@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { Terminal as TerminalIcon, ChevronRight, GitBranch, Activity, Coffee, Zap, Clock } from "lucide-react";
+import { Terminal as TerminalIcon, ChevronRight, GitBranch, Clock } from "lucide-react";
 import { emitMatrix } from "@/lib/matrixSignals";
 import { SECTION_ALIASES } from "@/constants/sections";
 
@@ -13,19 +13,16 @@ const COMMANDS = [
   "help",
   "whoami",
   "ls",
-  "cat about.txt",
-  "cat experience.txt",
-  "cat projects.txt",
-  "cat skills.json",
-  "cat education.txt",
+  "cat about.md",
   "cat now.md",
   "cat blog.md",
   "cd lab",
   "cd notes",
   "cd /",
   "open about",
-  "open projects",
   "open now",
+  "games",
+  "games arczero",
   "contact",
   "clear",
   "github",
@@ -45,27 +42,30 @@ const FORTUNES = [
 ];
 
 const GIT_LOG_TIMELINE = [
-  'commit a1b2c3d  2026-04  portfolio: matrix rain redux, terminal-first mobile',
-  'commit 9f8e7d6  2025-11  bhara: shipped v2 — 10k concurrent users on AWS',
-  'commit 7c5d3a2  2025-06  founded bhara — rent-anything marketplace, BD',
-  'commit 4e2b1a0  2024-12  graduated — CSE, Chittagong University',
-  'commit 0000000  2001-12  boot sequence initialized',
+  'commit a1b2c3d  2026-04  site: rewriting myself in public',
+  'commit 9f8e7d6  2026-04  workshop: arczero ready to ship',
+  'commit 7c5d3a2  2026-04  meta: resigned. no more jobs.',
+  'commit 4e2b1a0  2025-09  body: started training for 100k',
+  'commit 2x1y0z3  2022-01  brain: returned to cs on my own terms',
+  'commit 0000000  2018-01  road: dropped cuet year one, started reading',
 ];
 
 const EASTER_EGGS: { [key: string]: string[] } = {
   'whoami --deep': [
-    'Nasiful Alam',
-    'Founder, Bhara · Full-stack engineer · Chattogram, BD',
-    'Shipped: scalable marketplaces, serverless APIs, a portfolio shaped like a codebase.',
-    'Looking for: hard problems in distributed systems and developer tooling.',
+    'nj. niruddeshjatra. nasif if you\'ve known me a while.',
+    '27. chattogram, bangladesh.',
+    'dropped out of cuet year one. self-taught after that.',
+    'tutoring 10+ years. eight kids a day, still.',
+    'quit my job in april 2026.',
+    'training for 100k. shipping arczero. learning what i actually want to make.',
     '',
   ],
   'fortune': [],
   'git log --author=nasif': GIT_LOG_TIMELINE.concat(''),
   'about nasif': [
-    '> cat about.txt',
-    'Full-stack engineer who treats software like writing: draft, revise, publish.',
-    'Runs on coffee, Typescript, and stubbornness.',
+    '> cat me/about.md',
+    "nj's full name is nasiful alam.",
+    "he doesn't lead with it. read me/about.md if you want the rest.",
     '',
   ],
   'sudo sudo': [
@@ -78,7 +78,7 @@ const EASTER_EGGS: { [key: string]: string[] } = {
 const Terminal = ({ onCommand, currentSection, onThemeChange }: TerminalProps) => {
   const [input, setInput] = useState("");
   const [history, setHistory] = useState<string[]>([
-    "$ welcome to nasif.space",
+    "$ welcome to niruddeshjatra.space",
     "$ type 'help' for commands, or click a file in the sidebar",
     "$ tab = autocomplete · ↑/↓ = recall · 'secrets' = hidden commands",
     "",
@@ -87,7 +87,6 @@ const Terminal = ({ onCommand, currentSection, onThemeChange }: TerminalProps) =
   const [historyIndex, setHistoryIndex] = useState(-1);
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [time, setTime] = useState(new Date());
-  const [coffeeCount, setCoffeeCount] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
   const terminalRef = useRef<HTMLDivElement>(null);
 
@@ -108,17 +107,9 @@ const Terminal = ({ onCommand, currentSection, onThemeChange }: TerminalProps) =
     }
   }, [input]);
 
-  // Stats Dashboard timers
   useEffect(() => {
     const timer = setInterval(() => setTime(new Date()), 1000);
-    const coffeeTimer = setInterval(() => {
-      setCoffeeCount(prev => (prev + 1) % 10);
-    }, 5000);
-    
-    return () => {
-      clearInterval(timer);
-      clearInterval(coffeeTimer);
-    };
+    return () => clearInterval(timer);
   }, []);
 
   const handleCommand = (cmd: string) => {
@@ -146,9 +137,11 @@ const Terminal = ({ onCommand, currentSection, onThemeChange }: TerminalProps) =
         "Available commands:",
         "  whoami           - Display information about me",
         "  ls               - List all sections",
-        "  cat <file>       - Display content (about.txt, experience.txt, projects.txt, skills.json, education.txt, now.md, blog.md)",
-        "  cd <section>     - Navigate (about, projects, lab, notes, now, or '/')",
+        "  cat <file>       - Display content (about.md, now.md, blog.md)",
+        "  cd <section>     - Navigate (about, lab, notes, now, or '/')",
         "  open <file>      - Alias for cat/cd",
+        "  games            - Open games index",
+        "  games arczero    - Navigate to ArcZero",
         "  contact          - Show contact information",
         "  github           - Open GitHub profile",
         "  linkedin         - Open LinkedIn profile",
@@ -159,26 +152,26 @@ const Terminal = ({ onCommand, currentSection, onThemeChange }: TerminalProps) =
       );
     } else if (trimmedCmd === "whoami") {
       newHistory.push(
-        "Nasiful Alam",
-        "Startup founder & full-stack engineer",
-        "Location: Chattogram, Bangladesh",
-        "Building scalable systems on AWS",
-        "Email: nasifulalam1212@gmail.com",
+        "nj. they call me niruddeshjatra online.",
+        "chattogram, bangladesh.",
+        "i tutor. i make games. i run.",
+        "no longer for hire.",
+        "mail: nasifulalam1212@gmail.com",
         ""
       );
     } else if (trimmedCmd === "ls") {
       newHistory.push(
-        "about.txt",
-        "experience.txt",
-        "projects.txt",
-        "skills.json",
-        "education.txt",
+        "me/about.md",
+        "games/",
+        "writing/blog.md",
+        "writing/notes/",
+        "journey/running.md",
+        "journey/hiking.md",
+        "field-notes/",
+        "photos/",
+        "archived/",
         "now.md",
-        "lab/",
-        "notes/",
-        "blog.md",
         "contact.md",
-        "colophon.md",
         ""
       );
     } else if (trimmedCmd.startsWith("cd ") || trimmedCmd === "cd") {
@@ -225,14 +218,21 @@ const Terminal = ({ onCommand, currentSection, onThemeChange }: TerminalProps) =
     } else if (trimmedCmd.startsWith("cat ")) {
       const file = trimmedCmd.substring(4).trim();
       const section = SECTION_ALIASES[file];
-      if (section && section !== "welcome" && section !== "lab" && section !== "notes") {
+      const isDirSection = section === "lab" || section === "notes" || section === "games" || section === "field-notes" || section === "photos";
+      if (section && section !== "welcome" && !isDirSection) {
         onCommand(section);
         newHistory.push(`📄 Loading ${file}...`, "");
-      } else if (section === "lab" || section === "notes") {
+      } else if (isDirSection) {
         newHistory.push(`❌ cat: ${file}: Is a directory — try 'cd ${section}'`, "");
       } else {
         newHistory.push(`❌ cat: ${file}: No such file or directory`, "");
       }
+    } else if (trimmedCmd === "games arczero") {
+      newHistory.push("🎮 Navigating to ArcZero...", "");
+      window.location.href = "/games/arczero/";
+    } else if (trimmedCmd === "games") {
+      onCommand("games");
+      newHistory.push("🎮 Opening games index...", "");
     } else if (trimmedCmd === "contact") {
       onCommand("contact");
       newHistory.push("📧 Loading contact information...", "");
@@ -281,9 +281,6 @@ const Terminal = ({ onCommand, currentSection, onThemeChange }: TerminalProps) =
 
   const stats = [
     { icon: GitBranch, label: 'Branch', value: 'main', color: 'terminal-cyan' },
-    { icon: Activity, label: 'Lines', value: '10,000+', color: 'text-muted-foreground' },
-    { icon: Coffee, label: 'Coffee', value: String(coffeeCount + 5), color: 'text-muted-foreground' },
-    { icon: Zap, label: 'Bugs Fixed', value: '999', color: 'text-muted-foreground' },
   ];
 
   return (

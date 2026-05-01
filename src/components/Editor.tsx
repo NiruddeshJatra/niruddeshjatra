@@ -1,20 +1,18 @@
 import React, { Suspense, lazy, useState, useEffect, useRef } from "react";
-import { FileCode, FileText, FileJson, Mail, Terminal, Zap, ChevronUp } from "lucide-react";
+import { FileCode, FileText, FileJson, Mail, ChevronUp } from "lucide-react";
 import MatrixBackground from "./MatrixBackground";
 import Changelog from "./sections/Changelog";
 import { useViewport } from "../hooks/useViewport";
 
 const AboutContent = lazy(() => import("./sections/AboutContent"));
-const ExperienceContent = lazy(() => import("./sections/ExperienceContent"));
-const ProjectsContent = lazy(() => import("./sections/ProjectsContent"));
-const SkillsContent = lazy(() => import("./sections/SkillsContent"));
-const EducationContent = lazy(() => import("./sections/EducationContent"));
 const BlogContent = lazy(() => import("./sections/BlogContent"));
 const ContactContent = lazy(() => import("./sections/ContactContent"));
 const NowContent = lazy(() => import("./sections/NowContent"));
 const LabContent = lazy(() => import("./sections/LabContent"));
 const NotesContent = lazy(() => import("./sections/NotesContent"));
-const ColophonContent = lazy(() => import("./sections/ColophonContent"));
+const GamesContent = lazy(() => import("./sections/GamesContent"));
+const ArchivedContent = lazy(() => import("./sections/ArchivedContent"));
+const SoonContent = lazy(() => import("./sections/SoonContent"));
 
 const LineSkeleton = ({ rows = 4 }: { rows?: number }) => (
   <div className="animate-pulse space-y-3 p-4">
@@ -60,10 +58,9 @@ const ListSkeleton = () => (
 
 const getSectionSkeleton = (section: string) => {
   switch (section) {
-    case 'projects': return <ProjectsSkeleton />;
     case 'notes':
     case 'blog': return <ListSkeleton />;
-    case 'skills': return <LineSkeleton rows={6} />;
+    case 'archived-skills': return <LineSkeleton rows={6} />;
     default: return <LineSkeleton />;
   }
 };
@@ -145,43 +142,31 @@ const SmoothScrollContainer = React.forwardRef<HTMLDivElement, { children: React
 
 const getFileIcon = (section: string) => {
   switch (section) {
-    case "about":
-      return <FileText className="w-4 h-4 terminal-blue" />;
-    case "skills":
-      return <FileJson className="w-4 h-4 terminal-yellow" />;
-    case "contact":
-      return <Mail className="w-4 h-4 terminal-orange" />;
-    default:
-      return <FileCode className="w-4 h-4 terminal-cyan" />;
+    case "about": return <FileText className="w-4 h-4 terminal-blue" />;
+    case "archived-skills": return <FileJson className="w-4 h-4 terminal-yellow" />;
+    case "contact": return <Mail className="w-4 h-4 terminal-orange" />;
+    default: return <FileCode className="w-4 h-4 terminal-cyan" />;
   }
 };
 
 const getFileName = (section: string) => {
   switch (section) {
-    case "about":
-      return "about.txt";
-    case "experience":
-      return "experience.txt";
-    case "projects":
-      return "projects.txt";
-    case "skills":
-      return "skills.json";
-    case "education":
-      return "education.txt";
-    case "blog":
-      return "blog.md";
-    case "contact":
-      return "contact.md";
-    case "now":
-      return "now.md";
-    case "lab":
-      return "lab/";
-    case "notes":
-      return "notes/";
-    case "colophon":
-      return "colophon.md";
-    default:
-      return "welcome.txt";
+    case "about": return "me/about.md";
+    case "games": return "games/";
+    case "blog": return "writing/blog.md";
+    case "notes": return "writing/notes/";
+    case "journey-running": return "journey/running.md";
+    case "journey-hiking": return "journey/hiking.md";
+    case "field-notes": return "field-notes/";
+    case "photos": return "photos/";
+    case "archived-experience": return "archived/experience.txt";
+    case "archived-education": return "archived/education.txt";
+    case "archived-projects": return "archived/projects.txt";
+    case "archived-skills": return "archived/skills.json";
+    case "contact": return "contact.md";
+    case "now": return "now.md";
+    case "lab": return "lab/";
+    default: return "welcome.txt";
   }
 };
 
@@ -228,30 +213,22 @@ const Editor = ({ currentSection }: EditorProps) => {
   };
   const renderSection = () => {
     switch (currentSection) {
-      case "about":
-        return <AboutContent />;
-      case "experience":
-        return <ExperienceContent />;
-      case "projects":
-        return <ProjectsContent />;
-      case "skills":
-        return <SkillsContent />;
-      case "education":
-        return <EducationContent />;
-      case "blog":
-        return <BlogContent />;
-      case "contact":
-        return <ContactContent />;
-      case "now":
-        return <NowContent />;
-      case "lab":
-        return <LabContent />;
-      case "notes":
-        return <NotesContent />;
-      case "colophon":
-        return <ColophonContent />;
-      default:
-        return null;
+      case "about": return <AboutContent />;
+      case "games": return <GamesContent />;
+      case "blog": return <BlogContent />;
+      case "notes": return <NotesContent />;
+      case "journey-running":
+      case "journey-hiking":
+      case "field-notes": return <SoonContent />;
+      case "photos": return <SoonContent message="eventually." />;
+      case "archived-experience": return <ArchivedContent variant="experience" />;
+      case "archived-education": return <ArchivedContent variant="education" />;
+      case "archived-projects": return <ArchivedContent variant="projects" />;
+      case "archived-skills": return <ArchivedContent variant="skills" />;
+      case "contact": return <ContactContent />;
+      case "now": return <NowContent />;
+      case "lab": return <LabContent />;
+      default: return null;
     }
   };
 
@@ -263,142 +240,37 @@ const Editor = ({ currentSection }: EditorProps) => {
     switch (currentSection) {
       default:
         return (
-          <div className={`${responsiveClasses.spacing} animate-fade-in font-mono`}>
-            {/* ASCII Art Header - Responsive */}
+          <div className="animate-fade-in font-mono text-sm leading-relaxed px-4 py-6">
             {!isMobile && (
-              <div className="terminal-cyan font-bold text-sm leading-tight mb-6">
-                <pre className={responsiveClasses.codeSize}>
-{`
- ███▄    █  ▄▄▄        ██████  ██▓  █████▒█    ██  ██▓    
- ██ ▀█   █ ▒████▄    ▒██    ▒ ▓██▒▓██   ▒ ██  ▓██▒▓██▒    
-▓██  ▀█ ██▒▒██  ▀█▄  ░ ▓██▄   ▒██▒▒████ ░▓██  ▒██░▒██░    
-▓██▒  ▐▌██▒░██▄▄▄▄██   ▒   ██▒░██░░▓█▒  ░▓▓█  ░██░▒██░    
-▒██░   ▓██░ ▓█   ▓██▒▒██████▒▒░██░░▒█░   ▒▒█████▓ ░██████▒
-░ ▒░   ▒ ▒  ▒▒   ▓▒█░▒ ▒▓▒ ▒ ░░▓   ▒ ░   ░▒▓▒ ▒ ▒ ░ ▒░▓  ░
-░ ░░   ░ ▒░  ▒   ▒▒ ░░ ░▒  ░ ░ ▒ ░ ░     ░░▒░ ░ ░ ░ ░ ▒  ░
-   ░   ░ ░   ░   ▒   ░  ░  ░   ▒ ░ ░ ░    ░░░ ░ ░   ░ ░   
-         ░       ░  ░      ░   ░            ░         ░  ░
-`}
-                </pre>
+              <div className="terminal-cyan font-bold leading-tight mb-8">
+                <pre className="text-[10px]">{`███╗   ██╗██╗██████╗ ██╗   ██╗██████╗ ██████╗ ███████╗███████╗██╗  ██╗             ██╗ █████╗ ████████╗██████╗  █████╗
+████╗  ██║██║██╔══██╗██║   ██║██╔══██╗██╔══██╗██╔════╝██╔════╝██║  ██║             ██║██╔══██╗╚══██╔══╝██╔══██╗██╔══██╗
+██╔██╗ ██║██║██████╔╝██║   ██║██║  ██║██║  ██║█████╗  ███████╗███████║             ██║███████║   ██║   ██████╔╝███████║
+██║╚██╗██║██║██╔══██╗██║   ██║██║  ██║██║  ██║██╔══╝  ╚════██║██╔══██║        ██   ██║██╔══██║   ██║   ██╔══██╗██╔══██║
+██║ ╚████║██║██║  ██║╚██████╔╝██████╔╝██████╔╝███████╗███████║██║  ██║        ╚█████╔╝██║  ██║   ██║   ██║  ██║██║  ██║
+╚═╝  ╚═══╝╚═╝╚═╝  ╚═╝ ╚═════╝ ╚═════╝ ╚═════╝ ╚══════╝╚══════╝╚═╝  ╚═╝         ╚════╝ ╚═╝  ╚═╝   ╚═╝   ╚═╝  ╚═╝╚═╝  ╚═╝`}</pre>
               </div>
             )}
 
-            {/* Main Title - Responsive */}
-            <div className="space-y-3">
-              <div className={`flex items-center ${isMobile ? 'gap-2' : 'gap-3'}`}>
-                <Terminal className={`${isMobile ? 'w-6 h-6' : 'w-8 h-8'} terminal-green animate-pulse`} />
-                <div>
-                  <h1 className={`${responsiveClasses.headingSize} font-bold terminal-cyan`}>Nasiful Alam</h1>
-                  <div className={`terminal-green ${responsiveClasses.textSize} mt-1`}>
-                    <span className="animate-pulse">$</span> Startup Founder & Full-Stack Engineer
-                  </div>
-                </div>
-              </div>
+            <div className="max-w-2xl mx-auto space-y-3 text-foreground/80">
+              <p><span className="terminal-green">$ </span>welcome to niruddeshjatra.space</p>
+              <p><span className="terminal-green">&gt; </span>i'm nj.</p>
+              <p><span className="terminal-green">&gt; </span>i make games. i write. i run.</p>
+              <p><span className="terminal-green">&gt; </span>i tutor for a living. i'm not for hire.</p>
+              <p><span className="terminal-green">&gt; </span>everything i'm working on lives here. nothing is finished.</p>
+              <p><span className="terminal-green">&gt; </span>that's fine.</p>
             </div>
 
-            {/* Quick Info - Responsive Grid */}
-            <div className={`grid ${responsiveClasses.gridCols} gap-4 mt-6`}>
-              <div className={`${isMobile ? 'p-3' : 'p-4'} bg-card/50 border border-border rounded-lg hover:border-primary/50 transition-all`}>
-                <div className={`terminal-purple ${responsiveClasses.textSize} mb-2`}>// Location</div>
-                <div className={`text-foreground ${responsiveClasses.textSize}`}>📍 Chattogram, Bangladesh</div>
-              </div>
-              <div className={`${isMobile ? 'p-3' : 'p-4'} bg-card/50 border border-border rounded-lg hover:border-primary/50 transition-all`}>
-                <div className={`terminal-purple ${responsiveClasses.textSize} mb-2`}>// Tech Stack</div>
-                <div className={`text-foreground ${responsiveClasses.textSize}`}>⚡ Django • MERN • AWS</div>
-              </div>
+            <div className="max-w-2xl mx-auto mt-6 text-xs text-muted-foreground space-y-1">
+              <p><span className="terminal-green">// </span>type 'help' in the terminal, or click a file.</p>
+              <p><span className="terminal-green">// </span>start with games/ if you want something to play.</p>
             </div>
 
-            {/* Feature Highlights - Responsive */}
-            <div className={`mt-8 ${isMobile ? 'p-4' : 'p-6'} bg-gradient-to-br from-primary/5 to-purple-500/5 border border-primary/20 rounded-lg`}>
-              <div className={`flex items-center ${isMobile ? 'gap-2' : 'gap-2'} mb-4`}>
-                <Zap className={`${isMobile ? 'w-4 h-4' : 'w-5 h-5'} terminal-yellow animate-pulse`} />
-                <h2 className={`${isMobile ? 'text-base' : 'text-lg'} font-semibold terminal-cyan`}>What I Build</h2>
-              </div>
-              <div className={`grid ${isMobile ? 'grid-cols-1 gap-3' : 'grid-cols-1 md:grid-cols-3 gap-4'} ${responsiveClasses.textSize}`}>
-                <div className="space-y-1">
-                  <div className="terminal-green">→ Scalable Systems</div>
-                  <div className={`text-muted-foreground ${isMobile ? 'text-xs' : 'text-xs'}`}>Production-grade architectures on AWS</div>
-                </div>
-                <div className="space-y-1">
-                  <div className="terminal-green">→ Full-Stack Apps</div>
-                  <div className={`text-muted-foreground ${isMobile ? 'text-xs' : 'text-xs'}`}>React, Django, Node.js platforms</div>
-                </div>
-                <div className="space-y-1">
-                  <div className="terminal-green">→ MVPs & Products</div>
-                  <div className={`text-muted-foreground ${isMobile ? 'text-xs' : 'text-xs'}`}>From idea to production in weeks</div>
-                </div>
-              </div>
+            <div className="max-w-2xl mx-auto mt-6 text-xs text-muted-foreground">
+              <span className="terminal-green">// </span>recent
             </div>
-
-            {/* Terminal Commands Guide - Responsive with horizontal scroll for code */}
-            <div className={`mt-8 space-y-3 ${isMobile ? 'p-3' : 'p-4'} bg-black/30 border border-border rounded-lg`}>
-              <div className={`terminal-purple ${responsiveClasses.textSize}`}>// Quick Start Guide</div>
-              <div className={`space-y-2 ${responsiveClasses.textSize}`}>
-                <div className="flex items-start gap-3">
-                  <span className="terminal-cyan flex-shrink-0">→</span>
-                  <div className="min-w-0 flex-1">
-                    <div className="overflow-x-auto">
-                      <span className="terminal-yellow whitespace-nowrap">cat about.txt</span>
-                    </div>
-                    <span className="text-muted-foreground ml-2 block">Learn about my background</span>
-                  </div>
-                </div>
-                <div className="flex items-start gap-3">
-                  <span className="terminal-cyan flex-shrink-0">→</span>
-                  <div className="min-w-0 flex-1">
-                    <div className="overflow-x-auto">
-                      <span className="terminal-yellow whitespace-nowrap">cat projects.txt</span>
-                    </div>
-                    <span className="text-muted-foreground ml-2 block">View my featured projects</span>
-                  </div>
-                </div>
-                <div className="flex items-start gap-3">
-                  <span className="terminal-cyan flex-shrink-0">→</span>
-                  <div className="min-w-0 flex-1">
-                    <div className="overflow-x-auto">
-                      <span className="terminal-yellow whitespace-nowrap">cat experience.txt</span>
-                    </div>
-                    <span className="text-muted-foreground ml-2 block">See my work experience</span>
-                  </div>
-                </div>
-                <div className="flex items-start gap-3">
-                  <span className="terminal-cyan flex-shrink-0">→</span>
-                  <div className="min-w-0 flex-1">
-                    <div className="overflow-x-auto">
-                      <span className="terminal-yellow whitespace-nowrap">secrets</span>
-                    </div>
-                    <span className="text-muted-foreground ml-2 block">Discover easter eggs</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Fun Stats - Responsive Grid */}
-            <div className={`mt-6 grid ${isMobile ? 'grid-cols-2 gap-2' : 'grid-cols-2 md:grid-cols-4 gap-3'} text-center`}>
-              <div className={`${isMobile ? 'p-2' : 'p-3'} bg-card/30 border border-border rounded`}>
-                <div className={`${isMobile ? 'text-lg' : 'text-2xl'} font-bold terminal-cyan`}>3+</div>
-                <div className={`${isMobile ? 'text-xs' : 'text-xs'} text-muted-foreground`}>Years Coding</div>
-              </div>
-              <div className={`${isMobile ? 'p-2' : 'p-3'} bg-card/30 border border-border rounded`}>
-                <div className={`${isMobile ? 'text-lg' : 'text-2xl'} font-bold terminal-green`}>10K+</div>
-                <div className={`${isMobile ? 'text-xs' : 'text-xs'} text-muted-foreground`}>Lines Written</div>
-              </div>
-              <div className={`${isMobile ? 'p-2' : 'p-3'} bg-card/30 border border-border rounded`}>
-                <div className={`${isMobile ? 'text-lg' : 'text-2xl'} font-bold terminal-yellow`}>∞</div>
-                <div className={`${isMobile ? 'text-xs' : 'text-xs'} text-muted-foreground`}>Coffee Cups</div>
-              </div>
-              <div className={`${isMobile ? 'p-2' : 'p-3'} bg-card/30 border border-border rounded`}>
-                <div className={`${isMobile ? 'text-lg' : 'text-2xl'} font-bold terminal-purple`}>999</div>
-                <div className={`${isMobile ? 'text-xs' : 'text-xs'} text-muted-foreground`}>Bugs Fixed</div>
-              </div>
-            </div>
-
-            {/* Recent activity — living system */}
-            <Changelog />
-
-            {/* Bottom Tip - Responsive */}
-            <div className={`mt-8 ${responsiveClasses.textSize} text-muted-foreground text-center pb-4`}>
-              <span className="terminal-blue">💡 Pro Tip:</span> Use the terminal below or {isMobile ? 'menu' : 'click files on the left'} to explore
+            <div className="max-w-2xl mx-auto">
+              <Changelog />
             </div>
           </div>
         );
