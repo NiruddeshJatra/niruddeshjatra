@@ -303,6 +303,7 @@ const Editor = ({ currentSection }: EditorProps) => {
                 <div className={`text-foreground ${responsiveClasses.textSize}`}>📍 Chattogram, Bangladesh</div>
               </div>
               <div className={`${isMobile ? 'p-3' : 'p-4'} bg-card/50 border border-border rounded-lg hover:border-primary/50 transition-all`}>
+                <div className={`terminal-purple ${responsiveClasses.textSize} mb-2`}>// THIS IS AN OLD VERSION WHERE I USED THE WEBSITE FOR MY PORFOLIO</div>
                 <div className={`terminal-purple ${responsiveClasses.textSize} mb-2`}>// Tech Stack</div>
                 <div className={`text-foreground ${responsiveClasses.textSize}`}>⚡ Django • MERN • AWS</div>
               </div>
