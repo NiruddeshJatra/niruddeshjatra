@@ -87,21 +87,6 @@ const ResponsiveHeader: React.FC<ResponsiveHeaderProps> = ({
 
         {/* Right Section - Social Links */}
         <div className="flex items-center gap-2 shrink-0">
-          {!isMobile && (
-            <button
-              type="button"
-              onClick={() => {
-                const el = document.getElementById("terminal-input");
-                if (el instanceof HTMLInputElement) el.focus();
-              }}
-              className="hidden md:inline-flex items-center gap-1 px-1.5 py-0.5 rounded border border-white/10 text-[11px] font-mono text-muted-foreground hover:text-foreground hover:border-white/30 transition-colors"
-              aria-label="Focus terminal"
-              title="Focus terminal"
-            >
-              <kbd className="font-sans">⌘</kbd>
-              <kbd className="font-sans">/</kbd>
-            </button>
-          )}
           {/* Social Links */}
           <nav
             className={`flex items-center ${isMobile ? 'gap-1' : 'gap-3'}`}

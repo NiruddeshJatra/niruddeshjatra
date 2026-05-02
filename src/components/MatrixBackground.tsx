@@ -15,14 +15,15 @@ const KATAKANA = Array.from({ length: 59 }, (_, i) =>
 const DIGITS = ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"];
 const CHARS: string[] = [...KATAKANA, ...DIGITS];
 
-const HEAD_COLOR = "#CFFFCF";
-const TRAIL_BRIGHT = { r: 0, g: 255, b: 102 };
+const HEAD_COLOR = "rgba(190, 255, 205, 0.58)";
+const TRAIL_BRIGHT = { r: 0, g: 190, b: 82 };
 const TRAIL_DIM = { r: 0, g: 51, b: 17 };
-const TRAIL_FADE_RGBA = "rgba(10, 14, 10, 0.08)";
-
 interface Drop {
+  x: number;
   y: number;
   speed: number;
+  length: number;
+  phase: number;
 }
 
 const MatrixBackground = () => {
@@ -31,8 +32,8 @@ const MatrixBackground = () => {
   const animationRef = useRef<number>();
   const { prefersReducedMotion } = useReducedMotion();
   const [config] = useState<MatrixConfig>({
-    fontSize: 14,
-    animationSpeed: 50,
+    fontSize: 16,
+    animationSpeed: 45,
     particleDensity: 0.6,
     opacity: 0.25,
   });
@@ -54,15 +55,16 @@ const MatrixBackground = () => {
       if (!scrollContainer) return;
 
       const scrollRect = scrollContainer.getBoundingClientRect();
-      const scrollHeight = scrollContainer.scrollHeight;
+      const canvasWidth = Math.ceil(Math.max(window.innerWidth, scrollRect.width));
+      const canvasHeight = Math.ceil(Math.max(window.innerHeight, scrollContainer.scrollHeight));
 
-      canvas.width = scrollRect.width * dpr;
-      canvas.height = scrollHeight * dpr;
+      canvas.width = canvasWidth * dpr;
+      canvas.height = canvasHeight * dpr;
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      canvas.style.width = `${scrollRect.width}px`;
-      canvas.style.height = `${scrollHeight}px`;
+      canvas.style.width = `${canvasWidth}px`;
+      canvas.style.height = `${canvasHeight}px`;
 
-      setContentHeight(scrollHeight);
+      setContentHeight(canvasHeight);
     };
 
     updateCanvasSize();
@@ -70,14 +72,35 @@ const MatrixBackground = () => {
     const actualColumns = Math.floor(
       canvas.width / window.devicePixelRatio / config.fontSize
     );
-    const maxColumns = Math.floor(actualColumns * config.particleDensity);
+    const maxDrops = Math.floor(actualColumns * config.particleDensity);
+    const buildDrop = (index: number): Drop => {
+      const colIndex = Math.floor((index / Math.max(1, maxDrops)) * actualColumns);
+      const x = colIndex * config.fontSize;
+      
+      // Use overlapping sine waves to generate an 'aurora' landscape of peaks and valleys
+      const wave1 = Math.sin(colIndex * 0.15) * 6;
+      const wave2 = Math.sin(colIndex * 0.04 + 1) * 12;
+      const wave3 = Math.sin(colIndex * 0.3) * 3;
+      
+      // Max possible sum is ~21. Peaks (wave heads) will have composite close to 21.
+      const composite = wave1 + wave2 + wave3;
+      
+      // auroraCurve maps composite to a trailing distance. Peaks get 0 (start at top), valleys get up to 42 (trail behind)
+      const auroraCurve = 21 - composite;
+        
+      return {
+        x,
+        // Start exactly at y=0 for the wave heads, minus the aurora curve and slight noise for natural feel
+        y: 0 - auroraCurve - Math.random() * 1.5,
+        speed: 0.12 + Math.random() * 0.03, // Tighter speed variance keeps the wavefronts cohesive longer
+        length: 12 + Math.floor(Math.random() * 16),
+        phase: composite * 0.1, // Tie the breathing phase to the aurora curve
+      };
+    };
 
     const drops: Drop[] = [];
-    for (let i = 0; i < maxColumns; i++) {
-      drops.push({
-        y: Math.random() * -100,
-        speed: 0.3 + Math.random() * 0.6,
-      });
+    for (let i = 0; i < maxDrops; i++) {
+      drops.push(buildDrop(i));
     }
 
     const pickChar = () => CHARS[Math.floor(Math.random() * CHARS.length)];
@@ -138,7 +161,7 @@ const MatrixBackground = () => {
       const canvasHeight = canvas.height / window.devicePixelRatio;
 
       // Typing & focus reduce fade alpha → denser trails
-      const fadeAlpha = Math.max(0.08, 0.18 - typeBoost * 0.06 - focusBoost * 0.03);
+      const fadeAlpha = Math.max(0.11, 0.23 - typeBoost * 0.04 - focusBoost * 0.02);
       ctx.fillStyle = `rgba(10, 14, 10, ${fadeAlpha})`;
       ctx.fillRect(0, 0, canvasWidth, canvasHeight);
 
@@ -147,43 +170,43 @@ const MatrixBackground = () => {
 
       // Focus → slight cyan-green shift on head glyph
       const headColor = focusBoost > 0.05
-        ? `rgb(${Math.round(207 - focusBoost * 60)}, 255, ${Math.round(207 + focusBoost * 30)})`
+        ? `rgba(${Math.round(190 - focusBoost * 42)}, 255, ${Math.round(205 + focusBoost * 26)}, 0.66)`
         : HEAD_COLOR;
 
-      const speedMul = 1 + scrollBoost * 1.2 + typeBoost * 0.3;
-      const flickerProb = 0.985 - typeBoost * 0.04 - focusBoost * 0.01;
-
+      const speedMul = 1 + scrollBoost * 0.65 + typeBoost * 0.18;
+      const flickerProb = 0.995 - typeBoost * 0.02 - focusBoost * 0.006;
       for (let i = 0; i < drops.length; i++) {
         const drop = drops[i];
-        const x = i * config.fontSize;
         const y = drop.y * config.fontSize;
+        
+        // Use phase and currentTime to create a dynamic wave effect on the speed
+        const wave = 0.85 + Math.sin(currentTime * 0.0006 + drop.phase * Math.PI * 2) * 0.15;
 
         ctx.fillStyle = headColor;
-        drawMirroredGlyph(pickChar(), x, y);
+        drawMirroredGlyph(pickChar(), drop.x, y);
 
-        for (let j = 1; j < 10; j++) {
+        for (let j = 1; j < drop.length; j++) {
           const trailY = y - j * config.fontSize;
           if (trailY < 0) break;
-          const t = j / 10;
+          const t = j / drop.length;
           const r = Math.round(TRAIL_BRIGHT.r + (TRAIL_DIM.r - TRAIL_BRIGHT.r) * t);
           const g = Math.round(TRAIL_BRIGHT.g + (TRAIL_DIM.g - TRAIL_BRIGHT.g) * t);
           const b = Math.round(TRAIL_BRIGHT.b + (TRAIL_DIM.b - TRAIL_BRIGHT.b) * t);
-          const a = Math.max(0, 0.85 - j * 0.08);
+          const a = Math.max(0, 0.45 - t * 0.45);
           ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${a})`;
-          drawMirroredGlyph(pickChar(), x, trailY);
+          drawMirroredGlyph(pickChar(), drop.x, trailY);
         }
 
         if (Math.random() > flickerProb && y > 0 && y < canvasHeight) {
-          ctx.fillStyle = "rgba(0, 255, 102, 0.35)";
-          const flickerY = y - Math.floor(Math.random() * 8) * config.fontSize;
-          drawMirroredGlyph(pickChar(), x, flickerY);
+          ctx.fillStyle = "rgba(0, 255, 102, 0.3)";
+          const flickerY = y - Math.floor(Math.random() * Math.min(drop.length, 10)) * config.fontSize;
+          drawMirroredGlyph(pickChar(), drop.x, flickerY);
         }
 
-        drop.y += drop.speed * speedMul;
+        drop.y += drop.speed * wave * speedMul;
 
-        if (drop.y * config.fontSize > canvasHeight + 100) {
-          drop.y = Math.random() * -20;
-          drop.speed = 0.3 + Math.random() * 0.6;
+        if (drop.y * config.fontSize > canvasHeight + drop.length * config.fontSize) {
+          drops[i] = buildDrop(i);
         }
       }
 
@@ -202,16 +225,13 @@ const MatrixBackground = () => {
           const newActualColumns = Math.floor(
             canvas.width / window.devicePixelRatio / config.fontSize
           );
-          const newMaxColumns = Math.floor(
+          const newMaxDrops = Math.floor(
             newActualColumns * config.particleDensity
           );
-          while (drops.length < newMaxColumns) {
-            drops.push({
-              y: Math.random() * -100,
-              speed: 0.3 + Math.random() * 0.6,
-            });
+          while (drops.length < newMaxDrops) {
+            drops.push(buildDrop(drops.length));
           }
-          drops.length = newMaxColumns;
+          drops.length = newMaxDrops;
         }
       }
     });
@@ -219,6 +239,7 @@ const MatrixBackground = () => {
     resizeObserver.observe(container);
     const scrollContainer = container.closest(".editor-smooth-scroll");
     if (scrollContainer) resizeObserver.observe(scrollContainer);
+    window.addEventListener("resize", updateCanvasSize);
 
     const mutationObserver = new MutationObserver(() => updateCanvasSize());
     if (scrollContainer) {
@@ -233,6 +254,7 @@ const MatrixBackground = () => {
       if (animationRef.current) cancelAnimationFrame(animationRef.current);
       resizeObserver.disconnect();
       mutationObserver.disconnect();
+      window.removeEventListener("resize", updateCanvasSize);
       scrollEl?.removeEventListener("scroll", onScroll);
       unsubType();
       unsubFocusOn();
@@ -260,7 +282,7 @@ const MatrixBackground = () => {
         ref={canvasRef}
         className="block"
         style={{
-          opacity: Math.max(config.opacity, 0.25),
+          opacity: config.opacity,
           willChange: "transform",
           transform: "translate3d(0,0,0)",
           zIndex: 0,

@@ -313,25 +313,30 @@ const Terminal = ({ onCommand, currentSection, onThemeChange }: TerminalProps) =
           </div>
         ))}
 
-        <div className="flex items-center gap-2 mt-2">
+        <div className="flex items-center gap-2 mt-2 relative">
           <ChevronRight className="w-4 h-4 text-phosphor flex-shrink-0 animate-pulse" />
-          <input
-            ref={inputRef}
-            id="terminal-input"
-            type="text"
-            value={input}
-            onChange={(e) => {
-              setInput(e.target.value);
-              emitMatrix("type");
-            }}
-            onKeyDown={handleKeyDown}
-            onFocus={() => emitMatrix("focus-on")}
-            onBlur={() => emitMatrix("focus-off")}
-            className="flex-1 bg-transparent border-none outline-none text-gray-100 font-mono placeholder:text-gray-600"
-            placeholder="Type 'help' for commands..."
-            autoFocus
-          />
-          <span className="cursor-blink text-phosphor font-bold">▋</span>
+          <div className="relative flex-1 flex items-center font-mono overflow-hidden">
+            <span className="text-gray-100 whitespace-pre">{input}</span>
+            <span className="cursor-blink text-phosphor font-bold ml-0.5">▋</span>
+            {!input && (
+              <span className="absolute left-0 text-gray-600 pointer-events-none">Type 'help' for commands...</span>
+            )}
+            <input
+              ref={inputRef}
+              id="terminal-input"
+              type="text"
+              value={input}
+              onChange={(e) => {
+                setInput(e.target.value);
+                emitMatrix("type");
+              }}
+              onKeyDown={handleKeyDown}
+              onFocus={() => emitMatrix("focus-on")}
+              onBlur={() => emitMatrix("focus-off")}
+              className="absolute inset-0 opacity-0 cursor-text text-transparent bg-transparent border-none outline-none w-full h-full"
+              autoFocus
+            />
+          </div>
         </div>
 
         {suggestions.length > 0 && input && (

@@ -131,7 +131,7 @@ const FileExplorer = ({ currentSection, onSectionChange }: FileExplorerProps) =>
         <div className="flex items-center gap-2 px-2 py-1.5">
           <Folder className="w-3.5 h-3.5 terminal-blue" aria-hidden="true" />
           <h2 className="text-[11px] font-semibold uppercase tracking-wide flex-1 text-muted-foreground">
-            niruddeshjatra
+            WORKSPACE
           </h2>
           <button
             onClick={() => setCollapsed(true)}

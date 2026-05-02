@@ -154,4 +154,14 @@ Comprehensive visual register overhaul. Retired the "VSCode rainbow" color syste
 
 ---
 
+## Phase C2 Preview — UI Polish & Matrix Aurora
+**2026-05-02**
+
+Refined several UI details based on review:
+- **Matrix Background**: Restructured drop generation into "aurora" wavefronts using overlapping sine waves for a consistent, choreographed downpour. Increased font size (`16`) and density (`0.6`). Removed unused fade constants.
+- **Terminal**: Resolved a double-cursor issue by obscuring the native input caret and overlaying a custom green block cursor (`▋`).
+- **Sidebar**: Renamed the root FileExplorer header from `NEXUS_CORE` (previously `niruddeshjatra`) to `WORKSPACE` for a more grounded feel.
+
+---
+
 *Updated by `after-change` on each commit. Append new entries at the bottom — never rewrite history.*
