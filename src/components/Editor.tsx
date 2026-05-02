@@ -71,55 +71,13 @@ interface EditorProps {
   currentSection: string;
 }
 
-// Responsive Code Block Component
-const ResponsiveCodeBlock = ({ children, className = "" }: { children: React.ReactNode; className?: string }) => {
-  const { isMobile } = useViewport();
-  
-  return (
-    <div className={`editor-code-block overflow-x-auto ${className}`}>
-      <pre className={`${isMobile ? 'text-xs' : 'text-sm'} whitespace-pre font-mono`}>
-        {children}
-      </pre>
-    </div>
-  );
-};
-
-// Responsive Image Component
-const ResponsiveImage = ({ src, alt, className = "" }: { src: string; alt: string; className?: string }) => {
-  const { isMobile, width } = useViewport();
-  
-  return (
-    <div className={`overflow-hidden rounded-lg ${className}`}>
-      <img 
-        src={src} 
-        alt={alt}
-        className={`w-full h-auto object-contain ${isMobile ? 'max-h-48' : 'max-h-96'}`}
-        style={{
-          maxWidth: isMobile ? '100%' : `${Math.min(width * 0.8, 800)}px`
-        }}
-      />
-    </div>
-  );
-};
-
-// Responsive Text Container
-const ResponsiveTextContainer = ({ children, className = "" }: { children: React.ReactNode; className?: string }) => {
-  const { isMobile } = useViewport();
-  
-  return (
-    <div className={`${isMobile ? 'text-xs leading-relaxed' : 'text-sm leading-normal'} ${className}`}>
-      {children}
-    </div>
-  );
-};
-
 // Smooth Scroll Container for Editor Content
 const SmoothScrollContainer = React.forwardRef<HTMLDivElement, { children: React.ReactNode; className?: string }>(
   ({ children, className = "" }, ref) => {
     const { isMobile } = useViewport();
-    
+
     return (
-      <div 
+      <div
         ref={ref}
         className={`
           editor-smooth-scroll
@@ -129,9 +87,9 @@ const SmoothScrollContainer = React.forwardRef<HTMLDivElement, { children: React
         `}
         style={{
           scrollBehavior: 'smooth',
-          WebkitOverflowScrolling: 'touch', // iOS momentum scrolling
-          scrollbarWidth: isMobile ? 'none' : 'thin', // Firefox
-          msOverflowStyle: isMobile ? 'none' : 'auto' // IE/Edge
+          WebkitOverflowScrolling: 'touch',
+          scrollbarWidth: isMobile ? 'none' : 'thin',
+          msOverflowStyle: isMobile ? 'none' : 'auto'
         }}
       >
         {children}
@@ -142,10 +100,10 @@ const SmoothScrollContainer = React.forwardRef<HTMLDivElement, { children: React
 
 const getFileIcon = (section: string) => {
   switch (section) {
-    case "about": return <FileText className="w-4 h-4 terminal-blue" />;
-    case "archived-skills": return <FileJson className="w-4 h-4 terminal-yellow" />;
-    case "contact": return <Mail className="w-4 h-4 terminal-orange" />;
-    default: return <FileCode className="w-4 h-4 terminal-cyan" />;
+    case "about": return <FileText className="w-4 h-4 text-phosphor-dim" />;
+    case "archived-skills": return <FileJson className="w-4 h-4 text-phosphor-dim" />;
+    case "contact": return <Mail className="w-4 h-4 text-phosphor-dim" />;
+    default: return <FileCode className="w-4 h-4 text-phosphor-dim" />;
   }
 };
 
@@ -175,7 +133,6 @@ const Editor = ({ currentSection }: EditorProps) => {
   const [showScrollTop, setShowScrollTop] = useState(false);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
-  // Handle scroll events for mobile scroll-to-top button
   useEffect(() => {
     const handleScroll = () => {
       if (scrollContainerRef.current) {
@@ -191,17 +148,12 @@ const Editor = ({ currentSection }: EditorProps) => {
     }
   }, []);
 
-  // Scroll to top function
   const scrollToTop = () => {
     if (scrollContainerRef.current) {
-      scrollContainerRef.current.scrollTo({
-        top: 0,
-        behavior: 'smooth'
-      });
+      scrollContainerRef.current.scrollTo({ top: 0, behavior: 'smooth' });
     }
   };
-  
-  // Responsive classes based on viewport - Decreased font sizes
+
   const responsiveClasses = {
     fontSize: getResponsiveFontSize(isMobile, isTablet),
     padding: getResponsivePadding(isMobile),
@@ -211,6 +163,7 @@ const Editor = ({ currentSection }: EditorProps) => {
     gridCols: isMobile ? 'grid-cols-1' : isTablet ? 'grid-cols-1 md:grid-cols-2' : 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3',
     spacing: isMobile ? 'space-y-3' : 'space-y-4'
   };
+
   const renderSection = () => {
     switch (currentSection) {
       case "about": return <AboutContent />;
@@ -242,7 +195,7 @@ const Editor = ({ currentSection }: EditorProps) => {
         return (
           <div className="animate-fade-in font-mono text-sm leading-relaxed px-4 py-6">
             {!isMobile && (
-              <div className="terminal-cyan font-bold leading-tight mb-8">
+              <div className="text-phosphor font-bold leading-tight mb-8">
                 <pre className="text-[10px]">{`███╗   ██╗██╗██████╗ ██╗   ██╗██████╗ ██████╗ ███████╗███████╗██╗  ██╗             ██╗ █████╗ ████████╗██████╗  █████╗
 ████╗  ██║██║██╔══██╗██║   ██║██╔══██╗██╔══██╗██╔════╝██╔════╝██║  ██║             ██║██╔══██╗╚══██╔══╝██╔══██╗██╔══██╗
 ██╔██╗ ██║██║██████╔╝██║   ██║██║  ██║██║  ██║█████╗  ███████╗███████║             ██║███████║   ██║   ██████╔╝███████║
@@ -253,21 +206,21 @@ const Editor = ({ currentSection }: EditorProps) => {
             )}
 
             <div className="max-w-2xl mx-auto space-y-3 text-foreground/80">
-              <p><span className="terminal-green">$ </span>welcome to niruddeshjatra.space</p>
-              <p><span className="terminal-green">&gt; </span>i'm nj.</p>
-              <p><span className="terminal-green">&gt; </span>i make games. i write. i run.</p>
-              <p><span className="terminal-green">&gt; </span>i tutor for a living. i'm not for hire.</p>
-              <p><span className="terminal-green">&gt; </span>everything i'm working on lives here. nothing is finished.</p>
-              <p><span className="terminal-green">&gt; </span>that's fine.</p>
+              <p><span className="text-phosphor">$ </span>welcome to niruddeshjatra.space</p>
+              <p><span className="text-phosphor">&gt; </span>i'm nj.</p>
+              <p><span className="text-phosphor">&gt; </span>i make games. i write. i run.</p>
+              <p><span className="text-phosphor">&gt; </span>i tutor for a living. i'm not for hire.</p>
+              <p><span className="text-phosphor">&gt; </span>everything i'm working on lives here. nothing is finished.</p>
+              <p><span className="text-phosphor">&gt; </span>that's fine.</p>
             </div>
 
             <div className="max-w-2xl mx-auto mt-6 text-xs text-muted-foreground space-y-1">
-              <p><span className="terminal-green">// </span>type 'help' in the terminal, or click a file.</p>
-              <p><span className="terminal-green">// </span>start with games/ if you want something to play.</p>
+              <p><span className="text-phosphor-dim">// </span>type 'help' in the terminal, or click a file.</p>
+              <p><span className="text-phosphor-dim">// </span>start with games/ if you want something to play.</p>
             </div>
 
             <div className="max-w-2xl mx-auto mt-6 text-xs text-muted-foreground">
-              <span className="terminal-green">// </span>recent
+              <span className="text-phosphor-dim">// </span>recent
             </div>
             <div className="max-w-2xl mx-auto">
               <Changelog />
@@ -279,65 +232,25 @@ const Editor = ({ currentSection }: EditorProps) => {
 
   return (
     <div className="h-full flex flex-col bg-transparent">
-      {/* Header - Responsive */}
+      {/* Header */}
       <div className={`flex items-center gap-2 ${isMobile ? 'px-2 py-1.5' : 'px-3 py-1.5'} border-b border-border bg-black/80 backdrop-blur-sm`}>
         {getFileIcon(currentSection)}
         <span className={`${isMobile ? 'text-[11px]' : 'text-xs'} font-medium truncate flex-1`}>{getFileName(currentSection)}</span>
-        {!isMobile && (
-          <div className="ml-auto flex items-center gap-2 text-[10px] text-muted-foreground">
-            <span>UTF-8</span>
-            <span>•</span>
-            <span>LF</span>
-          </div>
-        )}
       </div>
 
-      {/* Content Area - Responsive with Smooth Scrolling */}
+      {/* Content Area */}
       <SmoothScrollContainer className="flex-1 relative" ref={scrollContainerRef}>
-        {/* Matrix Background - Only in Editor */}
         <div className="absolute inset-0 overflow-hidden">
           <MatrixBackground />
         </div>
-        
+
         <div className="flex min-h-full relative z-10">
-          {/* Line Numbers - Responsive and Dynamic */}
-          {!isMobile && (
-            <div className={`
-              editor-line-numbers
-              ${isMobile ? 'w-8' : 'w-12'} 
-              bg-[#0a0a0a]/80 text-right 
-              ${isMobile ? 'pr-2' : 'pr-3'} 
-              py-4 
-              ${isMobile ? 'text-[10px]' : 'text-xs'} 
-              text-muted-foreground/40 
-              select-none 
-              border-r border-border/30
-              sticky top-0
-              transition-all duration-200
-              backdrop-blur-sm
-            `}>
-              {Array.from({ length: 100 }, (_, i) => (
-                <div 
-                  key={i} 
-                  className={`
-                    leading-6 
-                    hover:text-muted-foreground 
-                    transition-colors duration-150
-                    ${isMobile ? 'py-1' : 'py-0'}
-                  `}
-                >
-                  {i + 1}
-                </div>
-              ))}
-            </div>
-          )}
-          
-          {/* Content Container - Enhanced for mobile scrolling */}
+          {/* Content Container */}
           <div className={`
             editor-content
-            flex-1 
-            ${responsiveClasses.padding} 
-            animate-fade-in 
+            flex-1
+            ${responsiveClasses.padding}
+            animate-fade-in
             transition-all duration-300 ease-out
             ${isMobile ? 'overflow-x-auto' : ''}
             bg-black/10 backdrop-blur-sm

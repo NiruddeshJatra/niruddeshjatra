@@ -8,8 +8,8 @@ const Changelog = () => {
   return (
     <div className="mt-8 border border-border rounded-lg p-4 bg-card/30">
       <div className="flex items-center gap-2 mb-3">
-        <GitCommit className="w-4 h-4 terminal-cyan" />
-        <div className="terminal-cyan text-sm font-semibold">$ git log --recent</div>
+        <GitCommit className="w-4 h-4 text-phosphor" />
+        <div className="text-phosphor text-sm font-semibold">$ git log --recent</div>
         <span className="text-[10px] text-muted-foreground ml-auto">
           last {CHANGELOG.length} updates
         </span>
@@ -19,8 +19,8 @@ const Changelog = () => {
         {CHANGELOG.map((entry, i) => {
           const body = (
             <>
-              <span className="terminal-yellow shrink-0">{entry.date}</span>
-              <span className="terminal-purple shrink-0">[{entry.section}]</span>
+              <span className="text-phosphor shrink-0">{entry.date}</span>
+              <span className="text-phosphor shrink-0">[{entry.section}]</span>
               <span className="text-foreground/90">{entry.summary}</span>
             </>
           );
@@ -39,7 +39,7 @@ const Changelog = () => {
                   onClick={onClick}
                   className="flex items-start gap-2 w-full text-left hover:text-foreground transition-colors group"
                 >
-                  <span className="terminal-green shrink-0 group-hover:translate-x-0.5 transition-transform">
+                  <span className="text-phosphor shrink-0 group-hover:translate-x-0.5 transition-transform">
                     →
                   </span>
                   {body}

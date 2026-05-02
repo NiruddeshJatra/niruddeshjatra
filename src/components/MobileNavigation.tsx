@@ -152,7 +152,7 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({
         {/* Header with close button */}
         <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-black/50">
           <div className="flex items-center gap-2">
-            <Folder className="w-4 h-4 terminal-blue" />
+            <Folder className="w-4 h-4 text-phosphor-dim" />
             <span className="text-xs font-semibold uppercase tracking-wide">Explorer</span>
           </div>
           <button
@@ -171,7 +171,7 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({
             {/* Portfolio folder header */}
             <div className="flex items-center gap-1 px-2 py-1 text-xs font-medium text-muted-foreground mb-1">
               <ChevronRight className="w-3 h-3" />
-              <Folder className="w-3 h-3 terminal-blue" />
+              <Folder className="w-3 h-3 text-phosphor-dim" />
               <span>PORTFOLIO</span>
             </div>
             
@@ -204,7 +204,7 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({
                   >
                     <Icon 
                       className={`w-3 h-3 transition-transform group-hover:scale-110 ${
-                        isActive ? 'terminal-cyan' : ''
+                        isActive ? 'text-phosphor' : ''
                       }`} 
                       aria-hidden="true"
                     />

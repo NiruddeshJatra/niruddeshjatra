@@ -88,7 +88,11 @@ Adding a new container folder: add a `FileItem` with `isContainer: true`, `id` s
 - **CommandPalette** is lazy-loaded; `meta+p` = files, `meta+shift+p` = commands; always guard against `HTMLInputElement` focus before opening
 - **FileExplorer owns its width** — do NOT set `w-*` on the wrapper div in `ResponsiveLayout`. Collapsed = `w-8`, expanded = `w-48`, managed internally.
 - **Lazy section loading** — all sections in `Editor.tsx` are `React.lazy`. Each has a dedicated skeleton fallback (see `getSectionSkeleton`). Do not use generic "loading..." text.
-- **Section page design**: code-as-self style — monospace, comment blocks, `const` objects. No generic resume bullet points. `max-w-2xl mx-auto` for center focus.
+- **Section page design**: code-as-self style — monospace, comment blocks, `const` objects. No generic resume bullet points. `max-w-xl mx-auto` for short-form sections; `max-w-2xl` only for prose pages (DraftAbout, future blog).
+- **Color system — phosphor palette**: use `text-phosphor` (accent/markers), `text-phosphor-soft` (string values), `text-phosphor-dim` (comments, metadata), `text-danger` (errors). `terminal-{cyan,purple,yellow,orange,blue,green}` classes are **retired** — do not use. Note: `FileExplorer`, `MobileShell`, `ResponsiveHeader`, `CommandPalette` still use `terminal-*` pending Phase C2.
+- **Font**: Departure Mono is primary (`public/fonts/DepartureMono-Regular.woff2`). JetBrains Mono is fallback. Both declared in `tailwind.config.ts` `fontFamily.mono`.
+- **File-signature footer**: completed section components end with `— nj · YYYY-MM · N bytes` in `text-phosphor-dim`. Byte counts are hardcoded per section — see each component.
+- **Terminal output**: ASCII markers only — `>` for nav/status, `!` for errors, `ok ·` for success, `•` for lists. No emoji in `Terminal.tsx` output strings.
 - Commit format: `type(scope): description` (feat/fix/chore/refactor/docs)
 
 ## localStorage Keys
@@ -133,6 +137,10 @@ gstack installed at `~/.claude/skills/gstack`. Use `/browse` for all web browsin
 
 Available skills:
 `/office-hours`, `/plan-ceo-review`, `/plan-eng-review`, `/plan-design-review`, `/design-consultation`, `/design-shotgun`, `/design-html`, `/review`, `/ship`, `/land-and-deploy`, `/canary`, `/benchmark`, `/browse`, `/connect-chrome`, `/qa`, `/qa-only`, `/design-review`, `/setup-browser-cookies`, `/setup-deploy`, `/retro`, `/investigate`, `/document-release`, `/codex`, `/cso`, `/autoplan`, `/plan-devex-review`, `/devex-review`, `/careful`, `/freeze`, `/guard`, `/unfreeze`, `/gstack-upgrade`, `/learn`
+
+## Progression Log
+
+Full sequential history of site phases lives in `PROGRESSION.md`. Read it for context on *why* things are structured the way they are. Updated by `after-change` on every commit.
 
 ## Security Notes
 - Never commit `.env` files — all secrets via Vercel environment variables

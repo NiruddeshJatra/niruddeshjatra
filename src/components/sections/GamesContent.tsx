@@ -69,7 +69,7 @@ const GamesContent = () => {
   return (
     <div
       className={`
-        font-mono max-w-2xl mx-auto px-4 py-6 transition-opacity duration-300
+        font-mono max-w-xl mx-auto px-4 py-6 transition-opacity duration-300
         ${visible ? 'opacity-100' : 'opacity-0'}
       `}
       style={{ fontFamily: "'Courier New', Courier, monospace" }}
@@ -79,6 +79,10 @@ const GamesContent = () => {
       <p className="mt-8 text-[10px] text-white/25">
         more slots pending. ship first.
       </p>
+
+      <div className="mt-12 pt-3 border-t border-border/40 text-[10px] text-phosphor-dim font-mono">
+        — nj · 2026-04 · 156 bytes
+      </div>
     </div>
   );
 };

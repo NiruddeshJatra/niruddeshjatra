@@ -22,54 +22,65 @@ const CONTENT: Record<Exclude<ArchivedContentProps['variant'], 'skills'>, string
   ],
 };
 
+const SIGNATURES: Record<ArchivedContentProps['variant'], { bytes: number }> = {
+  experience: { bytes: 178 },
+  education:  { bytes: 196 },
+  projects:   { bytes: 142 },
+  skills:     { bytes: 213 },
+};
+
 const SkillsJson = () => (
   <div className="space-y-1 text-sm">
-    <div><span className="terminal-yellow">{"{"}</span></div>
+    <div><span className="text-phosphor">{"{"}</span></div>
     <div className="pl-6 space-y-1">
       <div>
-        <span className="terminal-blue">"note"</span>
+        <span className="text-phosphor/70">"note"</span>
         <span className="text-muted-foreground">: </span>
-        <span className="terminal-orange">"i used to inventory myself like a stack of buzzwords."</span>
+        <span className="text-phosphor-soft">"i used to inventory myself like a stack of buzzwords."</span>
         <span className="text-muted-foreground">,</span>
       </div>
       {(["django", "mern", "aws"] as const).map(k => (
         <div key={k}>
-          <span className="terminal-blue">"{k}"</span>
+          <span className="text-phosphor/70">"{k}"</span>
           <span className="text-muted-foreground">: </span>
-          <span className="terminal-orange">"yeah"</span>
+          <span className="text-phosphor-soft">"yeah"</span>
           <span className="text-muted-foreground">,</span>
         </div>
       ))}
       <div>
-        <span className="terminal-blue">"the_actual_point"</span>
+        <span className="text-phosphor/70">"the_actual_point"</span>
         <span className="text-muted-foreground">: </span>
-        <span className="terminal-orange">"skills aren't a list. they're whatever i ship next."</span>
+        <span className="text-phosphor-soft">"skills aren't a list. they're whatever i ship next."</span>
       </div>
     </div>
-    <div><span className="terminal-yellow">{"}"}</span></div>
+    <div><span className="text-phosphor">{"}"}</span></div>
   </div>
 );
 
 const ArchivedContent = ({ variant }: ArchivedContentProps) => {
   const lines = variant !== 'skills' ? CONTENT[variant] : [];
+  const { bytes } = SIGNATURES[variant];
 
   return (
-    <div className="animate-fade-in font-mono text-sm leading-relaxed max-w-2xl mx-auto px-4 py-6">
+    <div className="animate-fade-in font-mono text-sm leading-relaxed max-w-xl mx-auto px-4 py-6">
       {variant === 'skills' ? (
         <SkillsJson />
       ) : (
         <div className="space-y-3 text-foreground/80">
           {lines.map((line, i) => (
             <p key={i}>
-              <span className="terminal-green">&gt; </span>
+              <span className="text-phosphor">&gt; </span>
               {line}
             </p>
           ))}
         </div>
       )}
       <p className="mt-8 text-xs text-muted-foreground">
-        <span className="terminal-green">// </span>archived — no longer maintained
+        <span className="text-phosphor-dim">// </span>archived — no longer maintained
       </p>
+      <div className="mt-12 pt-3 border-t border-border/40 text-[10px] text-phosphor-dim font-mono">
+        — nj · archived · {bytes} bytes
+      </div>
     </div>
   );
 };

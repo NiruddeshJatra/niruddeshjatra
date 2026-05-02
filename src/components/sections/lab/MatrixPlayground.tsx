@@ -118,7 +118,7 @@ const MatrixPlayground = () => {
   return (
     <div className="space-y-3 border border-border rounded-lg p-4 bg-card/30">
       <div className="flex items-center justify-between">
-        <div className="terminal-cyan text-sm font-semibold">matrix-playground.tsx</div>
+        <div className="text-phosphor text-sm font-semibold">matrix-playground.tsx</div>
         <span className="text-[10px] text-muted-foreground">live canvas</span>
       </div>
 
@@ -130,7 +130,7 @@ const MatrixPlayground = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
         <label className="flex flex-col gap-1">
           <span className="text-muted-foreground">
-            speed: <span className="terminal-green">{speed}</span>
+            speed: <span className="text-phosphor">{speed}</span>
           </span>
           <input
             type="range"
@@ -144,7 +144,7 @@ const MatrixPlayground = () => {
 
         <label className="flex flex-col gap-1">
           <span className="text-muted-foreground">
-            density: <span className="terminal-green">{density.toFixed(2)}</span>
+            density: <span className="text-phosphor">{density.toFixed(2)}</span>
           </span>
           <input
             type="range"

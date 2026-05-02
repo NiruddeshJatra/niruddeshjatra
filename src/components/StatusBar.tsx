@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { GitBranch, Clock, FileText, Circle } from "lucide-react";
+import { GitBranch, Clock, Circle } from "lucide-react";
 
 interface StatusBarProps {
   currentSection: string;
@@ -60,7 +60,7 @@ const StatusBar = ({ currentSection }: StatusBarProps) => {
   return (
     <div className="h-6 bg-primary/10 border-t border-border flex items-center justify-between px-3 text-[11px] font-mono">
       <div className="flex items-center gap-4 min-w-0">
-        <div className="flex items-center gap-1.5 terminal-cyan shrink-0">
+        <div className="flex items-center gap-1.5 text-phosphor shrink-0">
           <GitBranch className="w-3 h-3" />
           <span>main</span>
         </div>
@@ -75,19 +75,10 @@ const StatusBar = ({ currentSection }: StatusBarProps) => {
       </div>
 
       <div className="flex items-center gap-3 text-muted-foreground shrink-0">
-        <a
-          href="/resume.html"
-          className="flex items-center gap-1 hover:text-foreground transition-colors"
-          aria-label="Plain-text resume"
-        >
-          <FileText className="w-3 h-3" />
-          <span className="hidden sm:inline">resume</span>
-        </a>
         <div className="hidden sm:flex items-center gap-1.5">
           <Clock className="w-3 h-3" />
           <span>{time.toLocaleTimeString([], { hour12: false })}</span>
         </div>
-        <span className="hidden lg:inline">UTF-8 · LF</span>
       </div>
     </div>
   );

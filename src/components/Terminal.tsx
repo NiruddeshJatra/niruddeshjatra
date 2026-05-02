@@ -116,15 +116,14 @@ const Terminal = ({ onCommand, currentSection, onThemeChange }: TerminalProps) =
     const trimmedCmd = cmd.trim().toLowerCase();
     const newHistory = [...history, `$ ${cmd}`];
 
-    // Fortune: pull a rotating quote
     if (trimmedCmd === "fortune") {
       const quote = FORTUNES[Math.floor(Math.random() * FORTUNES.length)];
-      newHistory.push(`🔮 ${quote}`, "");
+      newHistory.push(`> ${quote}`, "");
     } else if (EASTER_EGGS[trimmedCmd]) {
       newHistory.push(...EASTER_EGGS[trimmedCmd]);
     } else if (trimmedCmd === "secrets" || trimmedCmd === "easter eggs") {
       newHistory.push(
-        "🥚 Hidden commands:",
+        "• Hidden commands:",
         "  whoami --deep              - sharper self-description",
         "  git log --author=nasif     - rolling micro-timeline",
         "  fortune                    - rotating quote from notes",
@@ -146,7 +145,7 @@ const Terminal = ({ onCommand, currentSection, onThemeChange }: TerminalProps) =
         "  github           - Open GitHub profile",
         "  linkedin         - Open LinkedIn profile",
         "  theme matrix     - Change to matrix theme",
-        "  secrets          - Show easter eggs 🥚",
+        "  secrets          - Show hidden commands",
         "  clear            - Clear terminal",
         ""
       );
@@ -180,20 +179,20 @@ const Terminal = ({ onCommand, currentSection, onThemeChange }: TerminalProps) =
       if (section) {
         onCommand(section);
         newHistory.push(
-          section === "welcome" ? "📂 /" : `📂 cd /${section}`,
+          section === "welcome" ? "> /" : `> cd /${section}`,
           ""
         );
       } else {
-        newHistory.push(`❌ cd: ${target}: No such directory`, "");
+        newHistory.push(`! cd: ${target}: No such directory`, "");
       }
     } else if (trimmedCmd.startsWith("open ")) {
       const target = trimmedCmd.substring(5).trim();
       const section = SECTION_ALIASES[target];
       if (section) {
         onCommand(section);
-        newHistory.push(`📄 Opening ${target}...`, "");
+        newHistory.push(`> opening ${target}…`, "");
       } else {
-        newHistory.push(`❌ open: ${target}: No such file`, "");
+        newHistory.push(`! open: ${target}: No such file`, "");
       }
     } else if (trimmedCmd === "clear") {
       setHistory([]);
@@ -208,12 +207,12 @@ const Terminal = ({ onCommand, currentSection, onThemeChange }: TerminalProps) =
     } else if (trimmedCmd.startsWith("theme ")) {
       const themeName = trimmedCmd.substring(6).trim();
       const matrixTheme = { name: 'matrix', bg: '#0d0d0d', accent: '#00ff00' };
-      
+
       if (themeName === 'matrix' && onThemeChange) {
         onThemeChange(matrixTheme);
-        newHistory.push(`✨ Theme changed to ${themeName}`, "");
+        newHistory.push(`ok · theme: ${themeName}`, "");
       } else {
-        newHistory.push(`❌ Unknown theme: ${themeName}`, "Available: matrix", "");
+        newHistory.push(`! unknown theme: ${themeName}`, "available: matrix", "");
       }
     } else if (trimmedCmd.startsWith("cat ")) {
       const file = trimmedCmd.substring(4).trim();
@@ -221,23 +220,23 @@ const Terminal = ({ onCommand, currentSection, onThemeChange }: TerminalProps) =
       const isDirSection = section === "lab" || section === "notes" || section === "games" || section === "field-notes" || section === "photos";
       if (section && section !== "welcome" && !isDirSection) {
         onCommand(section);
-        newHistory.push(`📄 Loading ${file}...`, "");
+        newHistory.push(`> loading ${file}…`, "");
       } else if (isDirSection) {
-        newHistory.push(`❌ cat: ${file}: Is a directory — try 'cd ${section}'`, "");
+        newHistory.push(`! cat: ${file}: is a directory — try 'cd ${section}'`, "");
       } else {
-        newHistory.push(`❌ cat: ${file}: No such file or directory`, "");
+        newHistory.push(`! cat: ${file}: no such file or directory`, "");
       }
     } else if (trimmedCmd === "games arczero") {
-      newHistory.push("🎮 Navigating to ArcZero...", "");
+      newHistory.push("> launching arczero…", "");
       window.location.href = "/games/arczero/";
     } else if (trimmedCmd === "games") {
       onCommand("games");
-      newHistory.push("🎮 Opening games index...", "");
+      newHistory.push("> opening games…", "");
     } else if (trimmedCmd === "contact") {
       onCommand("contact");
-      newHistory.push("📧 Loading contact information...", "");
+      newHistory.push("> opening contact…", "");
     } else if (trimmedCmd !== "") {
-      newHistory.push(`❌ Command not found: ${trimmedCmd}`, "Type 'help' for available commands", "");
+      newHistory.push(`! command not found: ${trimmedCmd}`, "type 'help' for available commands", "");
     }
 
     setHistory(newHistory);
@@ -280,13 +279,13 @@ const Terminal = ({ onCommand, currentSection, onThemeChange }: TerminalProps) =
   };
 
   const stats = [
-    { icon: GitBranch, label: 'Branch', value: 'main', color: 'terminal-cyan' },
+    { icon: GitBranch, label: 'Branch', value: 'main', color: 'text-phosphor' },
   ];
 
   return (
     <div className="h-full flex flex-col bg-black/90 backdrop-blur-sm">
       <div className="flex items-center gap-2 px-4 py-2 border-b border-border bg-black/80">
-        <TerminalIcon className="w-4 h-4 terminal-cyan" />
+        <TerminalIcon className="w-4 h-4 text-phosphor" />
         <span className="text-xs font-semibold uppercase tracking-wide">Terminal</span>
         <div className="ml-auto flex items-center gap-2">
           <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
@@ -301,21 +300,21 @@ const Terminal = ({ onCommand, currentSection, onThemeChange }: TerminalProps) =
         {history.map((line, index) => (
           <div key={index} className="whitespace-pre-wrap font-mono animate-fade-in">
             {line.startsWith("$") ? (
-              <span className="terminal-green font-semibold">{line}</span>
-            ) : line.includes("Loading") || line.includes("Opening") || line.includes("☕") || line.includes("🚀") || line.includes("🍕") ? (
-              <span className="terminal-cyan">{line}</span>
-            ) : line.includes("not found") || line.includes("No such") || line.includes("❌") ? (
-              <span className="terminal-orange">{line}</span>
-            ) : line.includes("✨") || line.includes("✅") ? (
-              <span className="terminal-green">{line}</span>
+              <span className="text-phosphor font-semibold">{line}</span>
+            ) : line.includes("Loading") || line.includes("Opening") || line.includes("loading") || line.includes("opening") || line.includes("launching") ? (
+              <span className="text-phosphor">{line}</span>
+            ) : line.startsWith("!") || line.includes("not found") || line.includes("No such") ? (
+              <span className="text-danger">{line}</span>
+            ) : line.startsWith("ok") ? (
+              <span className="text-phosphor">{line}</span>
             ) : (
-              <span className="text-gray-300">{line}</span>
+              <span className="text-foreground">{line}</span>
             )}
           </div>
         ))}
 
         <div className="flex items-center gap-2 mt-2">
-          <ChevronRight className="w-4 h-4 terminal-green flex-shrink-0 animate-pulse" />
+          <ChevronRight className="w-4 h-4 text-phosphor flex-shrink-0 animate-pulse" />
           <input
             ref={inputRef}
             id="terminal-input"
@@ -332,22 +331,21 @@ const Terminal = ({ onCommand, currentSection, onThemeChange }: TerminalProps) =
             placeholder="Type 'help' for commands..."
             autoFocus
           />
-          <span className="cursor-blink terminal-cyan font-bold">▋</span>
+          <span className="cursor-blink text-phosphor font-bold">▋</span>
         </div>
 
         {suggestions.length > 0 && input && (
           <div className="mt-2 pl-6 text-muted-foreground text-xs animate-slide-in">
-            <span className="terminal-blue font-semibold">→</span> {suggestions.join(", ")}
+            <span className="text-phosphor/70 font-semibold">→</span> {suggestions.join(", ")}
           </div>
         )}
       </div>
 
-      {/* Merged Stats Dashboard + Tips */}
+      {/* Stats + Tips */}
       <div className="px-4 py-1 border-t border-border bg-black/80 backdrop-blur-sm">
-        {/* Stats Row */}
         <div className="flex items-center justify-between text-xs mb-2">
           <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2 terminal-cyan">
+            <div className="flex items-center gap-2 text-phosphor">
               <Clock className="w-3 h-3" />
               <span>{time.toLocaleTimeString()}</span>
             </div>
@@ -362,7 +360,7 @@ const Terminal = ({ onCommand, currentSection, onThemeChange }: TerminalProps) =
             })}
           </div>
           <div className="flex items-center gap-2">
-            <span className="terminal-purple">💡 Tip:</span>
+            <span className="text-phosphor">💡 Tip:</span>
             <span>Tab for autocomplete • ↑↓ for history • Try 'secrets' for fun</span>
           </div>
         </div>
