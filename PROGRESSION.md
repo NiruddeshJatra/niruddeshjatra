@@ -164,4 +164,15 @@ Refined several UI details based on review:
 
 ---
 
+## Phase C2 — Phosphor Theme Overhaul Complete
+**2026-05-03 — migrated deferred layout chrome to phosphor token system**
+
+- **Files changed**: `FileExplorer.tsx`, `MobileShell.tsx`, `ResponsiveHeader.tsx`, `CommandPalette.tsx` — the four surfaces intentionally deferred from C1
+- **Retired classes removed**: `terminal-cyan`, `terminal-green`, `terminal-blue` — all replaced per the C1 replacement map (`terminal-green/cyan` → `text-phosphor`, `terminal-blue` → `text-phosphor/70`)
+- **Zero structural changes**: only className strings touched, conditional logic preserved exactly (e.g. active-state ternaries in FileExplorer and MobileShell)
+- **CLAUDE.md updated**: removed the "pending C2" caveat from the color system convention — `terminal-*` classes now fully retired across all of `src/`
+- `grep src/` confirms zero remaining `terminal-{cyan,green,blue,purple,yellow,orange}` matches; build and typecheck clean
+
+---
+
 *Updated by `after-change` on each commit. Append new entries at the bottom — never rewrite history.*

@@ -66,7 +66,7 @@ const ResponsiveHeader: React.FC<ResponsiveHeaderProps> = ({
 
           <div className="flex items-center gap-2 min-w-0">
             <TerminalIcon
-              className="terminal-green shrink-0"
+              className="text-phosphor shrink-0"
               size={18}
               aria-hidden="true"
             />

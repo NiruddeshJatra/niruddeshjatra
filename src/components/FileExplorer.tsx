@@ -129,7 +129,7 @@ const FileExplorer = ({ currentSection, onSectionChange }: FileExplorerProps) =>
     >
       <div className="border-b border-border bg-black/50">
         <div className="flex items-center gap-2 px-2 py-1.5">
-          <Folder className="w-3.5 h-3.5 terminal-blue" aria-hidden="true" />
+          <Folder className="w-3.5 h-3.5 text-phosphor/70" aria-hidden="true" />
           <h2 className="text-[11px] font-semibold uppercase tracking-wide flex-1 text-muted-foreground">
             WORKSPACE
           </h2>
@@ -168,7 +168,7 @@ const FileExplorer = ({ currentSection, onSectionChange }: FileExplorerProps) =>
                     type="button"
                   >
                     <Chevron className="w-3 h-3 shrink-0" aria-hidden="true" />
-                    <Folder className="w-3 h-3 shrink-0 terminal-blue" aria-hidden="true" />
+                    <Folder className="w-3 h-3 shrink-0 text-phosphor/70" aria-hidden="true" />
                     <span className="truncate font-medium">{file.name}</span>
                   </button>
                 </li>
@@ -194,7 +194,7 @@ const FileExplorer = ({ currentSection, onSectionChange }: FileExplorerProps) =>
                   type="button"
                 >
                   <file.icon
-                    className={`w-3 h-3 shrink-0 ${isActive ? 'terminal-cyan' : ''}`}
+                    className={`w-3 h-3 shrink-0 ${isActive ? 'text-phosphor' : ''}`}
                     aria-hidden="true"
                   />
                   <span className="truncate">{file.name}</span>
