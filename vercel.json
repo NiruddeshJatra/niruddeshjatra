@@ -2,7 +2,7 @@
   "rewrites": [
     {
       "source": "/games/arczero/:path*",
-      "destination": "https://arczero-niruddeshjatra.vercel.app/:path*"
+      "destination": "https://arczero.vercel.app/:path*"
     }
   ]
 }
