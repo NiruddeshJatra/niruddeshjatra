@@ -176,3 +176,15 @@ Refined several UI details based on review:
 ---
 
 *Updated by `after-change` on each commit. Append new entries at the bottom — never rewrite history.*
+
+---
+
+## Phase D — Loader System (IntroLoader + PortalLoader)
+**2026-05-03 — GSAP-powered intro and portal loaders with sessionStorage gating**
+
+- **New files**: `src/components/IntroLoader.tsx`, `src/components/PortalLoader.tsx`, `src/hooks/useLoader.ts`, `src/lib/matrixChars.ts`
+- **IntroLoader**: terminal typing animation (3 lines × 1.0s, 0.6s pauses, 0.7s hold, 1.0s fade-out = 5.9s). Fires once per browser session via `ncs_intro_seen` sessionStorage flag. Skip via Esc or click.
+- **PortalLoader**: hand-rolled scramble reveal (3s, 40% pure cycling → 60% left-to-right lock-in, CYCLE_MS=120ms throttle) followed by phosphor-green cloud-veil dissolve (0.8s veil + 2s overlay fade). One portal per area per session, gated by `ncs_portal_seen_*` keys. Destinations: `> arczero standby`, `> entering the workshop`, `> entering the writing`, `> entering the journal`.
+- **FOUC elimination**: both overlays render opaque by default (no initial `opacity:0`); Suspense fallbacks show `bg-background` while lazy chunks load — together these eliminate all flashes between page load and loader start. PortalLoader uses `useLayoutEffect` to pre-populate scrambled text before first paint.
+- **matrixChars.ts**: extracted shared `KATAKANA`/`DIGITS`/`CHARS` arrays from `MatrixBackground.tsx` to avoid duplication. PortalLoader uses a different charset (extended unicode cipher set).
+- **gsap** added to dependencies (free tier, v3.15). Uses `gsap.context()` + `ctx.revert()` pattern (no `@gsap/react`).

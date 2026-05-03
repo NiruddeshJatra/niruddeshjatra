@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
 import { onMatrix } from "@/lib/matrixSignals";
+import { CHARS } from "@/lib/matrixChars";
 
 interface MatrixConfig {
   fontSize: number;
@@ -8,12 +9,6 @@ interface MatrixConfig {
   particleDensity: number;
   opacity: number;
 }
-
-const KATAKANA = Array.from({ length: 59 }, (_, i) =>
-  String.fromCodePoint(0xff65 + i)
-);
-const DIGITS = ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"];
-const CHARS: string[] = [...KATAKANA, ...DIGITS];
 
 const HEAD_COLOR = "rgba(190, 255, 205, 0.58)";
 const TRAIL_BRIGHT = { r: 0, g: 190, b: 82 };

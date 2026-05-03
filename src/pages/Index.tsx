@@ -1,10 +1,14 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, lazy, Suspense } from "react";
 import { flushSync } from "react-dom";
 import { useLocation, useNavigate } from "react-router-dom";
 import ResponsiveLayout from "@/components/ResponsiveLayout";
 import { MemoryManager } from "@/utils/memoryOptimization";
 import { getPerformanceMonitor } from "@/utils/performance";
 import { startViewTransition } from "@/lib/viewTransition";
+import { useIntroLoader, usePortalLoader } from "@/hooks/useLoader";
+
+const IntroLoader = lazy(() => import("@/components/IntroLoader"));
+const PortalLoader = lazy(() => import("@/components/PortalLoader"));
 
 interface Theme {
   name: string;
@@ -21,6 +25,9 @@ const Index = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const currentSection = pathToSection(location.pathname);
+
+  const { shouldShow: showIntro, dismiss: dismissIntro } = useIntroLoader();
+  const { shouldShow: showPortal, destination: portalDest, dismiss: dismissPortal } = usePortalLoader();
 
   const [theme, setTheme] = useState<Theme>({
     name: "matrix",
@@ -60,6 +67,17 @@ const Index = () => {
         theme={theme}
         onThemeChange={handleThemeChange}
       />
+      {/* Black overlay shown immediately while lazy chunk loads — prevents website flash */}
+      <Suspense fallback={showIntro ? <div className="fixed inset-0 z-[9999] bg-background" aria-hidden="true" /> : null}>
+        {showIntro && (
+          <IntroLoader onComplete={dismissIntro} onSkip={dismissIntro} />
+        )}
+      </Suspense>
+      <Suspense fallback={showPortal ? <div className="fixed inset-0 z-[9999] bg-background" aria-hidden="true" /> : null}>
+        {showPortal && portalDest && (
+          <PortalLoader destination={portalDest} onComplete={dismissPortal} />
+        )}
+      </Suspense>
     </div>
   );
 };

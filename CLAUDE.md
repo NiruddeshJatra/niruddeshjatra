@@ -27,14 +27,19 @@ src/
 │   ├── ResponsiveHeader.tsx  # Top nav / menu bar
 │   ├── StatusBar.tsx     # Bottom VS Code status bar
 │   ├── ThemeSwitcher.tsx # Dark/light/system theme toggle
-│   └── MatrixBackground.tsx  # Animated matrix background (density 0.6, 50ms frame)
+│   ├── MatrixBackground.tsx  # Animated matrix background (density 0.6, 50ms frame)
+│   ├── IntroLoader.tsx   # First-visit terminal typing intro (sessionStorage-gated, lazy-loaded)
+│   └── PortalLoader.tsx  # Sub-world transition scramble + cloud-dissolve (sessionStorage-gated, lazy-loaded)
 ├── pages/
 │   ├── Index.tsx         # Home page
 │   └── NotFound.tsx      # 404
 ├── hooks/
 │   ├── useCommandPalette.ts  # Palette open/mode state
+│   ├── useLoader.ts      # IntroLoader + PortalLoader state; sessionStorage gating per area
 │   └── ...               # Other custom hooks
-├── lib/                  # Shared utilities
+├── lib/
+│   ├── matrixChars.ts    # Shared katakana/digit char arrays — source of truth for MatrixBackground
+│   └── ...               # Other shared utilities
 └── constants/
     ├── sections.ts       # SECTION_ALIASES — derived from FileExplorer.files (skips containers)
     └── ...               # Other static data
@@ -93,14 +98,28 @@ Adding a new container folder: add a `FileItem` with `isContainer: true`, `id` s
 - **Font**: Departure Mono is primary (`public/fonts/DepartureMono-Regular.woff2`). JetBrains Mono is fallback. Both declared in `tailwind.config.ts` `fontFamily.mono`.
 - **File-signature footer**: completed section components end with `— nj · YYYY-MM · N bytes` in `text-phosphor-dim`. Byte counts are hardcoded per section — see each component.
 - **Terminal output**: ASCII markers only — `>` for nav/status, `!` for errors, `ok ·` for success, `•` for lists. No emoji in `Terminal.tsx` output strings.
+- **Loader overlays** (`IntroLoader`, `PortalLoader`) must render opaque by default (no initial `opacity:0` or `visibility:hidden` inline style). This matches the Suspense fallback (`bg-background`) so there is no flash between fallback unmount and first paint. Use `useLayoutEffect` for any DOM pre-population that must happen before paint (e.g. pre-filling scrambled text in PortalLoader).
+- **Matrix chars** — `KATAKANA`, `DIGITS`, `CHARS` live in `src/lib/matrixChars.ts`. Import from there; do not redeclare in components.
+- **Loader sessionStorage keys** — all in `useLoader.ts`; do not gate loaders with ad-hoc sessionStorage calls in components.
 - Commit format: `type(scope): description` (feat/fix/chore/refactor/docs)
 
-## localStorage Keys
-All keys namespaced `ncs_*` to avoid collisions:
+## Storage Keys
+All keys namespaced `ncs_*` to avoid collisions.
+
+**localStorage** (persists across sessions):
 | Key | Type | Purpose |
 |-----|------|---------|
 | `ncs_sidebar_collapsed` | `"true" \| "false"` | FileExplorer collapsed state |
 | `ncs_folders_expanded` | `JSON string[]` | Set of expanded container folder ids |
+
+**sessionStorage** (resets on tab close — managed by `useLoader.ts`):
+| Key | Type | Purpose |
+|-----|------|---------|
+| `ncs_intro_seen` | `"true"` | IntroLoader shown once per tab session |
+| `ncs_portal_seen_games` | `"true"` | PortalLoader gate for /games area |
+| `ncs_portal_seen_writing` | `"true"` | PortalLoader gate for /writing area |
+| `ncs_portal_seen_blog` | `"true"` | PortalLoader gate for /blog area |
+| `ncs_portal_seen_arczero` | `"true"` | PortalLoader gate for /games/arczero (set alongside games key) |
 
 ## Commands
 ```bash
