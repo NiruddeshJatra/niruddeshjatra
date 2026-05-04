@@ -3,6 +3,8 @@ import { FileCode, FileText, FileJson, Mail, ChevronUp } from "lucide-react";
 import MatrixBackground from "./MatrixBackground";
 import Changelog from "./sections/Changelog";
 import { useViewport } from "../hooks/useViewport";
+import { Link } from "react-router-dom";
+import { getTodaysQuote } from "../lib/quotes";
 
 const AboutContent = lazy(() => import("./sections/AboutContent"));
 const BlogContent = lazy(() => import("./sections/BlogContent"));
@@ -191,11 +193,12 @@ const Editor = ({ currentSection }: EditorProps) => {
       return <Suspense fallback={getSectionSkeleton(currentSection)}>{lazySection}</Suspense>;
     }
     switch (currentSection) {
-      default:
+      default: {
+        const quote = getTodaysQuote();
         return (
-          <div className="animate-fade-in font-mono text-sm leading-relaxed px-4 py-6">
+          <div className="animate-fade-in font-mono text-sm leading-relaxed py-6 px-4">
             {!isMobile && (
-              <div className="text-phosphor font-bold leading-tight mb-8">
+              <div className="text-phosphor font-bold leading-tight mb-10">
                 <pre className="text-[10px]">{`███╗   ██╗██╗██████╗ ██╗   ██╗██████╗ ██████╗ ███████╗███████╗██╗  ██╗             ██╗ █████╗ ████████╗██████╗  █████╗
 ████╗  ██║██║██╔══██╗██║   ██║██╔══██╗██╔══██╗██╔════╝██╔════╝██║  ██║             ██║██╔══██╗╚══██╔══╝██╔══██╗██╔══██╗
 ██╔██╗ ██║██║██████╔╝██║   ██║██║  ██║██║  ██║█████╗  ███████╗███████║             ██║███████║   ██║   ██████╔╝███████║
@@ -205,28 +208,44 @@ const Editor = ({ currentSection }: EditorProps) => {
               </div>
             )}
 
-            <div className="max-w-2xl mx-auto space-y-3 text-foreground/80">
-              <p><span className="text-phosphor">$ </span>welcome to niruddeshjatra.space</p>
-              <p><span className="text-phosphor">&gt; </span>i'm nj.</p>
-              <p><span className="text-phosphor">&gt; </span>i make games. i write. i run.</p>
-              <p><span className="text-phosphor">&gt; </span>i tutor for a living. i'm not for hire.</p>
-              <p><span className="text-phosphor">&gt; </span>everything i'm working on lives here. nothing is finished.</p>
-              <p><span className="text-phosphor">&gt; </span>that's fine.</p>
+            <div className="pl-2 mb-6">
+              <p><span className="text-phosphor">&gt; </span>i'm nj. this is my workshop.</p>
+              <p><span className="text-phosphor">&gt; </span>games i'm building, things i'm writing, trips i'm taking.</p>
+              <p><span className="text-phosphor">&gt; </span>nothing is finished. that's fine.</p>
             </div>
 
-            <div className="max-w-2xl mx-auto mt-6 text-xs text-muted-foreground space-y-1">
-              <p><span className="text-phosphor-dim">// </span>type 'help' in the terminal, or click a file.</p>
-              <p><span className="text-phosphor-dim">// </span>start with games/ if you want something to play.</p>
+            <div className="text-phosphor-dim text-sm mt-10 mb-3 font-mono">// where to go</div>
+            <div className="pl-2 grid grid-cols-[auto_1fr] gap-x-6 gap-y-1">
+              <Link to="/games" className="text-phosphor hover:underline">games/</Link>
+              <span className="text-foreground/85">things i made to play</span>
+              <Link to="/blog" className="text-phosphor hover:underline">writing/</Link>
+              <span className="text-foreground/85">essays, guides, field notes</span>
+              <Link to="/journey-running" className="text-phosphor hover:underline">journey/</Link>
+              <span className="text-foreground/85">running, hiking, eventually mountains</span>
+              <Link to="/about" className="text-phosphor hover:underline">me/</Link>
+              <span className="text-foreground/85">about me, mostly</span>
+              <Link to="/now" className="text-phosphor hover:underline">now/</Link>
+              <span className="text-foreground/85">what i'm doing now</span>
             </div>
 
-            <div className="max-w-2xl mx-auto mt-6 text-xs text-muted-foreground">
-              <span className="text-phosphor-dim">// </span>recent
+            <div className="text-phosphor-dim text-sm mt-10 mb-3 font-mono">// in my head today</div>
+            <div className="text-center my-6 italic text-foreground/85">
+              <p {...(quote.lang === "bn" ? { lang: "bn", className: "font-bengali" } : {})}>{quote.text}</p>
+              {quote.attribution && <p className="mt-1 text-phosphor-dim text-xs not-italic">— {quote.attribution}</p>}
             </div>
-            <div className="max-w-2xl mx-auto">
-              <Changelog />
+
+            <div className="text-phosphor-dim text-sm mt-10 mb-3 font-mono">// the last few moves</div>
+            <Changelog />
+
+            <div className="text-phosphor-dim text-sm mt-10 mb-3 font-mono">// fine print</div>
+            <div className="pl-2 mb-2">
+              <p><span className="text-phosphor">&gt; </span><span className="text-foreground/70">type 'help' in the terminal for commands, or just click around.</span></p>
             </div>
+
+            <div className="h-12" />
           </div>
         );
+      }
     }
   };
 

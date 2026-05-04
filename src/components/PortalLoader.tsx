@@ -19,7 +19,7 @@ const SCRAMBLE_CHARS =
 const pickChar = () =>
   SCRAMBLE_CHARS[Math.floor(Math.random() * SCRAMBLE_CHARS.length)];
 
-// Timeline: 3.0s scramble + 0.6s hold + 0.8s cloud-veil + 2.0s dissolve = ~6.0s
+// Timeline: 0.5s intro pause + 3.0s scramble + 0.6s hold + 0.8s cloud-veil + 2.0s dissolve = ~6.5s
 
 const PortalLoader = ({ destination, onComplete }: Props) => {
   const { prefersReducedMotion } = useReducedMotion();
@@ -52,7 +52,10 @@ const PortalLoader = ({ destination, onComplete }: Props) => {
       const tl = gsap.timeline({ onComplete });
       tlRef.current = tl;
 
-      // Phase 1 (3s): scramble reveal — overlay renders opaque (radial-gradient bg), no fade-in needed
+      // Intro: text fades in from invisible — overlay stays opaque throughout
+      tl.to(textRef.current, { autoAlpha: 1, duration: 0.35, ease: "power2.out" }, 0.3);
+
+      // Phase 1 (3s): scramble reveal — starts at 0.5s, overlapping tail of fade-in
       // - 0–40% progress: all chars cycle randomly every CYCLE_MS
       // - 40–100% progress: lock letters left-to-right; spaces preserved throughout
       tl.to(tracker, {
@@ -87,7 +90,7 @@ const PortalLoader = ({ destination, onComplete }: Props) => {
         onComplete() {
           if (textRef.current) textRef.current.textContent = destination;
         },
-      });
+      }, 0.5);
 
       // Phase 2 (0.6s gap): hold phrase visible
       // Phase 3 (0.8s): phosphor-green cloud veil rises before dissolve
@@ -164,6 +167,7 @@ const PortalLoader = ({ destination, onComplete }: Props) => {
           ref={textRef}
           className="relative z-10 font-mono text-3xl md:text-4xl text-phosphor tracking-wider select-none"
           style={{
+            opacity: 0,
             textShadow:
               "0 0 16px hsl(var(--accent) / 0.5), 0 0 32px hsl(var(--accent) / 0.25)",
           }}

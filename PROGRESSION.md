@@ -188,3 +188,14 @@ Refined several UI details based on review:
 - **FOUC elimination**: both overlays render opaque by default (no initial `opacity:0`); Suspense fallbacks show `bg-background` while lazy chunks load — together these eliminate all flashes between page load and loader start. PortalLoader uses `useLayoutEffect` to pre-populate scrambled text before first paint.
 - **matrixChars.ts**: extracted shared `KATAKANA`/`DIGITS`/`CHARS` arrays from `MatrixBackground.tsx` to avoid duplication. PortalLoader uses a different charset (extended unicode cipher set).
 - **gsap** added to dependencies (free tier, v3.15). Uses `gsap.context()` + `ctx.revert()` pattern (no `@gsap/react`).
+
+---
+
+## Phase D2 — Welcome Redesign + Portal Intro Softening
+**2026-05-04 — terminal-style welcome, day-stable quote rotation, portal loader eased in**
+
+- **Welcome page** (`src/components/Editor.tsx` default branch): fully rewritten as left-aligned terminal output. Dropped `max-w-2xl mx-auto` wrapper — content flows left at editor width. Added four named sections: `// where to go` (5 react-router Links in `grid-cols-[auto_1fr]` two-column layout), `// in my head today` (day-stable rotating quote), `// the last few moves` (Changelog), `// fine print` (relocated help tip). Opener reduced from 6 lines to 3.
+- **Quote rotation** (`src/lib/quotes.ts`): new file with 30 hardcoded `Quote { text, attribution?, lang? }` entries spanning personal aphorisms, song lyrics, and philosophy. `getTodaysQuote()` uses `year * 365 + dayOfYear` index — stable for a given calendar day, advances at midnight. Bangla entries carry `lang: "bn"` for future font-hook targeting. No state, no animation, computed once at render.
+- **Changelog** (`src/constants/changelog.ts`, `Changelog.tsx`): data shape changed from `{ date, section, summary, target? }` to `{ hash, date, message }` — 10-entry git-log style timeline from 2001 to present. Rendered as CSS grid `grid-cols-[7ch_7ch_1fr]`; HEAD hash in `text-phosphor`, others in `text-phosphor-dim`. Border/card wrapper and nav links removed — pure terminal log output.
+- **PortalLoader intro delay** (`src/components/PortalLoader.tsx`): text span starts invisible (`opacity: 0` inline). GSAP timeline adds `autoAlpha` 0→1 fade (0.35s) starting at t=0.3s; scramble phase shifted to t=0.5s (was t=0). Overlay stays opaque throughout — FOUC constraint unchanged. Total loader duration ~6.5s (+0.5s). Effect: ~0.5s of dark overlay before text appears, softening the abrupt scramble onset.
+- **Typographic split locked**: welcome = terminal output (left-aligned, no max-width); prose pages = centered `max-w-2xl`. Conventions added to CLAUDE.md.
