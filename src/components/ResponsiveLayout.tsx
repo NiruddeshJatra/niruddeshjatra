@@ -38,6 +38,7 @@ const ResponsiveLayout: React.FC<ResponsiveLayoutProps> = ({
 }) => {
   const { viewport, navigationState, actions } = useResponsiveLayout();
   const [isTransitioning, setIsTransitioning] = useState(false);
+  const [isTerminalFocused, setIsTerminalFocused] = useState(false);
 
   // Memory optimization - register cleanup tasks
   useEffect(() => {
@@ -111,6 +112,23 @@ const ResponsiveLayout: React.FC<ResponsiveLayoutProps> = ({
 
     preserveState();
   }, [viewport.layoutMode, viewport.isDesktop, viewport.isMobile, navigationState, actions]);
+
+  // Click-outside collapses terminal
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      if (!target.closest('[data-terminal-region]')) {
+        setIsTerminalFocused(false);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
+
+  // Terminal height: collapsed differs by route type, expanded is fixed
+  const isReadingPage = currentSection?.startsWith('writing/');
+  const collapsedHeight = isReadingPage ? 72 : 132;
+  const terminalHeight = isTerminalFocused ? 288 : collapsedHeight;
 
   // Get layout classes based on current layout mode
   const layoutClasses = getLayoutClasses(navigationState.currentLayout);
@@ -282,18 +300,24 @@ const ResponsiveLayout: React.FC<ResponsiveLayoutProps> = ({
           />
         </ConditionalLazy>
       ) : (
-        <div className="h-56 border-t border-border relative" style={{ zIndex: Z_INDEX.terminal }}>
-          <ConditionalLazy 
+        <div
+          data-terminal-region
+          className="border-t border-border relative transition-all duration-200 ease-out overflow-hidden"
+          style={{ height: terminalHeight, zIndex: Z_INDEX.terminal }}
+        >
+          <ConditionalLazy
             fallback={
               <div className="h-full flex items-center justify-center">
                 <span className="text-green-400 font-mono">Loading terminal...</span>
               </div>
             }
           >
-            <LazyTerminal 
-              onCommand={handleCommand} 
+            <LazyTerminal
+              onCommand={handleCommand}
               currentSection={currentSection}
               onThemeChange={onThemeChange}
+              isFocused={isTerminalFocused}
+              onFocusChange={setIsTerminalFocused}
             />
           </ConditionalLazy>
         </div>

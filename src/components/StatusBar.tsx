@@ -12,6 +12,7 @@ const getPath = (section: string): string => {
     case "games": return "~/niruddeshjatra/games/";
     case "blog": return "~/niruddeshjatra/writing/blog.md";
     case "notes": return "~/niruddeshjatra/writing/notes/";
+    case "journey": return "~/niruddeshjatra/journey/";
     case "journey-running": return "~/niruddeshjatra/journey/running.md";
     case "journey-hiking": return "~/niruddeshjatra/journey/hiking.md";
     case "field-notes": return "~/niruddeshjatra/field-notes/";
@@ -23,6 +24,9 @@ const getPath = (section: string): string => {
     case "now": return "~/niruddeshjatra/now.md";
     case "contact": return "~/niruddeshjatra/contact.md";
     case "lab": return "~/niruddeshjatra/lab/";
+    case "writing": return "~/niruddeshjatra/writing/";
+    case "writing/on-running-for-nothing": return "~/niruddeshjatra/writing/on-running-for-nothing.md";
+    case "writing/on-running-for-nothing-bn": return "~/niruddeshjatra/writing/on-running-for-nothing.bn.md";
     default: return `~/niruddeshjatra/${section}`;
   }
 };
@@ -33,9 +37,13 @@ const LAST_UPDATED: Record<string, string> = {
   games: "2026-04-29",
   now: "2026-04-29",
   contact: "2026-04-29",
+  writing: "2026-05",
+  "writing/on-running-for-nothing": "2026-05",
+  "writing/on-running-for-nothing-bn": "2026-05",
   blog: "pending",
   notes: "pending",
-  "journey-running": "pending",
+  journey: "2026-05",
+  "journey-running": "2026-05",
   "journey-hiking": "pending",
   "field-notes": "pending",
   photos: "eventually",

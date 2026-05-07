@@ -25,6 +25,7 @@ const App = () => (
           <Route path="/" element={<Index />} />
           <Route path="/resume" element={<ResumeRedirect />} />
           <Route path="/:section" element={<Index />} />
+          <Route path="/:section/:subsection" element={<Index />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>

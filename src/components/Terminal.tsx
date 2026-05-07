@@ -7,6 +7,8 @@ interface TerminalProps {
   onCommand: (command: string) => void;
   currentSection: string;
   onThemeChange?: (theme: { name: string; bg: string; accent: string }) => void;
+  isFocused?: boolean;
+  onFocusChange?: (focused: boolean) => void;
 }
 
 const COMMANDS = [
@@ -75,7 +77,7 @@ const EASTER_EGGS: { [key: string]: string[] } = {
   ],
 };
 
-const Terminal = ({ onCommand, currentSection, onThemeChange }: TerminalProps) => {
+const Terminal = ({ onCommand, currentSection, onThemeChange, isFocused = false, onFocusChange }: TerminalProps) => {
   const [input, setInput] = useState("");
   const [history, setHistory] = useState<string[]>([
     "$ welcome to niruddeshjatra.space",
@@ -275,6 +277,8 @@ const Terminal = ({ onCommand, currentSection, onThemeChange }: TerminalProps) =
       if (suggestions.length > 0) {
         setInput(suggestions[0]);
       }
+    } else if (e.key === "Escape") {
+      (e.target as HTMLInputElement).blur();
     }
   };
 
@@ -283,8 +287,9 @@ const Terminal = ({ onCommand, currentSection, onThemeChange }: TerminalProps) =
   ];
 
   return (
-    <div className="h-full flex flex-col bg-black/90 backdrop-blur-sm">
-      <div className="flex items-center gap-2 px-4 py-2 border-b border-border bg-black/80">
+    <div className="h-full flex flex-col bg-black/90 backdrop-blur-sm overflow-hidden">
+      {/* Header bar */}
+      <div className="flex items-center gap-2 px-4 py-2 border-b border-border bg-black/80 shrink-0">
         <TerminalIcon className="w-4 h-4 text-phosphor" />
         <span className="text-xs font-semibold uppercase tracking-wide">Terminal</span>
         <div className="ml-auto flex items-center gap-2">
@@ -293,9 +298,42 @@ const Terminal = ({ onCommand, currentSection, onThemeChange }: TerminalProps) =
         </div>
       </div>
 
+      {/* Input prompt — sits below header, always visible in collapsed state */}
+      <div className="flex items-center gap-2 px-4 py-2 border-b border-border/40 bg-black/90 shrink-0 relative">
+        <ChevronRight className="w-4 h-4 text-phosphor flex-shrink-0 animate-pulse" />
+        <div className="relative flex-1 flex items-center font-mono overflow-hidden">
+          <span className="text-gray-100 whitespace-pre">{input}</span>
+          <span className="cursor-blink text-phosphor font-bold ml-0.5">▋</span>
+          {!input && (
+            <span className="absolute left-0 text-gray-600 pointer-events-none">Type 'help' for commands...</span>
+          )}
+          <input
+            ref={inputRef}
+            id="terminal-input"
+            type="text"
+            value={input}
+            onChange={(e) => {
+              setInput(e.target.value);
+              emitMatrix("type");
+            }}
+            onKeyDown={handleKeyDown}
+            onFocus={() => { emitMatrix("focus-on"); onFocusChange?.(true); }}
+            onBlur={() => { emitMatrix("focus-off"); onFocusChange?.(false); }}
+            className="absolute inset-0 opacity-0 cursor-text text-transparent bg-transparent border-none outline-none w-full h-full"
+            autoFocus
+          />
+        </div>
+        {suggestions.length > 0 && input && (
+          <span className="text-muted-foreground text-xs shrink-0">
+            <span className="text-phosphor/70 font-semibold">→</span> {suggestions[0]}
+          </span>
+        )}
+      </div>
+
+      {/* History — clipped by outer container when collapsed */}
       <div
         ref={terminalRef}
-        className="flex-1 overflow-y-auto p-4 space-y-1 text-sm custom-scrollbar"
+        className="flex-1 overflow-y-auto px-4 pt-3 pb-2 space-y-1 text-sm custom-scrollbar"
       >
         {history.map((line, index) => (
           <div key={index} className="whitespace-pre-wrap font-mono animate-fade-in">
@@ -312,64 +350,34 @@ const Terminal = ({ onCommand, currentSection, onThemeChange }: TerminalProps) =
             )}
           </div>
         ))}
-
-        <div className="flex items-center gap-2 mt-2 relative">
-          <ChevronRight className="w-4 h-4 text-phosphor flex-shrink-0 animate-pulse" />
-          <div className="relative flex-1 flex items-center font-mono overflow-hidden">
-            <span className="text-gray-100 whitespace-pre">{input}</span>
-            <span className="cursor-blink text-phosphor font-bold ml-0.5">▋</span>
-            {!input && (
-              <span className="absolute left-0 text-gray-600 pointer-events-none">Type 'help' for commands...</span>
-            )}
-            <input
-              ref={inputRef}
-              id="terminal-input"
-              type="text"
-              value={input}
-              onChange={(e) => {
-                setInput(e.target.value);
-                emitMatrix("type");
-              }}
-              onKeyDown={handleKeyDown}
-              onFocus={() => emitMatrix("focus-on")}
-              onBlur={() => emitMatrix("focus-off")}
-              className="absolute inset-0 opacity-0 cursor-text text-transparent bg-transparent border-none outline-none w-full h-full"
-              autoFocus
-            />
-          </div>
-        </div>
-
-        {suggestions.length > 0 && input && (
-          <div className="mt-2 pl-6 text-muted-foreground text-xs animate-slide-in">
-            <span className="text-phosphor/70 font-semibold">→</span> {suggestions.join(", ")}
-          </div>
-        )}
       </div>
 
-      {/* Stats + Tips */}
-      <div className="px-4 py-1 border-t border-border bg-black/80 backdrop-blur-sm">
-        <div className="flex items-center justify-between text-xs mb-2">
-          <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2 text-phosphor">
-              <Clock className="w-3 h-3" />
-              <span>{time.toLocaleTimeString()}</span>
+      {/* Stats + Tips — only visible when expanded */}
+      {isFocused && (
+        <div className="px-4 py-1 border-t border-border bg-black/80 backdrop-blur-sm shrink-0">
+          <div className="flex items-center justify-between text-xs mb-2">
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2 text-phosphor">
+                <Clock className="w-3 h-3" />
+                <span>{time.toLocaleTimeString()}</span>
+              </div>
+              {stats.map((stat, i) => {
+                const Icon = stat.icon;
+                return (
+                  <div key={i} className={`flex items-center gap-1.5 ${stat.color}`}>
+                    <Icon className="w-3 h-3" />
+                    <span>{stat.label}: {stat.value}</span>
+                  </div>
+                );
+              })}
             </div>
-            {stats.map((stat, i) => {
-              const Icon = stat.icon;
-              return (
-                <div key={i} className={`flex items-center gap-1.5 ${stat.color}`}>
-                  <Icon className="w-3 h-3" />
-                  <span>{stat.label}: {stat.value}</span>
-                </div>
-              );
-            })}
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="text-phosphor">💡 Tip:</span>
-            <span>Tab for autocomplete • ↑↓ for history • Try 'secrets' for fun</span>
+            <div className="flex items-center gap-2">
+              <span className="text-phosphor">💡 Tip:</span>
+              <span>Tab for autocomplete • ↑↓ for history • Try 'secrets' for fun</span>
+            </div>
           </div>
         </div>
-      </div>
+      )}
     </div>
   );
 };

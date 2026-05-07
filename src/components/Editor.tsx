@@ -7,6 +7,8 @@ import { Link } from "react-router-dom";
 import { getTodaysQuote } from "../lib/quotes";
 
 const AboutContent = lazy(() => import("./sections/AboutContent"));
+const JourneyContent = lazy(() => import("./sections/JourneyContent"));
+const RunningContent = lazy(() => import("./sections/RunningContent"));
 const BlogContent = lazy(() => import("./sections/BlogContent"));
 const ContactContent = lazy(() => import("./sections/ContactContent"));
 const NowContent = lazy(() => import("./sections/NowContent"));
@@ -15,6 +17,9 @@ const NotesContent = lazy(() => import("./sections/NotesContent"));
 const GamesContent = lazy(() => import("./sections/GamesContent"));
 const ArchivedContent = lazy(() => import("./sections/ArchivedContent"));
 const SoonContent = lazy(() => import("./sections/SoonContent"));
+const WritingContent = lazy(() => import("./sections/WritingContent"));
+const OnRunningForNothingContent = lazy(() => import("./sections/OnRunningForNothingContent"));
+const OnRunningForNothingBnContent = lazy(() => import("./sections/OnRunningForNothingBnContent"));
 
 const LineSkeleton = ({ rows = 4 }: { rows?: number }) => (
   <div className="animate-pulse space-y-3 p-4">
@@ -113,8 +118,12 @@ const getFileName = (section: string) => {
   switch (section) {
     case "about": return "me/about.md";
     case "games": return "games/";
+    case "writing": return "writing/";
+    case "writing/on-running-for-nothing": return "writing/on-running-for-nothing.md";
+    case "writing/on-running-for-nothing-bn": return "writing/on-running-for-nothing.bn.md";
     case "blog": return "writing/blog.md";
     case "notes": return "writing/notes/";
+    case "journey": return "journey/";
     case "journey-running": return "journey/running.md";
     case "journey-hiking": return "journey/hiking.md";
     case "field-notes": return "field-notes/";
@@ -172,7 +181,8 @@ const Editor = ({ currentSection }: EditorProps) => {
       case "games": return <GamesContent />;
       case "blog": return <BlogContent />;
       case "notes": return <NotesContent />;
-      case "journey-running":
+      case "journey": return <JourneyContent />;
+      case "journey-running": return <RunningContent />;
       case "journey-hiking":
       case "field-notes": return <SoonContent />;
       case "photos": return <SoonContent message="eventually." />;
@@ -183,6 +193,9 @@ const Editor = ({ currentSection }: EditorProps) => {
       case "contact": return <ContactContent />;
       case "now": return <NowContent />;
       case "lab": return <LabContent />;
+      case "writing": return <WritingContent />;
+      case "writing/on-running-for-nothing": return <OnRunningForNothingContent />;
+      case "writing/on-running-for-nothing-bn": return <OnRunningForNothingBnContent />;
       default: return null;
     }
   };
@@ -260,7 +273,7 @@ const Editor = ({ currentSection }: EditorProps) => {
       {/* Content Area */}
       <SmoothScrollContainer className="flex-1 relative" ref={scrollContainerRef}>
         <div className="absolute inset-0 overflow-hidden">
-          <MatrixBackground />
+          <MatrixBackground opacity={currentSection?.startsWith('writing/') ? 0.08 : undefined} />
         </div>
 
         <div className="flex min-h-full relative z-10">

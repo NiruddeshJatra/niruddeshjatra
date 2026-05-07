@@ -21,7 +21,11 @@ interface Drop {
   phase: number;
 }
 
-const MatrixBackground = () => {
+interface MatrixBackgroundProps {
+  opacity?: number;
+}
+
+const MatrixBackground = ({ opacity: opacityProp }: MatrixBackgroundProps) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const animationRef = useRef<number>();
@@ -68,25 +72,26 @@ const MatrixBackground = () => {
       canvas.width / window.devicePixelRatio / config.fontSize
     );
     const maxDrops = Math.floor(actualColumns * config.particleDensity);
-    const buildDrop = (index: number): Drop => {
+    const buildDrop = (index: number, initial = false): Drop => {
       const colIndex = Math.floor((index / Math.max(1, maxDrops)) * actualColumns);
       const x = colIndex * config.fontSize;
-      
+
       // Use overlapping sine waves to generate an 'aurora' landscape of peaks and valleys
       const wave1 = Math.sin(colIndex * 0.15) * 6;
       const wave2 = Math.sin(colIndex * 0.04 + 1) * 12;
       const wave3 = Math.sin(colIndex * 0.3) * 3;
-      
+
       // Max possible sum is ~21. Peaks (wave heads) will have composite close to 21.
       const composite = wave1 + wave2 + wave3;
-      
+
       // auroraCurve maps composite to a trailing distance. Peaks get 0 (start at top), valleys get up to 42 (trail behind)
       const auroraCurve = 21 - composite;
-        
+
       return {
         x,
-        // Start exactly at y=0 for the wave heads, minus the aurora curve and slight noise for natural feel
-        y: 0 - auroraCurve - Math.random() * 1.5,
+        // Initial wave uses aurora offset to form the wave shape.
+        // Recycled drops start just above the canvas with small random jitter to stagger arrivals.
+        y: initial ? (0 - auroraCurve - Math.random() * 1.5) : (0 - Math.random() * 8),
         speed: 0.12 + Math.random() * 0.03, // Tighter speed variance keeps the wavefronts cohesive longer
         length: 12 + Math.floor(Math.random() * 16),
         phase: composite * 0.1, // Tie the breathing phase to the aurora curve
@@ -95,7 +100,7 @@ const MatrixBackground = () => {
 
     const drops: Drop[] = [];
     for (let i = 0; i < maxDrops; i++) {
-      drops.push(buildDrop(i));
+      drops.push(buildDrop(i, true));
     }
 
     const pickChar = () => CHARS[Math.floor(Math.random() * CHARS.length)];
@@ -224,7 +229,7 @@ const MatrixBackground = () => {
             newActualColumns * config.particleDensity
           );
           while (drops.length < newMaxDrops) {
-            drops.push(buildDrop(drops.length));
+            drops.push(buildDrop(drops.length, true));
           }
           drops.length = newMaxDrops;
         }
@@ -277,7 +282,7 @@ const MatrixBackground = () => {
         ref={canvasRef}
         className="block"
         style={{
-          opacity: config.opacity,
+          opacity: opacityProp ?? config.opacity,
           willChange: "transform",
           transform: "translate3d(0,0,0)",
           zIndex: 0,

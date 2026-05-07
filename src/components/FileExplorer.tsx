@@ -20,10 +20,11 @@ export const files: FileItem[] = [
   { id: 'me', name: 'me/', section: '', icon: Folder, isContainer: true },
   { name: 'about.md', section: 'about', icon: File, parent: 'me' },
   { name: 'games/', section: 'games', icon: Folder },
-  { id: 'writing', name: 'writing/', section: '', icon: Folder, isContainer: true },
+  { id: 'writing', name: 'writing/', section: 'writing', icon: Folder, isContainer: true },
+  { name: 'on-running-for-nothing.md', section: 'writing/on-running-for-nothing', icon: File, parent: 'writing' },
   { name: 'blog.md', section: 'blog', icon: File, parent: 'writing' },
   { name: 'notes/', section: 'notes', icon: Folder, parent: 'writing' },
-  { id: 'journey', name: 'journey/', section: '', icon: Folder, isContainer: true },
+  { id: 'journey', name: 'journey/', section: 'journey', icon: Folder, isContainer: true },
   { name: 'running.md', section: 'journey-running', icon: File, parent: 'journey' },
   { name: 'hiking.md', section: 'journey-hiking', icon: File, parent: 'journey' },
   { name: 'field-notes/', section: 'field-notes', icon: Folder },
@@ -158,7 +159,7 @@ const FileExplorer = ({ currentSection, onSectionChange }: FileExplorerProps) =>
                 <li key={file.id} role="none">
                   <button
                     data-file-button
-                    onClick={() => file.id && toggleFolder(file.id)}
+                    onClick={() => { if (file.id) toggleFolder(file.id); if (file.section) onSectionChange(file.section); }}
                     className={`
                       w-full flex items-center gap-1 pl-1 pr-2 py-0.5 text-xs text-left
                       transition-colors duration-150 text-muted-foreground hover:text-foreground

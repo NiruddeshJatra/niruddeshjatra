@@ -179,6 +179,17 @@ Refined several UI details based on review:
 
 ---
 
+## Phase E — Reading Experience Overhaul
+**2026-05-08 — typography hierarchy, Bengali font, matrix opacity, terminal auto-collapse**
+
+- **EssayContent.tsx** (`src/components/sections/`): new shared essay wrapper component. English h1 gets `tracking-[0.15em] uppercase`; Bengali h1 gets `tracking-[0.1em]` (no uppercase — Bangla has no case). Subtitle `text-foreground/45`, no `>` prefix marker. `lang="bn"` attribute set on root div when `currentLang === 'bn'`.
+- **Bengali font** (`src/index.css`): Google Fonts import updated to include weight 500. `[lang="bn"]` rule overhauled: Noto Sans Bengali weight 500 (was 300), `letter-spacing: 0.02em`, `line-height: 1.9`. Added heading rule at weight 500 with `letter-spacing: 0.05em`. Departure Mono kept as fallback for Bangla to maintain visual mass consistency.
+- **MatrixBackground opacity prop** (`src/components/MatrixBackground.tsx`): added `opacity?: number` prop. Canvas style uses `opacityProp ?? config.opacity` (default unchanged at 0.25). `Editor.tsx` passes `opacity={0.08}` when `currentSection?.startsWith('writing/')` — reduces rain to near-invisible on essay routes while preserving atmosphere.
+- **Terminal auto-collapse** (`Terminal.tsx` + `ResponsiveLayout.tsx`): input row extracted from scrollable history div into its own `shrink-0` element between header and history — input always visible in collapsed state. Stats footer now gated on `isFocused` prop (hidden when collapsed). `ResponsiveLayout` owns `isTerminalFocused` state; computes height: reading pages 72px collapsed, other pages 132px collapsed, 288px expanded. Smooth `transition-all duration-200 ease-out`. Click-outside handler on `document.mousedown` uses `data-terminal-region` attribute. Escape key blurs terminal. No localStorage persistence — state is per page-load.
+- **New section files** (previously untracked): `WritingContent.tsx`, `OnRunningForNothingContent.tsx`, `OnRunningForNothingBnContent.tsx`, `JourneyContent.tsx`, `RunningContent.tsx` — all committed alongside this phase.
+
+---
+
 ## Phase D — Loader System (IntroLoader + PortalLoader)
 **2026-05-03 — GSAP-powered intro and portal loaders with sessionStorage gating**
 

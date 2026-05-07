@@ -16,7 +16,7 @@ A developer portfolio site built with React 19 + TypeScript + Vite + Tailwind. F
 ```
 src/
 ├── components/
-│   ├── sections/         # Page content sections (About, Projects, Skills, etc.)
+│   ├── sections/         # Page content sections; EssayContent.tsx is shared wrapper for prose essays
 │   ├── ui/               # shadcn/ui primitives
 │   ├── Editor.tsx        # Main VS Code-style editor pane; per-section skeleton fallbacks
 │   ├── FileExplorer.tsx  # Sidebar file tree — authoritative `files` array + hierarchy
@@ -105,6 +105,10 @@ Adding a new container folder: add a `FileItem` with `isContainer: true`, `id` s
 - **Welcome page layout**: left-aligned terminal-output, no `max-w-*` constraint on the outer container. Prose pages (about.md, future essays) keep `max-w-2xl` centered. This split is intentional — do not add `max-w-*` to the default branch in `Editor.tsx`.
 - **Changelog data shape**: `src/constants/changelog.ts` owns `ChangelogEntry { hash, date, message }` — git-log style, not date/section/summary. `Changelog.tsx` renders a 3-column CSS grid (`grid-cols-[7ch_7ch_1fr]`); HEAD hash renders in `text-phosphor`, others in `text-phosphor-dim`.
 - **Quote rotation**: `getTodaysQuote()` from `src/lib/quotes.ts` — stable per-day index (`year * 365 + dayOfYear`), computed once at render. No state, no animation, no user interaction. Do not add a refresh button or rotator.
+- **Essay pages**: use `EssayContent.tsx` as the shared wrapper (`title`, `subtitle`, `currentLang`, `alternateLangPath`, `readTime`, `wordCount`, `lastUpdated`, `children`). English title: `text-xl tracking-[0.15em] uppercase`. Bengali title: `text-xl tracking-[0.1em]` (no uppercase — Bangla has no case). Both have `text-foreground/45` subtitle, no `>` prefix marker.
+- **Bengali font**: `[lang="bn"]` rule in `src/index.css` sets Noto Sans Bengali weight 500, `letter-spacing: 0.02em`, `line-height: 1.9`. The `lang="bn"` attribute is set on the `EssayContent` root div when `currentLang === 'bn'`. Do not set inline font styles in components.
+- **MatrixBackground opacity**: component accepts `opacity?: number` prop (default: internal 0.25). `Editor.tsx` passes `opacity={0.08}` on `writing/*` routes. Prefix check is `currentSection?.startsWith('writing/')` — slash not dash.
+- **Terminal auto-collapse**: `ResponsiveLayout` owns `isTerminalFocused` state. Reading pages (`writing/*`): collapsed = 72px, others: collapsed = 132px. Expanded = 288px. Transitions 200ms ease-out. Click-outside (`data-terminal-region` attribute) and Escape key both collapse. Do NOT persist to localStorage. Terminal input row is a standalone `shrink-0` element between header and history — always visible in collapsed state.
 - Commit format: `type(scope): description` (feat/fix/chore/refactor/docs)
 
 ## Storage Keys
