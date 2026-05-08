@@ -3,7 +3,7 @@ import { FileCode, FileText, FileJson, Mail, ChevronUp } from "lucide-react";
 import MatrixBackground from "./MatrixBackground";
 import Changelog from "./sections/Changelog";
 import { useViewport } from "../hooks/useViewport";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { getTodaysQuote } from "../lib/quotes";
 
 const AboutContent = lazy(() => import("./sections/AboutContent"));
@@ -15,6 +15,7 @@ const NowContent = lazy(() => import("./sections/NowContent"));
 const LabContent = lazy(() => import("./sections/LabContent"));
 const NotesContent = lazy(() => import("./sections/NotesContent"));
 const GamesContent = lazy(() => import("./sections/GamesContent"));
+const NotFoundContent = lazy(() => import("./sections/NotFoundContent"));
 const ArchivedContent = lazy(() => import("./sections/ArchivedContent"));
 const SoonContent = lazy(() => import("./sections/SoonContent"));
 const WritingContent = lazy(() => import("./sections/WritingContent"));
@@ -141,6 +142,7 @@ const getFileName = (section: string) => {
 
 const Editor = ({ currentSection }: EditorProps) => {
   const { isMobile, isTablet, width } = useViewport();
+  const location = useLocation();
   const [showScrollTop, setShowScrollTop] = useState(false);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
@@ -196,6 +198,7 @@ const Editor = ({ currentSection }: EditorProps) => {
       case "writing": return <WritingContent />;
       case "writing/on-running-for-nothing": return <OnRunningForNothingContent />;
       case "writing/on-running-for-nothing-bn": return <OnRunningForNothingBnContent />;
+      case "404": return <NotFoundContent />;
       default: return null;
     }
   };
@@ -267,7 +270,7 @@ const Editor = ({ currentSection }: EditorProps) => {
       {/* Header */}
       <div className={`flex items-center gap-2 ${isMobile ? 'px-2 py-1.5' : 'px-3 py-1.5'} border-b border-border bg-black/80 backdrop-blur-sm`}>
         {getFileIcon(currentSection)}
-        <span className={`${isMobile ? 'text-[11px]' : 'text-xs'} font-medium truncate flex-1`}>{getFileName(currentSection)}</span>
+        <span className={`${isMobile ? 'text-[11px]' : 'text-xs'} font-medium truncate flex-1`}>{currentSection === "404" ? `${location.pathname}.404` : getFileName(currentSection)}</span>
       </div>
 
       {/* Content Area */}

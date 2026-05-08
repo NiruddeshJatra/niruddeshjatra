@@ -21,10 +21,14 @@ const pathToSection = (pathname: string): string => {
   return trimmed === "" ? "welcome" : trimmed;
 };
 
-const Index = () => {
+interface IndexProps {
+  forceSection?: string;
+}
+
+const Index = ({ forceSection }: IndexProps = {}) => {
   const location = useLocation();
   const navigate = useNavigate();
-  const currentSection = pathToSection(location.pathname);
+  const currentSection = forceSection ?? pathToSection(location.pathname);
 
   const { shouldShow: showIntro, dismiss: dismissIntro } = useIntroLoader();
   const { shouldShow: showPortal, destination: portalDest, dismiss: dismissPortal } = usePortalLoader();

@@ -210,3 +210,14 @@ Refined several UI details based on review:
 - **Changelog** (`src/constants/changelog.ts`, `Changelog.tsx`): data shape changed from `{ date, section, summary, target? }` to `{ hash, date, message }` — 10-entry git-log style timeline from 2001 to present. Rendered as CSS grid `grid-cols-[7ch_7ch_1fr]`; HEAD hash in `text-phosphor`, others in `text-phosphor-dim`. Border/card wrapper and nav links removed — pure terminal log output.
 - **PortalLoader intro delay** (`src/components/PortalLoader.tsx`): text span starts invisible (`opacity: 0` inline). GSAP timeline adds `autoAlpha` 0→1 fade (0.35s) starting at t=0.3s; scramble phase shifted to t=0.5s (was t=0). Overlay stays opaque throughout — FOUC constraint unchanged. Total loader duration ~6.5s (+0.5s). Effect: ~0.5s of dark overlay before text appears, softening the abrupt scramble onset.
 - **Typographic split locked**: welcome = terminal output (left-aligned, no max-width); prose pages = centered `max-w-2xl`. Conventions added to CLAUDE.md.
+
+---
+
+## Phase E2 — ArcZero Integration Fix + Custom 404
+**2026-05-08 — SPA fallback rewrite, NotFoundContent, forceSection pattern**
+
+- **vercel.json** (`vercel.json`): added SPA fallback rewrite `/(.*) → /index.html` after the existing ArcZero proxy rewrite. This fixes browser-back 404s on React Router routes after deep navigation. Order is load-bearing: ArcZero proxy must remain first (Vercel first-match-wins).
+- **ArcZero proxy**: `base: './'` was already set in ArcZero's `vite.config.js` — built asset paths are relative (`./assets/…`), so ArcZero loads correctly when proxied under `niruddeshjatra.space/games/arczero/`. No ArcZero source changes needed.
+- **NotFoundContent.tsx** (`src/components/sections/NotFoundContent.tsx`): new section component. Renders terminal-style `cat <path>` failure, `ls` with clickable top-level route links, and `cd ~` home link. File header in Editor shows `<pathname>.404`. Footer: `— nj · 404 · this file does not exist`. Lazy-loaded like all other sections.
+- **404 routing** (`src/App.tsx`, `src/pages/Index.tsx`): React Router `*` catch-all now renders `<Index forceSection="404" />` instead of the old generic `NotFound` page. `Index` accepts optional `forceSection?: string` prop that overrides the URL-derived `currentSection`. `Editor.tsx` maps sentinel `"404"` to `<NotFoundContent />` and uses `useLocation()` to build the filename display.
+- **Pattern introduced**: `forceSection` prop on `Index` — use this whenever a route needs to override URL-derived section mapping without touching the URL itself.

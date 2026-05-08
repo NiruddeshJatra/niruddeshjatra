@@ -31,8 +31,8 @@ src/
 │   ├── IntroLoader.tsx   # First-visit terminal typing intro (sessionStorage-gated, lazy-loaded)
 │   └── PortalLoader.tsx  # Sub-world transition scramble + cloud-dissolve (sessionStorage-gated, lazy-loaded)
 ├── pages/
-│   ├── Index.tsx         # Home page
-│   └── NotFound.tsx      # 404
+│   ├── Index.tsx         # Home page; accepts optional `forceSection` prop to override URL-derived section
+│   └── NotFound.tsx      # Legacy stub — no longer used; catch-all routes now use Index forceSection="404"
 ├── hooks/
 │   ├── useCommandPalette.ts  # Palette open/mode state
 │   ├── useLoader.ts      # IntroLoader + PortalLoader state; sessionStorage gating per area
@@ -109,6 +109,8 @@ Adding a new container folder: add a `FileItem` with `isContainer: true`, `id` s
 - **Bengali font**: `[lang="bn"]` rule in `src/index.css` sets Noto Sans Bengali weight 500, `letter-spacing: 0.02em`, `line-height: 1.9`. The `lang="bn"` attribute is set on the `EssayContent` root div when `currentLang === 'bn'`. Do not set inline font styles in components.
 - **MatrixBackground opacity**: component accepts `opacity?: number` prop (default: internal 0.25). `Editor.tsx` passes `opacity={0.08}` on `writing/*` routes. Prefix check is `currentSection?.startsWith('writing/')` — slash not dash.
 - **Terminal auto-collapse**: `ResponsiveLayout` owns `isTerminalFocused` state. Reading pages (`writing/*`): collapsed = 72px, others: collapsed = 132px. Expanded = 288px. Transitions 200ms ease-out. Click-outside (`data-terminal-region` attribute) and Escape key both collapse. Do NOT persist to localStorage. Terminal input row is a standalone `shrink-0` element between header and history — always visible in collapsed state.
+- **404 sentinel**: unmatched React Router routes render `<Index forceSection="404" />`. `Editor.tsx` maps `"404"` → `<NotFoundContent />` and uses `useLocation()` to display `location.pathname + ".404"` in the file header. Do NOT use the legacy `NotFound.tsx` page for new 404 handling.
+- **vercel.json rewrite order**: ArcZero proxy rewrites must come BEFORE the SPA fallback `/(.*) → /index.html`. First match wins. Never move the SPA fallback above the game rewrites.
 - Commit format: `type(scope): description` (feat/fix/chore/refactor/docs)
 
 ## Storage Keys
