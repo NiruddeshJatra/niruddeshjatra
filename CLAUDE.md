@@ -16,7 +16,7 @@ A developer portfolio site built with React 19 + TypeScript + Vite + Tailwind. F
 ```
 src/
 ├── components/
-│   ├── sections/         # Page content sections (About, Projects, Skills, etc.)
+│   ├── sections/         # Page content sections; EssayContent.tsx is shared wrapper for prose essays
 │   ├── ui/               # shadcn/ui primitives
 │   ├── Editor.tsx        # Main VS Code-style editor pane; per-section skeleton fallbacks
 │   ├── FileExplorer.tsx  # Sidebar file tree — authoritative `files` array + hierarchy
@@ -27,14 +27,20 @@ src/
 │   ├── ResponsiveHeader.tsx  # Top nav / menu bar
 │   ├── StatusBar.tsx     # Bottom VS Code status bar
 │   ├── ThemeSwitcher.tsx # Dark/light/system theme toggle
-│   └── MatrixBackground.tsx  # Animated matrix background (density 0.6, 50ms frame)
+│   ├── MatrixBackground.tsx  # Animated matrix background (density 0.6, 50ms frame)
+│   ├── IntroLoader.tsx   # First-visit terminal typing intro (sessionStorage-gated, lazy-loaded)
+│   └── PortalLoader.tsx  # Sub-world transition scramble + cloud-dissolve (sessionStorage-gated, lazy-loaded)
 ├── pages/
 │   ├── Index.tsx         # Home page
 │   └── NotFound.tsx      # 404
 ├── hooks/
 │   ├── useCommandPalette.ts  # Palette open/mode state
+│   ├── useLoader.ts      # IntroLoader + PortalLoader state; sessionStorage gating per area
 │   └── ...               # Other custom hooks
-├── lib/                  # Shared utilities
+├── lib/
+│   ├── matrixChars.ts    # Shared katakana/digit char arrays — source of truth for MatrixBackground
+│   ├── quotes.ts         # QUOTES array (30 entries) + getTodaysQuote() — day-stable rotating quote
+│   └── ...               # Other shared utilities
 └── constants/
     ├── sections.ts       # SECTION_ALIASES — derived from FileExplorer.files (skips containers)
     └── ...               # Other static data
@@ -88,15 +94,40 @@ Adding a new container folder: add a `FileItem` with `isContainer: true`, `id` s
 - **CommandPalette** is lazy-loaded; `meta+p` = files, `meta+shift+p` = commands; always guard against `HTMLInputElement` focus before opening
 - **FileExplorer owns its width** — do NOT set `w-*` on the wrapper div in `ResponsiveLayout`. Collapsed = `w-8`, expanded = `w-48`, managed internally.
 - **Lazy section loading** — all sections in `Editor.tsx` are `React.lazy`. Each has a dedicated skeleton fallback (see `getSectionSkeleton`). Do not use generic "loading..." text.
-- **Section page design**: code-as-self style — monospace, comment blocks, `const` objects. No generic resume bullet points. `max-w-2xl mx-auto` for center focus.
+- **Section page design**: code-as-self style — monospace, comment blocks, `const` objects. No generic resume bullet points. `max-w-xl mx-auto` for short-form sections; `max-w-2xl` only for prose pages (DraftAbout, future blog).
+- **Color system — phosphor palette**: use `text-phosphor` (accent/markers), `text-phosphor-soft` (string values), `text-phosphor-dim` (comments, metadata), `text-danger` (errors). `terminal-{cyan,purple,yellow,orange,blue,green}` classes are **retired** — do not use anywhere in `src/`.
+- **Font**: Departure Mono is primary (`public/fonts/DepartureMono-Regular.woff2`). JetBrains Mono is fallback. Both declared in `tailwind.config.ts` `fontFamily.mono`.
+- **File-signature footer**: completed section components end with `— nj · YYYY-MM · N bytes` in `text-phosphor-dim`. Byte counts are hardcoded per section — see each component.
+- **Terminal output**: ASCII markers only — `>` for nav/status, `!` for errors, `ok ·` for success, `•` for lists. No emoji in `Terminal.tsx` output strings.
+- **Loader overlays** (`IntroLoader`, `PortalLoader`) must render opaque by default (no initial `opacity:0` or `visibility:hidden` inline style). This matches the Suspense fallback (`bg-background`) so there is no flash between fallback unmount and first paint. Use `useLayoutEffect` for any DOM pre-population that must happen before paint (e.g. pre-filling scrambled text in PortalLoader).
+- **Matrix chars** — `KATAKANA`, `DIGITS`, `CHARS` live in `src/lib/matrixChars.ts`. Import from there; do not redeclare in components.
+- **Loader sessionStorage keys** — all in `useLoader.ts`; do not gate loaders with ad-hoc sessionStorage calls in components.
+- **Welcome page layout**: left-aligned terminal-output, no `max-w-*` constraint on the outer container. Prose pages (about.md, future essays) keep `max-w-2xl` centered. This split is intentional — do not add `max-w-*` to the default branch in `Editor.tsx`.
+- **Changelog data shape**: `src/constants/changelog.ts` owns `ChangelogEntry { hash, date, message }` — git-log style, not date/section/summary. `Changelog.tsx` renders a 3-column CSS grid (`grid-cols-[7ch_7ch_1fr]`); HEAD hash renders in `text-phosphor`, others in `text-phosphor-dim`.
+- **Quote rotation**: `getTodaysQuote()` from `src/lib/quotes.ts` — stable per-day index (`year * 365 + dayOfYear`), computed once at render. No state, no animation, no user interaction. Do not add a refresh button or rotator.
+- **Essay pages**: use `EssayContent.tsx` as the shared wrapper (`title`, `subtitle`, `currentLang`, `alternateLangPath`, `readTime`, `wordCount`, `lastUpdated`, `children`). English title: `text-xl tracking-[0.15em] uppercase`. Bengali title: `text-xl tracking-[0.1em]` (no uppercase — Bangla has no case). Both have `text-foreground/45` subtitle, no `>` prefix marker.
+- **Bengali font**: `[lang="bn"]` rule in `src/index.css` sets Noto Sans Bengali weight 500, `letter-spacing: 0.02em`, `line-height: 1.9`. The `lang="bn"` attribute is set on the `EssayContent` root div when `currentLang === 'bn'`. Do not set inline font styles in components.
+- **MatrixBackground opacity**: component accepts `opacity?: number` prop (default: internal 0.25). `Editor.tsx` passes `opacity={0.08}` on `writing/*` routes. Prefix check is `currentSection?.startsWith('writing/')` — slash not dash.
+- **Terminal auto-collapse**: `ResponsiveLayout` owns `isTerminalFocused` state. Reading pages (`writing/*`): collapsed = 72px, others: collapsed = 132px. Expanded = 288px. Transitions 200ms ease-out. Click-outside (`data-terminal-region` attribute) and Escape key both collapse. Do NOT persist to localStorage. Terminal input row is a standalone `shrink-0` element between header and history — always visible in collapsed state.
 - Commit format: `type(scope): description` (feat/fix/chore/refactor/docs)
 
-## localStorage Keys
-All keys namespaced `ncs_*` to avoid collisions:
+## Storage Keys
+All keys namespaced `ncs_*` to avoid collisions.
+
+**localStorage** (persists across sessions):
 | Key | Type | Purpose |
 |-----|------|---------|
 | `ncs_sidebar_collapsed` | `"true" \| "false"` | FileExplorer collapsed state |
 | `ncs_folders_expanded` | `JSON string[]` | Set of expanded container folder ids |
+
+**sessionStorage** (resets on tab close — managed by `useLoader.ts`):
+| Key | Type | Purpose |
+|-----|------|---------|
+| `ncs_intro_seen` | `"true"` | IntroLoader shown once per tab session |
+| `ncs_portal_seen_games` | `"true"` | PortalLoader gate for /games area |
+| `ncs_portal_seen_writing` | `"true"` | PortalLoader gate for /writing area |
+| `ncs_portal_seen_blog` | `"true"` | PortalLoader gate for /blog area |
+| `ncs_portal_seen_arczero` | `"true"` | PortalLoader gate for /games/arczero (set alongside games key) |
 
 ## Commands
 ```bash
@@ -133,6 +164,10 @@ gstack installed at `~/.claude/skills/gstack`. Use `/browse` for all web browsin
 
 Available skills:
 `/office-hours`, `/plan-ceo-review`, `/plan-eng-review`, `/plan-design-review`, `/design-consultation`, `/design-shotgun`, `/design-html`, `/review`, `/ship`, `/land-and-deploy`, `/canary`, `/benchmark`, `/browse`, `/connect-chrome`, `/qa`, `/qa-only`, `/design-review`, `/setup-browser-cookies`, `/setup-deploy`, `/retro`, `/investigate`, `/document-release`, `/codex`, `/cso`, `/autoplan`, `/plan-devex-review`, `/devex-review`, `/careful`, `/freeze`, `/guard`, `/unfreeze`, `/gstack-upgrade`, `/learn`
+
+## Progression Log
+
+Full sequential history of site phases lives in `PROGRESSION.md`. Read it for context on *why* things are structured the way they are. Updated by `after-change` on every commit.
 
 ## Security Notes
 - Never commit `.env` files — all secrets via Vercel environment variables

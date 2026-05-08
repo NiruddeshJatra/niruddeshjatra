@@ -1,0 +1,8 @@
+{
+  "rewrites": [
+    {
+      "source": "/games/arczero/:path*",
+      "destination": "https://arczero.vercel.app/:path*"
+    }
+  ]
+}

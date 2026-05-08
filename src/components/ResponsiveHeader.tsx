@@ -1,5 +1,6 @@
 import React, { useRef } from 'react';
-import { Terminal as TerminalIcon, Mail, Github, Linkedin, Menu } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { Terminal as TerminalIcon, Mail, Github, Menu } from 'lucide-react';
 import { useViewport } from '../hooks/useViewport';
 import { useKeyboardNavigation } from '../hooks/useKeyboardNavigation';
 import { MIN_TOUCH_TARGET_SIZE, announceToScreenReader } from '../utils/accessibility';
@@ -65,13 +66,13 @@ const ResponsiveHeader: React.FC<ResponsiveHeaderProps> = ({
 
           <div className="flex items-center gap-2 min-w-0">
             <TerminalIcon
-              className="terminal-green shrink-0"
+              className="text-phosphor shrink-0"
               size={18}
               aria-hidden="true"
             />
-            <h1 className={`font-bold truncate ${isMobile ? 'text-sm' : 'text-base'}`}>
-              Nasiful Alam
-            </h1>
+            <Link to="/" className={`font-bold truncate hover:opacity-80 transition-opacity ${isMobile ? 'text-sm' : 'text-base'}`}>
+              niruddeshjatra
+            </Link>
           </div>
         </div>
 
@@ -79,28 +80,13 @@ const ResponsiveHeader: React.FC<ResponsiveHeaderProps> = ({
         <div className="flex justify-center min-w-0">
           {!isMobile && (
             <p className="text-muted-foreground text-xs truncate" role="doc-subtitle">
-              Full-Stack Engineer
+              tutor · runner · maker
             </p>
           )}
         </div>
 
         {/* Right Section - Social Links */}
         <div className="flex items-center gap-2 shrink-0">
-          {!isMobile && (
-            <button
-              type="button"
-              onClick={() => {
-                const el = document.getElementById("terminal-input");
-                if (el instanceof HTMLInputElement) el.focus();
-              }}
-              className="hidden md:inline-flex items-center gap-1 px-1.5 py-0.5 rounded border border-white/10 text-[11px] font-mono text-muted-foreground hover:text-foreground hover:border-white/30 transition-colors"
-              aria-label="Focus terminal"
-              title="Focus terminal"
-            >
-              <kbd className="font-sans">⌘</kbd>
-              <kbd className="font-sans">/</kbd>
-            </button>
-          )}
           {/* Social Links */}
           <nav
             className={`flex items-center ${isMobile ? 'gap-1' : 'gap-3'}`}
@@ -112,7 +98,7 @@ const ResponsiveHeader: React.FC<ResponsiveHeaderProps> = ({
                 hover:text-primary focus-visible:focus-visible transition rounded-md
                 ${isMobile ? `min-h-[${MIN_TOUCH_TARGET_SIZE}px] min-w-[${MIN_TOUCH_TARGET_SIZE}px] flex items-center justify-center p-2` : 'p-1'}
               `}
-              aria-label="Send email to Nasiful Alam"
+              aria-label="Email nj"
             >
               <Mail size={isMobile ? 18 : 16} aria-hidden="true" />
             </a>
@@ -124,21 +110,9 @@ const ResponsiveHeader: React.FC<ResponsiveHeaderProps> = ({
                 hover:text-primary focus-visible:focus-visible transition rounded-md
                 ${isMobile ? `min-h-[${MIN_TOUCH_TARGET_SIZE}px] min-w-[${MIN_TOUCH_TARGET_SIZE}px] flex items-center justify-center p-2` : 'p-1'}
               `}
-              aria-label="Visit Nasiful Alam's GitHub profile (opens in new tab)"
+              aria-label="GitHub (opens in new tab)"
             >
               <Github size={isMobile ? 18 : 16} aria-hidden="true" />
-            </a>
-            <a
-              href="https://linkedin.com/in/nasiful-alam"
-              target="_blank"
-              rel="noopener noreferrer"
-              className={`
-                hover:text-primary focus-visible:focus-visible transition rounded-md
-                ${isMobile ? `min-h-[${MIN_TOUCH_TARGET_SIZE}px] min-w-[${MIN_TOUCH_TARGET_SIZE}px] flex items-center justify-center p-2` : 'p-1'}
-              `}
-              aria-label="Visit Nasiful Alam's LinkedIn profile (opens in new tab)"
-            >
-              <Linkedin size={isMobile ? 18 : 16} aria-hidden="true" />
             </a>
           </nav>
         </div>

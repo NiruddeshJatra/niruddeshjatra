@@ -14,6 +14,11 @@ export const SECTION_ALIASES: Record<string, string> = (() => {
   map['/'] = 'welcome';
   map['~'] = 'welcome';
   map['home'] = 'welcome';
+  // Writing essay aliases (full path forms and short forms not auto-derived)
+  map['writing/on-running-for-nothing.md'] = 'writing/on-running-for-nothing';
+  map['on-running-for-nothing'] = 'writing/on-running-for-nothing';
+  map['writing/on-running-for-nothing-bn'] = 'writing/on-running-for-nothing-bn';
+  map['writing/on-running-for-nothing-bn.md'] = 'writing/on-running-for-nothing-bn';
   return map;
 })();
 

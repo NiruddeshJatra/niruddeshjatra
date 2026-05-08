@@ -37,6 +37,12 @@ export const useKeyboardNavigation = (config: KeyboardNavigationConfig) => {
   const handleKeyDown = useCallback((event: KeyboardEvent) => {
     if (!enabled) return;
 
+    // Don't intercept keys when focus is inside a text input or textarea
+    const target = event.target as HTMLElement;
+    if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable)) {
+      return;
+    }
+
     // Check if we should prevent default for this key
     if (preventDefault.includes(event.key)) {
       event.preventDefault();

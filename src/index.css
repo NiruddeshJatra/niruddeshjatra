@@ -1,111 +1,110 @@
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Bengali:wght@400;500;600&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
-All colors MUST be HSL.
-*/
+[lang="bn"] {
+  font-family: 'Noto Sans Bengali', 'Departure Mono', sans-serif;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  line-height: 1.9;
+}
+
+[lang="bn"] h1, [lang="bn"] h2, [lang="bn"] h3 {
+  font-weight: 500;
+  letter-spacing: 0.05em;
+}
+
+@font-face {
+  font-family: 'Departure Mono';
+  src: url('/fonts/DepartureMono-Regular.woff2') format('woff2'),
+       url('/fonts/DepartureMono-Regular.woff') format('woff');
+  font-display: swap;
+}
 
 @layer base {
   :root {
-    /* Terminal Dark Theme - inspired by VS Code Dark+ */
-    --background: 0 0% 5%;
-    --foreground: 0 0% 90%;
+    --background: 120 2% 5%;
+    --foreground: 120 100% 95%;
 
-    --card: 0 0% 8%;
-    --card-foreground: 0 0% 90%;
+    --card: 120 3% 6%;
+    --card-foreground: 120 100% 95%;
 
-    --popover: 0 0% 8%;
-    --popover-foreground: 0 0% 90%;
+    --popover: 120 3% 6%;
+    --popover-foreground: 120 100% 95%;
 
-    /* Terminal Green accent */
-    --primary: 179 100% 47%;
-    --primary-foreground: 0 0% 5%;
+    --primary: 150 100% 41%;
+    --primary-foreground: 120 2% 5%;
 
-    /* Muted terminal gray */
-    --secondary: 217 91% 60%;
-    --secondary-foreground: 0 0% 5%;
+    --secondary: 120 3% 10%;
+    --secondary-foreground: 120 100% 95%;
 
-    --muted: 0 0% 15%;
-    --muted-foreground: 0 0% 60%;
+    --muted: 120 3% 10%;
+    --muted-foreground: 120 12% 65%;
 
-    /* Code syntax colors */
-    --accent: 0 0% 15%;
-    --accent-foreground: 0 0% 90%;
+    --accent: 150 100% 41%;
+    --accent-foreground: 120 2% 5%;
 
-    --terminal-cyan: 179 100% 47%;
-    --terminal-purple: 271 91% 65%;
-    --terminal-orange: 31 100% 71%;
-    --terminal-blue: 217 91% 60%;
-    --terminal-green: 142 76% 36%;
-    --terminal-yellow: 48 96% 53%;
-    
-    --destructive: 0 63% 31%;
-    --destructive-foreground: 0 0% 90%;
+    --destructive: 0 100% 63%;
+    --destructive-foreground: 120 100% 95%;
 
-    --border: 0 0% 20%;
-    --input: 0 0% 15%;
-    --ring: 179 100% 47%;
+    --border: 120 6% 14%;
+    --input: 120 3% 10%;
+    --ring: 150 100% 41%;
 
     --radius: 0.25rem;
-    
-    /* Custom animations */
+
     --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     --cursor-blink: blink 1s step-end infinite;
 
-    --sidebar-background: 0 0% 98%;
-
-    --sidebar-foreground: 240 5.3% 26.1%;
-
-    --sidebar-primary: 240 5.9% 10%;
-
-    --sidebar-primary-foreground: 0 0% 98%;
-
-    --sidebar-accent: 240 4.8% 95.9%;
-
-    --sidebar-accent-foreground: 240 5.9% 10%;
-
-    --sidebar-border: 220 13% 91%;
-
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --sidebar-background: 120 3% 6%;
+    --sidebar-foreground: 120 100% 95%;
+    --sidebar-primary: 150 100% 41%;
+    --sidebar-primary-foreground: 120 2% 5%;
+    --sidebar-accent: 120 3% 10%;
+    --sidebar-accent-foreground: 120 100% 95%;
+    --sidebar-border: 120 6% 14%;
+    --sidebar-ring: 150 100% 41%;
   }
 
   .dark {
-    --background: 0 0% 5%;
-    --foreground: 0 0% 90%;
+    --background: 120 2% 5%;
+    --foreground: 120 100% 95%;
 
-    --card: 0 0% 8%;
-    --card-foreground: 0 0% 90%;
+    --card: 120 3% 6%;
+    --card-foreground: 120 100% 95%;
 
-    --popover: 0 0% 8%;
-    --popover-foreground: 0 0% 90%;
+    --popover: 120 3% 6%;
+    --popover-foreground: 120 100% 95%;
 
-    --primary: 179 100% 47%;
-    --primary-foreground: 0 0% 5%;
+    --primary: 150 100% 41%;
+    --primary-foreground: 120 2% 5%;
 
-    --secondary: 217 91% 60%;
-    --secondary-foreground: 0 0% 5%;
+    --secondary: 120 3% 10%;
+    --secondary-foreground: 120 100% 95%;
 
-    --muted: 0 0% 15%;
-    --muted-foreground: 0 0% 60%;
+    --muted: 120 3% 10%;
+    --muted-foreground: 120 12% 65%;
 
-    --accent: 0 0% 15%;
-    --accent-foreground: 0 0% 90%;
+    --accent: 150 100% 41%;
+    --accent-foreground: 120 2% 5%;
 
-    --destructive: 0 63% 31%;
-    --destructive-foreground: 0 0% 90%;
+    --destructive: 0 100% 63%;
+    --destructive-foreground: 120 100% 95%;
 
-    --border: 0 0% 20%;
-    --input: 0 0% 15%;
-    --ring: 179 100% 47%;
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --border: 120 6% 14%;
+    --input: 120 3% 10%;
+    --ring: 150 100% 41%;
+
+    --sidebar-background: 120 3% 6%;
+    --sidebar-foreground: 120 100% 95%;
+    --sidebar-primary: 150 100% 41%;
+    --sidebar-primary-foreground: 120 2% 5%;
+    --sidebar-accent: 120 3% 10%;
+    --sidebar-accent-foreground: 120 100% 95%;
+    --sidebar-border: 120 6% 14%;
+    --sidebar-ring: 150 100% 41%;
   }
 }
 
@@ -120,30 +119,6 @@ All colors MUST be HSL.
 }
 
 @layer utilities {
-  .terminal-cyan {
-    color: hsl(var(--terminal-cyan));
-  }
-  
-  .terminal-purple {
-    color: hsl(var(--terminal-purple));
-  }
-  
-  .terminal-orange {
-    color: hsl(var(--terminal-orange));
-  }
-  
-  .terminal-blue {
-    color: hsl(var(--terminal-blue));
-  }
-  
-  .terminal-green {
-    color: hsl(var(--terminal-green));
-  }
-  
-  .terminal-yellow {
-    color: hsl(var(--terminal-yellow));
-  }
-  
   .cursor-blink {
     animation: blink 1s step-end infinite;
   }
@@ -158,104 +133,60 @@ All colors MUST be HSL.
       transform: translateY(0);
     }
   }
-  
+
   @keyframes scan {
-    0% {
-      transform: translateY(-100%);
-    }
-    100% {
-      transform: translateY(100%);
-    }
+    0% { transform: translateY(-100%); }
+    100% { transform: translateY(100%); }
   }
-  
+
   @keyframes glitch {
-    0% {
-      transform: translate(0);
-    }
-    20% {
-      transform: translate(-2px, 2px);
-    }
-    40% {
-      transform: translate(-2px, -2px);
-    }
-    60% {
-      transform: translate(2px, 2px);
-    }
-    80% {
-      transform: translate(2px, -2px);
-    }
-    100% {
-      transform: translate(0);
-    }
+    0%   { transform: translate(0); }
+    20%  { transform: translate(-2px, 2px); }
+    40%  { transform: translate(-2px, -2px); }
+    60%  { transform: translate(2px, 2px); }
+    80%  { transform: translate(2px, -2px); }
+    100% { transform: translate(0); }
   }
-  
+
   @keyframes pulse-glow {
-    0%, 100% {
-      box-shadow: 0 0 5px currentColor;
-    }
-    50% {
-      box-shadow: 0 0 20px currentColor;
-    }
+    0%, 100% { box-shadow: 0 0 5px currentColor; }
+    50%       { box-shadow: 0 0 20px currentColor; }
   }
-  
-  .animate-fade-in {
-    animation: fadeIn 0.3s ease-out;
-  }
-  
-  .animate-scan {
-    animation: scan 2s linear infinite;
-  }
-  
-  .animate-glitch {
-    animation: glitch 0.3s infinite;
-  }
-  
-  .animate-pulse-glow {
-    animation: pulse-glow 2s ease-in-out infinite;
-  }
-  
+
+  .animate-fade-in    { animation: fadeIn 0.3s ease-out; }
+  .animate-scan       { animation: scan 2s linear infinite; }
+  .animate-glitch     { animation: glitch 0.3s infinite; }
+  .animate-pulse-glow { animation: pulse-glow 2s ease-in-out infinite; }
+
   /* Custom scrollbar for terminal */
-  .custom-scrollbar::-webkit-scrollbar {
-    width: 8px;
-  }
-  
-  .custom-scrollbar::-webkit-scrollbar-track {
-    background: hsl(var(--muted));
-  }
-  
+  .custom-scrollbar::-webkit-scrollbar       { width: 8px; }
+  .custom-scrollbar::-webkit-scrollbar-track { background: hsl(var(--muted)); }
   .custom-scrollbar::-webkit-scrollbar-thumb {
     background: hsl(var(--primary));
     border-radius: 4px;
   }
-  
   .custom-scrollbar::-webkit-scrollbar-thumb:hover {
     background: hsl(var(--primary) / 0.8);
   }
-  
+
   @keyframes blink {
-    0%, 50% { opacity: 1; }
-    51%, 100% { opacity: 0; }
+    0%, 50%    { opacity: 1; }
+    51%, 100%  { opacity: 0; }
   }
 
   @keyframes typewriter {
     from { width: 0; }
-    to { width: 100%; }
+    to   { width: 100%; }
   }
 
   @keyframes slide-in {
-    from {
-      opacity: 0;
-      transform: translateX(-10px);
-    }
-    to {
-      opacity: 1;
-      transform: translateX(0);
-    }
+    from { opacity: 0; transform: translateX(-10px); }
+    to   { opacity: 1; transform: translateX(0); }
   }
-  
+
   .typewriter {
     overflow: hidden;
-    border-right: 2px solid hsl(var(--terminal-cyan));
+    border-right: 2px solid hsl(var(--primary));
     white-space: nowrap;
     animation: typewriter 2s steps(40) forwards, blink 0.75s step-end infinite;
   }
@@ -284,21 +215,18 @@ All colors MUST be HSL.
     white-space: normal;
   }
 
-  /* Focus visible styles for better keyboard navigation */
   .focus-visible:focus-visible {
     outline: 2px solid hsl(var(--primary));
     outline-offset: 2px;
   }
 
-  /* High contrast mode support */
   @media (prefers-contrast: high) {
     :root {
-      --border: 0 0% 50%;
-      --muted: 0 0% 25%;
+      --border: 120 6% 50%;
+      --muted: 120 3% 25%;
     }
   }
 
-  /* Reduced motion support */
   @media (prefers-reduced-motion: reduce) {
     *,
     *::before,
@@ -324,9 +252,5 @@ All colors MUST be HSL.
   from { opacity: 1; }
   to   { opacity: 0; }
 }
-::view-transition-old(root) {
-  animation: nasif-vt-fade-out 160ms ease-out both;
-}
-::view-transition-new(root) {
-  animation: nasif-vt-fade-in 200ms ease-out both;
-}
+::view-transition-old(root) { animation: nasif-vt-fade-out 160ms ease-out both; }
+::view-transition-new(root) { animation: nasif-vt-fade-in  200ms ease-out both; }

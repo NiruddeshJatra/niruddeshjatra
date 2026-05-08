@@ -1,96 +1,39 @@
-const AboutContent = () => {
-  return (
-    <div className="animate-fade-in font-mono text-sm leading-relaxed max-w-2xl mx-auto px-4 py-6">
+const DraftAbout = () => (
+  <div className="animate-fade-in font-mono max-w-2xl mx-auto px-4 py-6 text-[15px] leading-[1.7] text-foreground/85">
 
-      <div className="text-muted-foreground space-y-0.5 mb-6 text-xs">
-        <div><span className="terminal-green">/**</span></div>
-        <div className="pl-3"><span className="terminal-green"> * about.md — nasiful alam</span></div>
-        <div className="pl-3"><span className="terminal-green"> * builds systems. writes. makes 2d games.</span></div>
-        <div className="pl-3"><span className="terminal-green"> * Chattogram, Bangladesh</span></div>
-        <div><span className="terminal-green"> */</span></div>
-      </div>
+    <p className="mb-1"><span className="text-phosphor">&gt; </span>i make things. i think about things. i write some of it down.</p>
+    <p className="mb-4"><span className="text-phosphor">&gt; </span>i don't think well sitting still.</p>
 
-      <div className="mb-1">
-        <span className="terminal-purple">const </span>
-        <span className="terminal-cyan">me</span>
-        <span className="text-foreground"> = </span>
-        <span className="terminal-yellow">{"{"}</span>
-      </div>
+    <div className="text-phosphor-dim text-sm mt-10 mb-3 font-mono">// on forgetting</div>
+    <p className="mb-4">i forget most of what i read. my students call me a brainy goldfish. what stays isn't the details — it's the structure of how things work. when i need a detail, i re-derive it from the structure. so far that's been enough.</p>
+    <p className="mb-4">i go too deep when i should be going wide. i know this about myself. i try to compensate. it doesn't always work.</p>
 
-      <div className="pl-6 space-y-5">
+    <div className="text-phosphor-dim text-sm mt-10 mb-3 font-mono">// on the work i won't do</div>
+    <p className="mb-1"><span className="text-phosphor">&gt; </span>i tried the institutional path. it didn't fit.</p>
+    <p className="mb-4"><span className="text-phosphor">&gt; </span>i tried a job, working under someone else's vision. it didn't last.</p>
+    <p className="mb-4">i tutor for a living. people told me i should scale it. i still haven't. selling a path to better marks would mean joining the system that didn't fit me in the first place.</p>
+    <p className="mb-4">i'd rather build something that doesn't already exist than scale something i don't believe in.</p>
 
-        <div className="space-y-1">
-          <div className="terminal-green text-xs">// who</div>
-          <div>
-            <span className="terminal-blue">name</span>
-            <span className="text-muted-foreground">: </span>
-            <span className="terminal-orange">"Nasiful Alam"</span>
-            <span className="text-muted-foreground">,</span>
-          </div>
-          <div>
-            <span className="terminal-blue">based_in</span>
-            <span className="text-muted-foreground">: </span>
-            <span className="terminal-orange">"Chattogram, Bangladesh"</span>
-            <span className="text-muted-foreground">,</span>
-          </div>
-        </div>
+    <div className="text-phosphor-dim text-sm mt-10 mb-3 font-mono">// on hard things</div>
+    <p className="mb-1"><span className="text-phosphor">&gt; </span>i was a weak kid. people called me a farm chicken.</p>
+    <p className="mb-4"><span className="text-phosphor">&gt; </span>i wanted a different story so i started writing one.</p>
+    <p className="mb-4">i run long distance. two 52k ultras done, a 100k coming this year. i hike mountains in bandarban. tents, jungles, occasionally life-threatening. mountaineering, eventually.</p>
+    <p className="mb-1"><span className="text-phosphor">&gt; </span>i pick the longer distance, not the faster one.</p>
+    <p className="mb-1"><span className="text-phosphor">&gt; </span>the slow part is the point.</p>
+    <p className="mb-4"><span className="text-phosphor">&gt; </span>i'd rather finish broken than win unbroken.</p>
 
-        <div className="space-y-1">
-          <div className="terminal-green text-xs">// what I do</div>
-          <div>
-            <span className="terminal-blue">engineer</span>
-            <span className="text-muted-foreground">: </span>
-            <span className="terminal-orange">"full-stack — Django, MERN, AWS"</span>
-            <span className="text-muted-foreground">,</span>
-          </div>
-          <div>
-            <span className="terminal-blue">also</span>
-            <span className="text-muted-foreground">: [</span>
-            <span className="terminal-orange">"write"</span>
-            <span className="text-muted-foreground">, </span>
-            <span className="terminal-orange">"make 2d arcade games"</span>
-            <span className="text-muted-foreground">],</span>
-          </div>
-        </div>
+    <div className="text-phosphor-dim text-sm mt-10 mb-3 font-mono">// what this site is</div>
+    <p className="mb-4">a place to keep the work and the arguments. games i'm building. things i'm writing. trips i'm taking. slow to fill. honest while it does.</p>
+    <p className="mb-1"><span className="text-phosphor">&gt; </span>this is one angle. there are others.</p>
+    <p className="mb-4"><span className="text-phosphor">&gt; </span>i'm an explorer. that part i'm sure of.</p>
 
-        <div className="space-y-1">
-          <div className="terminal-green text-xs">// now</div>
-          <div>
-            <span className="terminal-blue">building</span>
-            <span className="text-muted-foreground">: </span>
-            <span className="terminal-orange">"Intellectify.io"</span>
-            <span className="text-muted-foreground">, </span>
-            <span className="terminal-green text-xs">// mentorship platform</span>
-          </div>
-          <div>
-            <span className="terminal-blue">deep_in</span>
-            <span className="text-muted-foreground">: </span>
-            <span className="terminal-orange">"AWS infrastructure, microservices"</span>
-            <span className="text-muted-foreground">,</span>
-          </div>
-        </div>
-
-      </div>
-
-      <div className="mt-1">
-        <span className="terminal-yellow">{"}"}</span>
-        <span className="text-muted-foreground">;</span>
-      </div>
-
-      <div className="mt-6 text-xs">
-        <span className="terminal-purple">export default </span>
-        <span className="terminal-cyan">me</span>
-        <span className="text-muted-foreground">;</span>
-      </div>
-
-      <div className="mt-8 pt-4 border-t border-border text-xs text-muted-foreground">
-        <span className="terminal-green">// </span>
-        email and contact info →{" "}
-        <span className="terminal-cyan">contact.md</span>
-      </div>
-
+    <div className="mt-12 pt-3 border-t border-border/40 text-[10px] text-phosphor-dim font-mono">
+      — nj · 2026-05 · 1247 bytes
     </div>
-  );
-};
+
+  </div>
+);
+
+const AboutContent = () => <DraftAbout />;
 
 export default AboutContent;

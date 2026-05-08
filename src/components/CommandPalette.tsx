@@ -113,7 +113,7 @@ const CommandPalette = ({ isOpen, mode, onClose, onThemeChange }: CommandPalette
         >
           {/* Input */}
           <div className="flex items-center gap-2 px-3 py-2 border-b border-border">
-            <span className="text-xs text-muted-foreground font-mono terminal-green select-none">
+            <span className="text-xs text-muted-foreground font-mono text-phosphor select-none">
               {mode === 'commands' ? '>' : '$'}
             </span>
             <Command.Input
@@ -149,7 +149,7 @@ const CommandPalette = ({ isOpen, mode, onClose, onThemeChange }: CommandPalette
                       text-muted-foreground hover:bg-muted/50 hover:text-foreground
                       transition-colors"
                   >
-                    <span className="terminal-cyan select-none">→</span>
+                    <span className="text-phosphor select-none">→</span>
                     <span className="flex-1 text-foreground">{item.label}</span>
                     {item.hint && (
                       <span className="text-xs text-muted-foreground/60">{item.hint}</span>

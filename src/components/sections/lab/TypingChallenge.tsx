@@ -59,7 +59,7 @@ const TypingChallenge = () => {
         const t = typed[i];
         let cls = "text-muted-foreground";
         if (t !== undefined) {
-          cls = t === ch ? "terminal-green" : "text-red-400 bg-red-950/40";
+          cls = t === ch ? "text-phosphor" : "text-red-400 bg-red-950/40";
         }
         if (i === typed.length) cls += " underline decoration-green-400";
         return (
@@ -74,7 +74,7 @@ const TypingChallenge = () => {
   return (
     <div className="space-y-3 border border-border rounded-lg p-4 bg-card/30">
       <div className="flex items-center justify-between">
-        <div className="terminal-cyan text-sm font-semibold">typing-challenge.ts</div>
+        <div className="text-phosphor text-sm font-semibold">typing-challenge.ts</div>
         <span className="text-[10px] text-muted-foreground">WPM + accuracy</span>
       </div>
 
@@ -97,17 +97,17 @@ const TypingChallenge = () => {
         <div className="flex items-center gap-4">
           {result ? (
             <>
-              <span className="terminal-green">wpm: {result.wpm}</span>
+              <span className="text-phosphor">wpm: {result.wpm}</span>
               <span className="text-muted-foreground">
-                accuracy: <span className="terminal-cyan">{result.accuracy}%</span>
+                accuracy: <span className="text-phosphor">{result.accuracy}%</span>
               </span>
               <span className="text-muted-foreground">
-                time: <span className="terminal-yellow">{result.seconds}s</span>
+                time: <span className="text-phosphor">{result.seconds}s</span>
               </span>
             </>
           ) : (
             <span className="text-muted-foreground">
-              progress: <span className="terminal-green">{typed.length}</span> / {prompt.length}
+              progress: <span className="text-phosphor">{typed.length}</span> / {prompt.length}
             </span>
           )}
         </div>

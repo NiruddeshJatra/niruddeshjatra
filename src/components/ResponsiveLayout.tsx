@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect, lazy, Suspense } from 'react';
+import React, { useState, useCallback, useEffect, useRef, lazy, Suspense } from 'react';
 import { useResponsiveLayout } from '../hooks/useResponsiveLayout';
 import { useGlobalKeyboardShortcuts } from '../hooks/useKeyboardNavigation';
 import { getLayoutClasses, Z_INDEX } from '../utils/responsive';
@@ -38,11 +38,12 @@ const ResponsiveLayout: React.FC<ResponsiveLayoutProps> = ({
 }) => {
   const { viewport, navigationState, actions } = useResponsiveLayout();
   const [isTransitioning, setIsTransitioning] = useState(false);
+  const [isTerminalFocused, setIsTerminalFocused] = useState(false);
+  const transitionTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Memory optimization - register cleanup tasks
   useEffect(() => {
     const cleanup = () => {
-      // Clear any component-specific state or caches
       setIsTransitioning(false);
     };
 
@@ -50,6 +51,9 @@ const ResponsiveLayout: React.FC<ResponsiveLayoutProps> = ({
 
     return () => {
       MemoryManager.removeCleanupTask(cleanup);
+      if (transitionTimeoutRef.current !== null) {
+        clearTimeout(transitionTimeoutRef.current);
+      }
     };
   }, []);
 
@@ -68,8 +72,10 @@ const ResponsiveLayout: React.FC<ResponsiveLayoutProps> = ({
     
     // Use optimal animation duration based on device performance
     const duration = viewport.isMobile ? 150 : 200;
-    
-    setTimeout(() => {
+
+    if (transitionTimeoutRef.current !== null) clearTimeout(transitionTimeoutRef.current);
+    transitionTimeoutRef.current = setTimeout(() => {
+      transitionTimeoutRef.current = null;
       onSectionChange(section);
       setIsTransitioning(false);
       announceToScreenReader(`${fileName} loaded`, 'polite');
@@ -111,6 +117,23 @@ const ResponsiveLayout: React.FC<ResponsiveLayoutProps> = ({
 
     preserveState();
   }, [viewport.layoutMode, viewport.isDesktop, viewport.isMobile, navigationState, actions]);
+
+  // Click-outside collapses terminal
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      if (!target.closest('[data-terminal-region]')) {
+        setIsTerminalFocused(false);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
+
+  // Terminal height: collapsed differs by route type, expanded is fixed
+  const isReadingPage = currentSection?.startsWith('writing/');
+  const collapsedHeight = isReadingPage ? 72 : 132;
+  const terminalHeight = isTerminalFocused ? 288 : collapsedHeight;
 
   // Get layout classes based on current layout mode
   const layoutClasses = getLayoutClasses(navigationState.currentLayout);
@@ -165,12 +188,12 @@ const ResponsiveLayout: React.FC<ResponsiveLayoutProps> = ({
       }
     },
     'ctrl+1': () => handleSectionChange('about'),
-    'ctrl+2': () => handleSectionChange('experience'),
-    'ctrl+3': () => handleSectionChange('projects'),
-    'ctrl+4': () => handleSectionChange('skills'),
-    'ctrl+5': () => handleSectionChange('education'),
-    'ctrl+6': () => handleSectionChange('blog'),
-    'ctrl+7': () => handleSectionChange('contact'),
+    'ctrl+2': () => handleSectionChange('blog'),
+    'ctrl+3': () => handleSectionChange('now'),
+    'ctrl+4': () => handleSectionChange('contact'),
+    'ctrl+5': () => handleSectionChange('games'),
+    'ctrl+6': () => handleSectionChange('writing'),
+    'ctrl+7': () => handleSectionChange('journey'),
     'meta+p': () => {
       const active = document.activeElement;
       if (active instanceof HTMLInputElement || active instanceof HTMLTextAreaElement) return;
@@ -282,18 +305,24 @@ const ResponsiveLayout: React.FC<ResponsiveLayoutProps> = ({
           />
         </ConditionalLazy>
       ) : (
-        <div className="h-56 border-t border-border relative" style={{ zIndex: Z_INDEX.terminal }}>
-          <ConditionalLazy 
+        <div
+          data-terminal-region
+          className="border-t border-border relative transition-all duration-200 ease-out overflow-hidden"
+          style={{ height: terminalHeight, zIndex: Z_INDEX.terminal }}
+        >
+          <ConditionalLazy
             fallback={
               <div className="h-full flex items-center justify-center">
                 <span className="text-green-400 font-mono">Loading terminal...</span>
               </div>
             }
           >
-            <LazyTerminal 
-              onCommand={handleCommand} 
+            <LazyTerminal
+              onCommand={handleCommand}
               currentSection={currentSection}
               onThemeChange={onThemeChange}
+              isFocused={isTerminalFocused}
+              onFocusChange={setIsTerminalFocused}
             />
           </ConditionalLazy>
         </div>

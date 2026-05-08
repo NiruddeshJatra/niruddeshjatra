@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { GitBranch, Clock, FileText, Circle } from "lucide-react";
+import { GitBranch, Clock, Circle } from "lucide-react";
 
 interface StatusBarProps {
   currentSection: string;
@@ -7,48 +7,51 @@ interface StatusBarProps {
 
 const getPath = (section: string): string => {
   switch (section) {
-    case "welcome":
-      return "~/nasif";
-    case "lab":
-      return "~/nasif/lab/";
-    case "notes":
-      return "~/nasif/notes/";
-    case "about":
-      return "~/nasif/about.txt";
-    case "experience":
-      return "~/nasif/experience.txt";
-    case "projects":
-      return "~/nasif/projects.txt";
-    case "skills":
-      return "~/nasif/skills.json";
-    case "education":
-      return "~/nasif/education.txt";
-    case "now":
-      return "~/nasif/now.md";
-    case "blog":
-      return "~/nasif/blog.md";
-    case "contact":
-      return "~/nasif/contact.md";
-    case "colophon":
-      return "~/nasif/colophon.md";
-    default:
-      return `~/nasif/${section}`;
+    case "welcome": return "~/niruddeshjatra";
+    case "about": return "~/niruddeshjatra/me/about.md";
+    case "games": return "~/niruddeshjatra/games/";
+    case "blog": return "~/niruddeshjatra/writing/blog.md";
+    case "notes": return "~/niruddeshjatra/writing/notes/";
+    case "journey": return "~/niruddeshjatra/journey/";
+    case "journey-running": return "~/niruddeshjatra/journey/running.md";
+    case "journey-hiking": return "~/niruddeshjatra/journey/hiking.md";
+    case "field-notes": return "~/niruddeshjatra/field-notes/";
+    case "photos": return "~/niruddeshjatra/photos/";
+    case "archived-experience": return "~/niruddeshjatra/archived/experience.txt";
+    case "archived-education": return "~/niruddeshjatra/archived/education.txt";
+    case "archived-projects": return "~/niruddeshjatra/archived/projects.txt";
+    case "archived-skills": return "~/niruddeshjatra/archived/skills.json";
+    case "now": return "~/niruddeshjatra/now.md";
+    case "contact": return "~/niruddeshjatra/contact.md";
+    case "lab": return "~/niruddeshjatra/lab/";
+    case "writing": return "~/niruddeshjatra/writing/";
+    case "writing/on-running-for-nothing": return "~/niruddeshjatra/writing/on-running-for-nothing.md";
+    case "writing/on-running-for-nothing-bn": return "~/niruddeshjatra/writing/on-running-for-nothing.bn.md";
+    default: return `~/niruddeshjatra/${section}`;
   }
 };
 
 const LAST_UPDATED: Record<string, string> = {
-  welcome: "2026-04-20",
-  about: "2026-02-10",
-  experience: "2026-03-15",
-  projects: "2026-04-05",
-  skills: "2026-01-28",
-  education: "2025-12-12",
-  now: "2026-04-20",
+  welcome: "2026-04-29",
+  about: "2026-04-29",
+  games: "2026-04-29",
+  now: "2026-04-29",
+  contact: "2026-04-29",
+  writing: "2026-05",
+  "writing/on-running-for-nothing": "2026-05",
+  "writing/on-running-for-nothing-bn": "2026-05",
   blog: "pending",
-  contact: "2026-02-10",
-  colophon: "2026-04-20",
+  notes: "pending",
+  journey: "2026-05",
+  "journey-running": "2026-05",
+  "journey-hiking": "pending",
+  "field-notes": "pending",
+  photos: "eventually",
+  "archived-experience": "archived",
+  "archived-education": "archived",
+  "archived-projects": "archived",
+  "archived-skills": "archived",
   lab: "2026-04-20",
-  notes: "seedling",
 };
 
 const StatusBar = ({ currentSection }: StatusBarProps) => {
@@ -65,7 +68,7 @@ const StatusBar = ({ currentSection }: StatusBarProps) => {
   return (
     <div className="h-6 bg-primary/10 border-t border-border flex items-center justify-between px-3 text-[11px] font-mono">
       <div className="flex items-center gap-4 min-w-0">
-        <div className="flex items-center gap-1.5 terminal-cyan shrink-0">
+        <div className="flex items-center gap-1.5 text-phosphor shrink-0">
           <GitBranch className="w-3 h-3" />
           <span>main</span>
         </div>
@@ -80,19 +83,10 @@ const StatusBar = ({ currentSection }: StatusBarProps) => {
       </div>
 
       <div className="flex items-center gap-3 text-muted-foreground shrink-0">
-        <a
-          href="/resume.html"
-          className="flex items-center gap-1 hover:text-foreground transition-colors"
-          aria-label="Plain-text resume"
-        >
-          <FileText className="w-3 h-3" />
-          <span className="hidden sm:inline">resume</span>
-        </a>
         <div className="hidden sm:flex items-center gap-1.5">
           <Clock className="w-3 h-3" />
           <span>{time.toLocaleTimeString([], { hour12: false })}</span>
         </div>
-        <span className="hidden lg:inline">UTF-8 · LF</span>
       </div>
     </div>
   );

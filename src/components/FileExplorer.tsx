@@ -18,25 +18,30 @@ interface FileExplorerProps {
 
 export const files: FileItem[] = [
   { id: 'me', name: 'me/', section: '', icon: Folder, isContainer: true },
-  { name: 'about.txt', section: 'about', icon: File, parent: 'me' },
-  { name: 'experience.txt', section: 'experience', icon: File, parent: 'me' },
-  { name: 'education.txt', section: 'education', icon: File, parent: 'me' },
-  { name: 'skills.json', section: 'skills', icon: File, parent: 'me' },
-  { id: 'work', name: 'work/', section: '', icon: Folder, isContainer: true },
-  { name: 'projects.txt', section: 'projects', icon: File, parent: 'work' },
-  { name: 'lab/', section: 'lab', icon: Folder, parent: 'work' },
-  { id: 'writing', name: 'writing/', section: '', icon: Folder, isContainer: true },
+  { name: 'about.md', section: 'about', icon: File, parent: 'me' },
+  { name: 'games/', section: 'games', icon: Folder },
+  { id: 'writing', name: 'writing/', section: 'writing', icon: Folder, isContainer: true },
+  { name: 'on-running-for-nothing.md', section: 'writing/on-running-for-nothing', icon: File, parent: 'writing' },
   { name: 'blog.md', section: 'blog', icon: File, parent: 'writing' },
   { name: 'notes/', section: 'notes', icon: Folder, parent: 'writing' },
+  { id: 'journey', name: 'journey/', section: 'journey', icon: Folder, isContainer: true },
+  { name: 'running.md', section: 'journey-running', icon: File, parent: 'journey' },
+  { name: 'hiking.md', section: 'journey-hiking', icon: File, parent: 'journey' },
+  { name: 'field-notes/', section: 'field-notes', icon: Folder },
+  { name: 'photos/', section: 'photos', icon: Folder },
+  { id: 'archived', name: 'archived/', section: '', icon: Folder, isContainer: true },
+  { name: 'experience.txt', section: 'archived-experience', icon: File, parent: 'archived' },
+  { name: 'education.txt', section: 'archived-education', icon: File, parent: 'archived' },
+  { name: 'projects.txt', section: 'archived-projects', icon: File, parent: 'archived' },
+  { name: 'skills.json', section: 'archived-skills', icon: File, parent: 'archived' },
   { name: 'now.md', section: 'now', icon: File },
   { name: 'contact.md', section: 'contact', icon: File },
-  { name: 'colophon.md', section: 'colophon', icon: File },
 ];
 
 const STORAGE_KEY_COLLAPSED = 'ncs_sidebar_collapsed';
 const STORAGE_KEY_EXPANDED = 'ncs_folders_expanded';
 
-const defaultExpanded = new Set(['me', 'work', 'writing']);
+const defaultExpanded = new Set(['me', 'writing', 'journey']);
 
 const loadExpanded = (): Set<string> => {
   try {
@@ -125,9 +130,9 @@ const FileExplorer = ({ currentSection, onSectionChange }: FileExplorerProps) =>
     >
       <div className="border-b border-border bg-black/50">
         <div className="flex items-center gap-2 px-2 py-1.5">
-          <Folder className="w-3.5 h-3.5 terminal-blue" aria-hidden="true" />
+          <Folder className="w-3.5 h-3.5 text-phosphor/70" aria-hidden="true" />
           <h2 className="text-[11px] font-semibold uppercase tracking-wide flex-1 text-muted-foreground">
-            nasiful-coder-space
+            WORKSPACE
           </h2>
           <button
             onClick={() => setCollapsed(true)}
@@ -154,7 +159,7 @@ const FileExplorer = ({ currentSection, onSectionChange }: FileExplorerProps) =>
                 <li key={file.id} role="none">
                   <button
                     data-file-button
-                    onClick={() => file.id && toggleFolder(file.id)}
+                    onClick={() => { if (file.id) toggleFolder(file.id); if (file.section) onSectionChange(file.section); }}
                     className={`
                       w-full flex items-center gap-1 pl-1 pr-2 py-0.5 text-xs text-left
                       transition-colors duration-150 text-muted-foreground hover:text-foreground
@@ -164,7 +169,7 @@ const FileExplorer = ({ currentSection, onSectionChange }: FileExplorerProps) =>
                     type="button"
                   >
                     <Chevron className="w-3 h-3 shrink-0" aria-hidden="true" />
-                    <Folder className="w-3 h-3 shrink-0 terminal-blue" aria-hidden="true" />
+                    <Folder className="w-3 h-3 shrink-0 text-phosphor/70" aria-hidden="true" />
                     <span className="truncate font-medium">{file.name}</span>
                   </button>
                 </li>
@@ -190,7 +195,7 @@ const FileExplorer = ({ currentSection, onSectionChange }: FileExplorerProps) =>
                   type="button"
                 >
                   <file.icon
-                    className={`w-3 h-3 shrink-0 ${isActive ? 'terminal-cyan' : ''}`}
+                    className={`w-3 h-3 shrink-0 ${isActive ? 'text-phosphor' : ''}`}
                     aria-hidden="true"
                   />
                   <span className="truncate">{file.name}</span>

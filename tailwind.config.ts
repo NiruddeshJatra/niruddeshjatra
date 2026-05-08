@@ -47,17 +47,15 @@ export default {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
-        terminal: {
-          cyan: "hsl(var(--terminal-cyan))",
-          purple: "hsl(var(--terminal-purple))",
-          orange: "hsl(var(--terminal-orange))",
-          blue: "hsl(var(--terminal-blue))",
-          green: "hsl(var(--terminal-green))",
-          yellow: "hsl(var(--terminal-yellow))",
+        phosphor: {
+          DEFAULT: "hsl(var(--accent))",
+          soft: "hsl(var(--foreground))",
+          dim: "hsl(var(--muted-foreground))",
         },
+        danger: "hsl(var(--destructive))",
       },
       fontFamily: {
-        mono: ['Fira Code', 'JetBrains Mono', 'ui-monospace', 'SFMono-Regular', 'Menlo', 'Monaco', 'Consolas', 'monospace'],
+        mono: ['"Departure Mono"', '"JetBrains Mono"', 'ui-monospace', 'SFMono-Regular', 'monospace'],
       },
       borderRadius: {
         lg: "var(--radius)",

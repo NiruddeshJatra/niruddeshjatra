@@ -14,29 +14,29 @@ const BlogContent = () => {
   return (
     <div className="space-y-6 animate-fade-in font-mono text-sm">
       <div className="space-y-2">
-        <span className="terminal-purple">const</span>{" "}
-        <span className="terminal-cyan">blogPosts</span> ={" "}
-        <span className="terminal-yellow">{"["}</span>
+        <span className="text-phosphor">const</span>{" "}
+        <span className="text-phosphor">blogPosts</span> ={" "}
+        <span className="text-phosphor">{"["}</span>
         {blogPosts.length === 0 && (
-          <span className="terminal-yellow">{"];"}</span>
+          <span className="text-phosphor">{"];"}</span>
         )}
       </div>
 
       {blogPosts.length === 0 ? (
         <div className="border border-dashed border-border rounded-lg p-6 bg-card/20">
           <div className="flex items-start gap-3">
-            <FileText className="w-5 h-5 terminal-cyan flex-shrink-0 mt-0.5" />
+            <FileText className="w-5 h-5 text-phosphor flex-shrink-0 mt-0.5" />
             <div className="space-y-2">
               <p className="text-sm text-foreground/90">
-                <span className="terminal-orange">blog.md</span> — unwritten.
+                <span className="text-phosphor-soft">blog.md</span> — unwritten.
               </p>
               <p className="text-xs text-muted-foreground">
                 Essays published here once drafts leave{" "}
-                <span className="terminal-cyan">/notes</span>. Seedling thoughts
+                <span className="text-phosphor">/notes</span>. Seedling thoughts
                 live there first; finished pieces land here.
               </p>
               <p className="text-xs text-muted-foreground">
-                Status: <span className="terminal-green">in progress</span>
+                Status: <span className="text-phosphor">in progress</span>
               </p>
             </div>
           </div>
@@ -50,7 +50,7 @@ const BlogContent = () => {
                 className="border border-border rounded-lg p-4 bg-card/30 hover:bg-card/50 transition-colors"
               >
                 <div className="space-y-3">
-                  <h2 className="text-base font-semibold terminal-cyan">
+                  <h2 className="text-base font-semibold text-phosphor">
                     {post.title}
                   </h2>
                   <div className="flex items-center gap-4 text-xs text-muted-foreground">
@@ -74,7 +74,7 @@ const BlogContent = () => {
           </div>
 
           <div className="space-y-2">
-            <span className="terminal-yellow">{"]"}</span>;
+            <span className="text-phosphor">{"]"}</span>;
           </div>
         </>
       )}

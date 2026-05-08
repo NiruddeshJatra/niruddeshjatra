@@ -59,7 +59,7 @@ const MobileShell = ({ onThemeChange }: MobileShellProps) => {
       <header className="flex items-center justify-between px-4 py-2 border-b border-border bg-black/80 backdrop-blur-sm shrink-0">
         <button
           onClick={() => goTo('welcome')}
-          className="text-xs font-mono font-semibold terminal-cyan"
+          className="text-xs font-mono font-semibold text-phosphor"
           aria-label="Go to home"
         >
           nasif.space
@@ -92,7 +92,7 @@ const MobileShell = ({ onThemeChange }: MobileShellProps) => {
                 <button
                   onClick={() => goTo(section)}
                   className={`w-full flex flex-col items-center gap-1 py-2 text-[10px] font-mono transition-colors
-                    ${isActive ? 'terminal-cyan' : 'text-muted-foreground hover:text-foreground'}`}
+                    ${isActive ? 'text-phosphor' : 'text-muted-foreground hover:text-foreground'}`}
                   role="menuitem"
                   aria-current={isActive ? 'page' : undefined}
                 >

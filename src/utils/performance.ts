@@ -16,25 +16,20 @@ export class PerformanceMonitor {
   private fps = 60;
   private rafId: number | null = null;
   private callbacks: ((metrics: PerformanceMetrics) => void)[] = [];
+  private capabilities: Pick<PerformanceMetrics, 'isLowEndDevice' | 'supportsWillChange' | 'supportsTransform3d'>;
 
   constructor() {
-    this.detectDeviceCapabilities();
+    // Detect once — these values are static after page load
+    this.capabilities = {
+      isLowEndDevice: this.isLowEndDevice(),
+      supportsWillChange: CSS.supports('will-change', 'transform'),
+      supportsTransform3d: CSS.supports('transform', 'translate3d(0,0,0)'),
+    };
     this.startMonitoring();
   }
 
   private detectDeviceCapabilities() {
-    // Detect low-end devices based on hardware concurrency and memory
-    const isLowEndDevice = this.isLowEndDevice();
-    
-    // Feature detection for CSS optimizations
-    const supportsWillChange = CSS.supports('will-change', 'transform');
-    const supportsTransform3d = CSS.supports('transform', 'translate3d(0,0,0)');
-
-    return {
-      isLowEndDevice,
-      supportsWillChange,
-      supportsTransform3d
-    };
+    return this.capabilities;
   }
 
   private isLowEndDevice(): boolean {

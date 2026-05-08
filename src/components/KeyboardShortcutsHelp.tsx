@@ -100,7 +100,7 @@ const KeyboardShortcutsHelp: React.FC = () => {
             {/* Header */}
             <div className="flex items-center justify-between p-4 border-b border-border">
               <h2 id="shortcuts-title" className="text-lg font-semibold flex items-center gap-2">
-                <Keyboard className="w-5 h-5 terminal-cyan" aria-hidden="true" />
+                <Keyboard className="w-5 h-5 text-phosphor" aria-hidden="true" />
                 Keyboard Shortcuts
               </h2>
               <button

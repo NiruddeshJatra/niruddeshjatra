@@ -24,17 +24,8 @@ const App = () => (
         <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/resume" element={<ResumeRedirect />} />
-          <Route path="/about" element={<Index />} />
-          <Route path="/experience" element={<Index />} />
-          <Route path="/projects" element={<Index />} />
-          <Route path="/skills" element={<Index />} />
-          <Route path="/education" element={<Index />} />
-          <Route path="/blog" element={<Index />} />
-          <Route path="/contact" element={<Index />} />
-          <Route path="/now" element={<Index />} />
-          <Route path="/lab" element={<Index />} />
-          <Route path="/notes" element={<Index />} />
-          <Route path="/colophon" element={<Index />} />
+          <Route path="/:section" element={<Index />} />
+          <Route path="/:section/:subsection" element={<Index />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
