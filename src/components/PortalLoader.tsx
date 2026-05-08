@@ -35,6 +35,7 @@ const PortalLoader = ({ destination, onComplete }: Props) => {
       return () => clearTimeout(id);
     }
 
+    let unmounted = false;
     const ctx = gsap.context(() => {
       // Pre-populate with scrambled chars before first paint — no empty-text frame
       if (textRef.current) {
@@ -120,7 +121,7 @@ const PortalLoader = ({ destination, onComplete }: Props) => {
         autoAlpha: 0,
         duration: 1,
         ease: "power2.out",
-        onComplete,
+        onComplete: () => { if (!unmounted) onComplete(); },
       });
     };
 
@@ -130,6 +131,7 @@ const PortalLoader = ({ destination, onComplete }: Props) => {
     window.addEventListener("keydown", handleKey);
 
     return () => {
+      unmounted = true;
       ctx.revert();
       window.removeEventListener("keydown", handleKey);
     };

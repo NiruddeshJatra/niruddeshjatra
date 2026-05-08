@@ -40,6 +40,7 @@ const Index = () => {
     const performanceMonitor = getPerformanceMonitor();
     return () => {
       performanceMonitor.destroy();
+      MemoryManager.destroy();
     };
   }, []);
 

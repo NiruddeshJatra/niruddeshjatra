@@ -33,6 +33,7 @@ const IntroLoader = ({ onComplete, onSkip }: Props) => {
       return;
     }
 
+    let unmounted = false;
     const ctx = gsap.context(() => {
       // No gsap.set needed — overlay renders opaque (bg-background), matching Suspense fallback.
       const tl = gsap.timeline();
@@ -79,7 +80,7 @@ const IntroLoader = ({ onComplete, onSkip }: Props) => {
         autoAlpha: 0,
         duration: 0.2,
         ease: "power2.out",
-        onComplete: onSkip,
+        onComplete: () => { if (!unmounted) onSkip(); },
       });
     };
 
@@ -89,6 +90,7 @@ const IntroLoader = ({ onComplete, onSkip }: Props) => {
     window.addEventListener("keydown", handleKey);
 
     return () => {
+      unmounted = true;
       ctx.revert();
       window.removeEventListener("keydown", handleKey);
     };

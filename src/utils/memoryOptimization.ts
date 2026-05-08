@@ -7,6 +7,8 @@ export class MemoryManager {
   private static cleanupTasks: (() => void)[] = [];
   private static memoryWarningThreshold = 0.8;
   private static isMonitoring = false;
+  private static intervalId: ReturnType<typeof setInterval> | null = null;
+  private static visibilityHandler: (() => void) | null = null;
 
   static init() {
     if (this.isMonitoring || typeof window === 'undefined') return;
@@ -16,34 +18,45 @@ export class MemoryManager {
     this.setupPageVisibilityHandling();
   }
 
+  static destroy() {
+    if (this.intervalId !== null) {
+      clearInterval(this.intervalId);
+      this.intervalId = null;
+    }
+    if (this.visibilityHandler) {
+      document.removeEventListener('visibilitychange', this.visibilityHandler);
+      this.visibilityHandler = null;
+    }
+    this.isMonitoring = false;
+    this.cleanupTasks = [];
+  }
+
   private static startMemoryMonitoring() {
     const checkMemory = () => {
       const memory = (performance as any).memory;
       if (!memory) return;
 
       const usage = memory.usedJSHeapSize / memory.jsHeapSizeLimit;
-      
+
       if (usage > this.memoryWarningThreshold) {
         console.warn('High memory usage detected:', usage);
         this.performCleanup();
       }
     };
 
-    // Check memory every 30 seconds
-    setInterval(checkMemory, 30000);
+    this.intervalId = setInterval(checkMemory, 30000);
   }
 
   private static setupPageVisibilityHandling() {
-    document.addEventListener('visibilitychange', () => {
+    this.visibilityHandler = () => {
       if (document.hidden) {
-        // Page is hidden, perform aggressive cleanup
         this.performCleanup();
         this.pauseNonEssentialAnimations();
       } else {
-        // Page is visible again, resume animations
         this.resumeAnimations();
       }
-    });
+    };
+    document.addEventListener('visibilitychange', this.visibilityHandler);
   }
 
   static addCleanupTask(task: () => void) {
