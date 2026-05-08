@@ -208,6 +208,9 @@ const Editor = ({ currentSection }: EditorProps) => {
     if (lazySection) {
       return <Suspense fallback={getSectionSkeleton(currentSection)}>{lazySection}</Suspense>;
     }
+    if (currentSection !== "welcome") {
+      return <Suspense fallback={<LineSkeleton />}><NotFoundContent /></Suspense>;
+    }
     switch (currentSection) {
       default: {
         const quote = getTodaysQuote();
