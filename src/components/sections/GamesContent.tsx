@@ -1,90 +1,107 @@
-import { useState, useEffect } from "react";
-
-const ARCZERO_PATH = "/games/arczero/";
-
-const ArcZeroCard = () => {
-  const [hovered, setHovered] = useState(false);
-
-  return (
-    <div
-      className={`
-        border font-mono transition-all duration-200 max-w-sm
-        ${hovered
-          ? 'border-[#44aaff]/70 bg-[#44aaff]/5'
-          : 'border-[#44aaff]/30 bg-black/40'
-        }
-      `}
-      style={{ fontFamily: "'Courier New', Courier, monospace" }}
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
-    >
-      <div className="px-5 py-4 border-b border-[#44aaff]/20">
-        <div className="text-[10px] text-[#44aaff]/50 mb-1">// game_001</div>
-        <div className="text-[#44aaff] text-base font-bold tracking-wider">ARCZERO</div>
-        <div className="text-xs text-white/50 mt-0.5">2d arcade · canvas · vanilla js</div>
-      </div>
-
-      <div className="px-5 py-4 space-y-3">
-        <p className="text-xs text-white/60 leading-relaxed">
-          First game out of the workshop.
-          Shoot things. Don't die. No tutorial.
-        </p>
-
-        <div className="flex gap-2 text-[10px]">
-          {['keyboard', 'mouse', 'canvas'].map(tag => (
-            <span key={tag} className="px-2 py-0.5 border border-[#44aaff]/25 text-[#44aaff]/60">
-              {tag}
-            </span>
-          ))}
-        </div>
-      </div>
-
-      <div className="px-5 pb-5">
-        <a
-          href={ARCZERO_PATH}
-          className={`
-            block w-full text-center text-xs font-bold tracking-widest py-2 border
-            transition-all duration-150
-            ${hovered
-              ? 'bg-[#44aaff] border-[#44aaff] text-black'
-              : 'border-[#44aaff]/50 text-[#44aaff] hover:bg-[#44aaff]/10'
-            }
-          `}
-        >
-          [ PLAY ]
-        </a>
-      </div>
+const GamesContent = () => (
+  <div className="animate-fade-in font-mono max-w-xl mx-auto px-4 py-6 text-foreground/85">
+    <div className="pl-2 mb-6">
+      <p className="mb-1"><span className="text-phosphor">&gt; </span>games/</p>
+      <p className="mb-1"><span className="text-phosphor">&gt; </span>things i made that you can play.</p>
+      <p className="mb-1"><span className="text-phosphor">&gt; </span>each one is its own world, deployed separately.</p>
     </div>
-  );
-};
 
-const GamesContent = () => {
-  const [visible, setVisible] = useState(false);
+    <div className="text-phosphor-dim text-sm mt-10 mb-4 font-mono">// deployed</div>
 
-  useEffect(() => {
-    const t = setTimeout(() => setVisible(true), 60);
-    return () => clearTimeout(t);
-  }, []);
+    <div style={{
+      backgroundColor: 'rgba(10, 10, 15, 0.92)',
+      border: '1px solid rgba(68, 170, 255, 0.4)',
+      borderRadius: '4px',
+      padding: '32px 28px',
+      marginBottom: '24px',
+    }} className="font-mono">
 
-  return (
-    <div
-      className={`
-        font-mono max-w-xl mx-auto px-4 py-6 transition-opacity duration-300
-        ${visible ? 'opacity-100' : 'opacity-0'}
-      `}
-      style={{ fontFamily: "'Courier New', Courier, monospace" }}
-    >
-      <ArcZeroCard />
+      <h3 style={{
+        fontFamily: '"Courier New", monospace',
+        color: '#44aaff',
+        fontSize: '2.5rem',
+        letterSpacing: '0.15em',
+        marginBottom: '4px',
+        fontWeight: 'normal',
+      }}>
+        ARCZERO
+      </h3>
 
-      <p className="mt-8 text-[10px] text-white/25">
-        more slots pending. ship first.
+      <p style={{
+        fontFamily: '"Courier New", monospace',
+        color: 'rgba(255, 255, 255, 0.7)',
+        fontSize: '0.75rem',
+        letterSpacing: '0.2em',
+        textTransform: 'uppercase',
+        marginBottom: '20px',
+      }}>
+        PHYSICS-BASED MISSILE INTERCEPTION
       </p>
 
-      <div className="mt-12 pt-3 border-t border-border/40 text-[10px] text-phosphor-dim font-mono">
-        — nj · 2026-04 · 156 bytes
-      </div>
+      <p style={{
+        fontFamily: '"Courier New", monospace',
+        color: 'rgba(255, 255, 255, 0.7)',
+        fontSize: '0.9rem',
+        lineHeight: '1.6',
+        marginBottom: '24px',
+      }}>
+        a two-minute physics puzzle disguised as an arcade reflex game.
+        you read a falling parabola, launch a rising one, and meet them
+        in the air — one shot at a time, one second of commitment at a time.
+      </p>
+
+      <p style={{
+        fontFamily: '"Courier New", monospace',
+        color: 'rgba(255, 255, 255, 0.5)',
+        fontSize: '0.75rem',
+        letterSpacing: '0.1em',
+        marginBottom: '24px',
+      }}>
+        10 levels · daily challenge · leaderboards · endless mode
+      </p>
+
+      <a
+        href="/games/arczero/"
+        style={{
+          display: 'inline-block',
+          fontFamily: '"Courier New", monospace',
+          color: '#44aaff',
+          border: '1px solid #44aaff',
+          borderRadius: '2px',
+          padding: '10px 28px',
+          fontSize: '0.95rem',
+          letterSpacing: '0.15em',
+          textDecoration: 'none',
+          transition: 'background-color 150ms ease',
+        }}
+        onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(68, 170, 255, 0.12)'}
+        onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+      >
+        ▶ PLAY
+      </a>
     </div>
-  );
-};
+
+    <div className="text-phosphor-dim text-sm mt-10 mb-4 font-mono">// in development</div>
+
+    <div className="pl-2 mb-4 opacity-70">
+      <p className="text-phosphor-dim text-sm font-mono mb-1">
+        word-grid (codename)
+      </p>
+      <p className="text-phosphor-dim text-xs font-mono leading-relaxed">
+        a classic paper-and-pencil word game from childhood, redone.
+        in head only for now.
+      </p>
+    </div>
+
+    <div className="text-phosphor-dim text-sm mt-10 mb-3 font-mono">// the rule</div>
+
+    <div className="pl-2">
+      <p className="text-foreground/85 text-sm leading-relaxed mb-4">
+        every game is its own world. its own repo, its own deploy,
+        its own visual language. this page is the doorway.
+      </p>
+    </div>
+  </div>
+);
 
 export default GamesContent;

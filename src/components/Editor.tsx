@@ -5,15 +5,14 @@ import Changelog from "./sections/Changelog";
 import { useViewport } from "../hooks/useViewport";
 import { Link, useLocation } from "react-router-dom";
 import { getTodaysQuote } from "../lib/quotes";
+import { getTodaysOpenerLine } from "../lib/openerLines";
 
 const AboutContent = lazy(() => import("./sections/AboutContent"));
 const JourneyContent = lazy(() => import("./sections/JourneyContent"));
 const RunningContent = lazy(() => import("./sections/RunningContent"));
-const BlogContent = lazy(() => import("./sections/BlogContent"));
 const ContactContent = lazy(() => import("./sections/ContactContent"));
 const NowContent = lazy(() => import("./sections/NowContent"));
 const LabContent = lazy(() => import("./sections/LabContent"));
-const NotesContent = lazy(() => import("./sections/NotesContent"));
 const GamesContent = lazy(() => import("./sections/GamesContent"));
 const NotFoundContent = lazy(() => import("./sections/NotFoundContent"));
 const ArchivedContent = lazy(() => import("./sections/ArchivedContent"));
@@ -23,6 +22,7 @@ const OnRunningForNothingContent = lazy(() => import("./sections/OnRunningForNot
 const OnRunningForNothingBnContent = lazy(() => import("./sections/OnRunningForNothingBnContent"));
 const VaultEntryContent = lazy(() => import("./sections/VaultEntryContent"));
 const VaultContent = lazy(() => import("./sections/VaultContent"));
+const FieldNotesContent = lazy(() => import("./sections/FieldNotesContent"));
 
 const LineSkeleton = ({ rows = 4 }: { rows?: number }) => (
   <div className="animate-pulse space-y-3 p-4">
@@ -50,26 +50,9 @@ const ProjectsSkeleton = () => (
   </div>
 );
 
-const ListSkeleton = () => (
-  <div className="animate-pulse p-4 space-y-4">
-    <div className="h-4 bg-muted/40 rounded w-1/4 mb-5" />
-    {Array.from({ length: 4 }, (_, i) => (
-      <div key={i} className="space-y-1.5">
-        <div className="h-3 bg-muted/40 rounded w-1/2" />
-        <div className="h-2 bg-muted/30 rounded w-3/4" />
-        <div className="flex gap-1">
-          <div className="h-4 w-10 bg-muted/30 rounded-full" />
-          <div className="h-4 w-14 bg-muted/30 rounded-full" />
-        </div>
-      </div>
-    ))}
-  </div>
-);
 
 const getSectionSkeleton = (section: string) => {
   switch (section) {
-    case 'notes':
-    case 'blog': return <ListSkeleton />;
     case 'archived-skills': return <LineSkeleton rows={6} />;
     default: return <LineSkeleton />;
   }
@@ -122,10 +105,8 @@ const getFileName = (section: string) => {
     case "about": return "me/about.md";
     case "games": return "games/";
     case "writing": return "writing/";
-    case "writing/on-running-for-nothing": return "writing/on-running-for-nothing.md";
-    case "writing/on-running-for-nothing-bn": return "writing/on-running-for-nothing.bn.md";
-    case "blog": return "writing/blog.md";
-    case "notes": return "writing/notes/";
+    case "writing-essays-on-running-for-nothing": return "writing/essays/on-running-for-nothing.md";
+    case "writing-essays-on-running-for-nothing-bn": return "writing/essays/on-running-for-nothing.bn.md";
     case "journey": return "journey/";
     case "journey-running": return "journey/running.md";
     case "journey-hiking": return "journey/hiking.md";
@@ -185,12 +166,10 @@ const Editor = ({ currentSection }: EditorProps) => {
     switch (currentSection) {
       case "about": return <AboutContent />;
       case "games": return <GamesContent />;
-      case "blog": return <BlogContent />;
-      case "notes": return <NotesContent />;
       case "journey": return <JourneyContent />;
       case "journey-running": return <RunningContent />;
-      case "journey-hiking":
-      case "field-notes": return <SoonContent />;
+      case "journey-hiking": return <SoonContent />;
+      case "field-notes": return <FieldNotesContent />;
       case "photos": return <SoonContent message="eventually." />;
       case "archived-experience": return <ArchivedContent variant="experience" />;
       case "archived-education": return <ArchivedContent variant="education" />;
@@ -200,8 +179,8 @@ const Editor = ({ currentSection }: EditorProps) => {
       case "now": return <NowContent />;
       case "lab": return <LabContent />;
       case "writing": return <WritingContent />;
-      case "writing/on-running-for-nothing": return <OnRunningForNothingContent />;
-      case "writing/on-running-for-nothing-bn": return <OnRunningForNothingBnContent />;
+      case "writing-essays-on-running-for-nothing": return <OnRunningForNothingContent />;
+      case "writing-essays-on-running-for-nothing-bn": return <OnRunningForNothingBnContent />;
       case "vault": return <VaultEntryContent />;
       case "vault-content": return <VaultContent />;
       case "404": return <NotFoundContent />;
@@ -220,6 +199,7 @@ const Editor = ({ currentSection }: EditorProps) => {
     switch (currentSection) {
       default: {
         const quote = getTodaysQuote();
+        const todaysLine = getTodaysOpenerLine();
         return (
           <div className="animate-fade-in font-mono text-sm leading-relaxed py-6 px-4">
             {!isMobile && (
@@ -235,6 +215,7 @@ const Editor = ({ currentSection }: EditorProps) => {
 
             <div className="pl-2 mb-6">
               <p><span className="text-phosphor">&gt; </span>i'm nj. this is my workshop.</p>
+              <p><span className="text-phosphor">&gt; </span>{todaysLine}</p>
               <p><span className="text-phosphor">&gt; </span>games i'm building, things i'm writing, trips i'm taking.</p>
               <p><span className="text-phosphor">&gt; </span>nothing is finished. that's fine.</p>
             </div>
@@ -243,7 +224,7 @@ const Editor = ({ currentSection }: EditorProps) => {
             <div className="pl-2 grid grid-cols-[auto_1fr] gap-x-6 gap-y-1">
               <Link to="/games" className="text-phosphor hover:underline">games/</Link>
               <span className="text-foreground/85">things i made to play</span>
-              <Link to="/blog" className="text-phosphor hover:underline">writing/</Link>
+              <Link to="/writing" className="text-phosphor hover:underline">writing/</Link>
               <span className="text-foreground/85">essays, guides, field notes</span>
               <Link to="/journey-running" className="text-phosphor hover:underline">journey/</Link>
               <span className="text-foreground/85">running, hiking, eventually mountains</span>
@@ -285,7 +266,7 @@ const Editor = ({ currentSection }: EditorProps) => {
       {/* Content Area */}
       <SmoothScrollContainer className="flex-1 relative" ref={scrollContainerRef}>
         <div className="absolute inset-0 overflow-hidden">
-          <MatrixBackground opacity={currentSection?.startsWith('writing/') ? 0.08 : undefined} />
+          <MatrixBackground opacity={currentSection?.startsWith('writing') ? 0.08 : undefined} />
         </div>
 
         <div className="flex min-h-full relative z-10">
