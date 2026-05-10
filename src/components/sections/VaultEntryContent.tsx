@@ -40,7 +40,7 @@ const VaultEntryContent = () => {
       <div className="mt-10">
         {error && <p className="text-danger mb-4">{error}</p>}
         <input
-          type="text"
+          type="password"
           value={input}
           onChange={(e) => {
             setInput(e.target.value);

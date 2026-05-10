@@ -1,17 +1,18 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { isVaultUnlocked } from "@/lib/vault";
 
 const VaultContent = () => {
   const navigate = useNavigate();
+  const [unlocked] = useState(() => isVaultUnlocked());
 
   useEffect(() => {
-    if (!isVaultUnlocked()) {
+    if (!unlocked) {
       navigate("/vault");
     }
-  }, [navigate]);
+  }, [navigate, unlocked]);
 
-  if (!isVaultUnlocked()) return null;
+  if (!unlocked) return null;
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-6 font-mono text-[15px] leading-[1.7] text-foreground/85">
