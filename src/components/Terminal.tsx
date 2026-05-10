@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { Terminal as TerminalIcon, ChevronRight, GitBranch, Clock } from "lucide-react";
 import { emitMatrix } from "@/lib/matrixSignals";
 import { SECTION_ALIASES } from "@/constants/sections";
+import { verifyPassphrase, unlockVault } from "@/lib/vault";
 
 interface TerminalProps {
   onCommand: (command: string) => void;
@@ -31,6 +32,7 @@ const COMMANDS = [
   "linkedin",
   "secrets",
   "theme matrix",
+  "vault",
 ];
 
 
@@ -54,12 +56,10 @@ const GIT_LOG_TIMELINE = [
 
 const EASTER_EGGS: { [key: string]: string[] } = {
   'whoami --deep': [
-    'nj. niruddeshjatra. nasif if you\'ve known me a while.',
-    '27. chattogram, bangladesh.',
-    'dropped out of cuet year one. self-taught after that.',
-    'tutoring 10+ years. eight kids a day, still.',
-    'quit my job in april 2026.',
-    'training for 100k. shipping arczero. learning what i actually want to make.',
+    'hi, i\'m nasif, expressively nj.',
+    'i make things. i think about things. i write some of it down.',
+    'i tutor for a living, run long distance, and try to explore whatever I find interesting.',
+    'the rest of the story is on the public pages — me/about.md is the right place to start.',
     '',
   ],
   'fortune': [],
@@ -114,7 +114,7 @@ const Terminal = ({ onCommand, currentSection, onThemeChange, isFocused = false,
     return () => clearInterval(timer);
   }, []);
 
-  const handleCommand = (cmd: string) => {
+  const handleCommand = async (cmd: string) => {
     const trimmedCmd = cmd.trim().toLowerCase();
     const newHistory = [...history, `$ ${cmd}`];
 
@@ -126,10 +126,12 @@ const Terminal = ({ onCommand, currentSection, onThemeChange, isFocused = false,
     } else if (trimmedCmd === "secrets" || trimmedCmd === "easter eggs") {
       newHistory.push(
         "• Hidden commands:",
-        "  whoami --deep              - sharper self-description",
+        "  whoami --deep              - the lighter version of who i am",
         "  git log --author=nasif     - rolling micro-timeline",
-        "  fortune                    - rotating quote from notes",
-        "  about nasif                - alias for cat about.txt",
+        "  fortune                    - rotating quote from my notes",
+        "  about nasif                - alias for cat about.md",
+        "  unlock <passphrase>        - if you know, you know",
+        "  vault                      - if you've already unlocked, jump there",
         "  sudo sudo                  - recursion warning",
         ""
       );
@@ -237,6 +239,26 @@ const Terminal = ({ onCommand, currentSection, onThemeChange, isFocused = false,
     } else if (trimmedCmd === "contact") {
       onCommand("contact");
       newHistory.push("> opening contact…", "");
+    } else if (trimmedCmd.startsWith("unlock ")) {
+      const passphrase = cmd.substring(7).trim();
+      const isValid = await verifyPassphrase(passphrase);
+      if (isValid) {
+        unlockVault();
+        newHistory.push("ok · vault unlocked", "");
+        setHistory(newHistory);
+        setCommandHistory([...commandHistory, cmd]);
+        setHistoryIndex(-1);
+        setInput("");
+        window.location.href = "/vault/the-real-story";
+        return;
+      } else {
+        newHistory.push("! incorrect", "");
+      }
+    } else if (trimmedCmd === "vault") {
+      newHistory.push("> opening vault…", "");
+      window.location.href = "/vault";
+    } else if (trimmedCmd === "coffee") {
+      newHistory.push("> ☕ no coffee. only chai.", "");
     } else if (trimmedCmd !== "") {
       newHistory.push(`! command not found: ${trimmedCmd}`, "type 'help' for available commands", "");
     }

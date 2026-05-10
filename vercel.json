@@ -5,6 +5,10 @@
       "destination": "https://arczero.vercel.app/"
     },
     {
+      "source": "/games/arczero/",
+      "destination": "https://arczero.vercel.app/"
+    },
+    {
       "source": "/games/arczero/:path*",
       "destination": "https://arczero.vercel.app/:path*"
     },
