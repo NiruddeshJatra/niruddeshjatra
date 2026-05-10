@@ -63,19 +63,11 @@ const GamesContent = () => (
       <a
         href="/games/arczero/"
         style={{
-          display: 'inline-block',
           fontFamily: '"Courier New", monospace',
-          color: '#44aaff',
-          border: '1px solid #44aaff',
-          borderRadius: '2px',
-          padding: '10px 28px',
           fontSize: '0.95rem',
           letterSpacing: '0.15em',
-          textDecoration: 'none',
-          transition: 'background-color 150ms ease',
         }}
-        onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(68, 170, 255, 0.12)'}
-        onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+        className="inline-block text-[#44aaff] border border-[#44aaff] rounded-[2px] px-[28px] py-[10px] no-underline transition-colors duration-150 hover:bg-[rgba(68,170,255,0.12)] focus-visible:bg-[rgba(68,170,255,0.12)] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#44aaff]"
       >
         ▶ PLAY
       </a>
