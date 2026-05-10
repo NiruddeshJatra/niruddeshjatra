@@ -10,8 +10,12 @@ export const STORED_HASH =
   "51f048a4ab1a15ffdad4da563d2ef6a1d504a298ee3b4def3aed49cef81d49b7";
 
 export async function verifyPassphrase(input: string): Promise<boolean> {
-  const hash = await hashPassphrase(input.trim().toLowerCase());
-  return hash === STORED_HASH;
+  try {
+    const hash = await hashPassphrase(input.trim().toLowerCase());
+    return hash === STORED_HASH;
+  } catch {
+    return false;
+  }
 }
 
 export function isVaultUnlocked(): boolean {

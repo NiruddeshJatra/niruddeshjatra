@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { Terminal as TerminalIcon, ChevronRight, GitBranch, Clock } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { emitMatrix } from "@/lib/matrixSignals";
 import { SECTION_ALIASES } from "@/constants/sections";
 import { verifyPassphrase, unlockVault } from "@/lib/vault";
@@ -78,6 +79,7 @@ const EASTER_EGGS: { [key: string]: string[] } = {
 };
 
 const Terminal = ({ onCommand, currentSection, onThemeChange, isFocused = false, onFocusChange }: TerminalProps) => {
+  const navigate = useNavigate();
   const [input, setInput] = useState("");
   const [history, setHistory] = useState<string[]>([
     "$ welcome to niruddeshjatra.space",
@@ -249,14 +251,14 @@ const Terminal = ({ onCommand, currentSection, onThemeChange, isFocused = false,
         setCommandHistory([...commandHistory, cmd]);
         setHistoryIndex(-1);
         setInput("");
-        window.location.href = "/vault/the-real-story";
+        navigate("/vault/the-real-story");
         return;
       } else {
         newHistory.push("! incorrect", "");
       }
     } else if (trimmedCmd === "vault") {
       newHistory.push("> opening vault…", "");
-      window.location.href = "/vault";
+      navigate("/vault");
     } else if (trimmedCmd === "coffee") {
       newHistory.push("> ☕ no coffee. only chai.", "");
     } else if (trimmedCmd !== "") {
