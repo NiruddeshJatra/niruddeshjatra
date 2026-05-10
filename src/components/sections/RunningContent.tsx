@@ -121,6 +121,7 @@ const RaceRow = ({ entry }: { entry: RaceEntry }) => (
 type CalEntry = { date: string; dist: string; event: string; weight: "phosphor" | "body" | "dim" };
 
 const cal: CalEntry[] = [
+  { date: "2026-06-19",  dist: "25K",                event: "Dhaka Run 25K",                       weight: "phosphor" },
   { date: "2026-07-03",  dist: "50K",               event: "Fuel Xtream Ultra 2026 Edition 2",    weight: "body" },
   { date: "2026-07-10",  dist: "21.1K",              event: "Chatto Metro Half Marathon 2026",     weight: "body" },
   { date: "2026-08-21",  dist: "30K",                event: "Sylhet Summer 30K Challenge 2026",    weight: "body" },

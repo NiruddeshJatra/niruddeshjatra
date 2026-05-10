@@ -221,3 +221,14 @@ Refined several UI details based on review:
 - **NotFoundContent.tsx** (`src/components/sections/NotFoundContent.tsx`): new section component. Renders terminal-style `cat <path>` failure, `ls` with clickable top-level route links, and `cd ~` home link. File header in Editor shows `<pathname>.404`. Footer: `— nj · 404 · this file does not exist`. Lazy-loaded like all other sections.
 - **404 routing** (`src/App.tsx`, `src/pages/Index.tsx`): React Router `*` catch-all now renders `<Index forceSection="404" />` instead of the old generic `NotFound` page. `Index` accepts optional `forceSection?: string` prop that overrides the URL-derived `currentSection`. `Editor.tsx` maps sentinel `"404"` to `<NotFoundContent />` and uses `useLocation()` to build the filename display.
 - **Pattern introduced**: `forceSection` prop on `Index` — use this whenever a route needs to override URL-derived section mapping without touching the URL itself.
+
+---
+
+## Phase F — The Vault, ArcZero Routing Fix, and May Updates
+**2026-05-10 — terminal secrets, Vercel routing edge cases, and lockfile cleanup**
+
+- **Terminal Vault (`Terminal.tsx`)**: Added hidden `vault` command that navigates to `/vault`, locked behind a passphrase hint in the `secrets` output. Added `coffee` easter egg command. Sanitized `whoami --deep` to migrate sensitive personal history into the vault.
+- **Vault Prose (`VaultContent.tsx`)**: Finalized personal prose in the vault replacing bracketed placeholders, detailing the CUET dropout, family financial dynamics, relationship context, and 5-10 year mountaineering/running goals.
+- **May Content Update**: Updated `NowContent.tsx` with May 2026 status (tutoring dominance, training restructure). Added "Dhaka Run 25K" to the 2026 calendar in `RunningContent.tsx`. Updated `quotes.ts` with new aphorisms and song lyrics.
+- **ArcZero Routing Fix (`vercel.json`)**: Fixed a subtle Vercel Edge Router bug where the trailing slash in `/games/arczero/` caused a rewrite mismatch and fell through to the portfolio's 404 page. Added an explicit rewrite rule for `"/games/arczero/"` (with slash) to proxy correctly. ArcZero's `base` was updated to `"/games/arczero/"` to ensure absolute path resolution immune to Vercel's slash-stripping.
+- **Project Cleanup**: Updated `.gitignore` to ignore the entire `.claude/` directory and removed the redundant `bun.lockb` to standardize on `yarn.lock`.

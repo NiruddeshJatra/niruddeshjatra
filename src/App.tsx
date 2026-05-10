@@ -25,6 +25,8 @@ const App = () => (
           <Route path="/resume" element={<ResumeRedirect />} />
           <Route path="/:section" element={<Index />} />
           <Route path="/:section/:subsection" element={<Index />} />
+          <Route path="/vault" element={<Index forceSection="vault" />} />
+          <Route path="/vault/the-real-story" element={<Index forceSection="vault-content" />} />
           <Route path="*" element={<Index forceSection="404" />} />
         </Routes>
       </BrowserRouter>

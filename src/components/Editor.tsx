@@ -21,6 +21,8 @@ const SoonContent = lazy(() => import("./sections/SoonContent"));
 const WritingContent = lazy(() => import("./sections/WritingContent"));
 const OnRunningForNothingContent = lazy(() => import("./sections/OnRunningForNothingContent"));
 const OnRunningForNothingBnContent = lazy(() => import("./sections/OnRunningForNothingBnContent"));
+const VaultEntryContent = lazy(() => import("./sections/VaultEntryContent"));
+const VaultContent = lazy(() => import("./sections/VaultContent"));
 
 const LineSkeleton = ({ rows = 4 }: { rows?: number }) => (
   <div className="animate-pulse space-y-3 p-4">
@@ -136,6 +138,8 @@ const getFileName = (section: string) => {
     case "contact": return "contact.md";
     case "now": return "now.md";
     case "lab": return "lab/";
+    case "vault": return "vault/";
+    case "vault-content": return "vault/the-real-story.md";
     default: return "welcome.txt";
   }
 };
@@ -198,6 +202,8 @@ const Editor = ({ currentSection }: EditorProps) => {
       case "writing": return <WritingContent />;
       case "writing/on-running-for-nothing": return <OnRunningForNothingContent />;
       case "writing/on-running-for-nothing-bn": return <OnRunningForNothingBnContent />;
+      case "vault": return <VaultEntryContent />;
+      case "vault-content": return <VaultContent />;
       case "404": return <NotFoundContent />;
       default: return null;
     }
