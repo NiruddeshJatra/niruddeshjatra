@@ -232,3 +232,13 @@ Refined several UI details based on review:
 - **May Content Update**: Updated `NowContent.tsx` with May 2026 status (tutoring dominance, training restructure). Added "Dhaka Run 25K" to the 2026 calendar in `RunningContent.tsx`. Updated `quotes.ts` with new aphorisms and song lyrics.
 - **ArcZero Routing Fix (`vercel.json`)**: Fixed a subtle Vercel Edge Router bug where the trailing slash in `/games/arczero/` caused a rewrite mismatch and fell through to the portfolio's 404 page. Added an explicit rewrite rule for `"/games/arczero/"` (with slash) to proxy correctly. ArcZero's `base` was updated to `"/games/arczero/"` to ensure absolute path resolution immune to Vercel's slash-stripping.
 - **Project Cleanup**: Updated `.gitignore` to ignore the entire `.claude/` directory and removed the redundant `bun.lockb` to standardize on `yarn.lock`.
+
+---
+
+## Phase G — Games Redesign + Field Notes Launch
+**2026-05-11 — ArcZero card in ArcZero's design language; field-notes section shipped with 3 seed entries**
+
+- **GamesContent.tsx** fully rewritten. ArcZero card now uses ArcZero's own design language: `#44aaff` title (Courier New, 2.5rem), dark wash background `rgba(10,10,15,0.92)`, cyan border `rgba(68,170,255,0.4)`, ghost PLAY button with hover fill `rgba(68,170,255,0.12)`. Deliberate guest design language — the card announces ArcZero's identity inside the portfolio site's phosphor-terminal register. File-signature footer removed (games page is not a document). Readme link removed (repo goes private at launch). Word-grid placeholder kept in quiet site register.
+- **FieldNotesContent.tsx** created. New section at `/field-notes`. Pattern: `> prefix` frame paragraph, then `<article>` blocks newest-first (2026-05-08, 2026-05-05, 2026-05-01). Bangla quote in entry 3 uses `<blockquote lang="bn">` + English italic line below — matches the `[lang="bn"]` Noto Sans Bengali rule in `index.css`. No expand/collapse, no pagination, no tags. File-signature footer: `— nj · 3 notes · 2026-05 · more as they come`.
+- **Editor.tsx**: added `FieldNotesContent` lazy import; `field-notes` switch case now routes to it (was `SoonContent`). Fixed `journey-hiking` fall-through that previously shared the `field-notes` case.
+- **Pattern added to CLAUDE.md**: guest design language rule (ArcZero card) and field notes page convention.
