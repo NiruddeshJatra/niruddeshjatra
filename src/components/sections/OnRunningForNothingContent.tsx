@@ -6,7 +6,7 @@ const OnRunningForNothingContent = () => (
     subtitle="nj · may 2026"
     currentLang="en"
     alternateLang="bn"
-    alternateLangPath="/writing/on-running-for-nothing-bn"
+    alternateLangPath="/writing/essays/on-running-for-nothing-bn"
     readTime="4 min read"
     wordCount="~700 words"
     lastUpdated="2026-05"

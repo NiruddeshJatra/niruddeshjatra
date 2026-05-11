@@ -13,29 +13,8 @@ function getArea(pathname: string): AreaInfo | null {
   if (pathname.startsWith("/games/arczero")) {
     return {
       dest: "> arczero standby",
-      checkKeys: ["ncs_portal_seen_games", "ncs_portal_seen_arczero"],
-      setKeys: ["ncs_portal_seen_games", "ncs_portal_seen_arczero"],
-    };
-  }
-  if (pathname.startsWith("/games")) {
-    return {
-      dest: "> entering the workshop",
-      checkKeys: ["ncs_portal_seen_games"],
-      setKeys: ["ncs_portal_seen_games"],
-    };
-  }
-  if (pathname.startsWith("/writing")) {
-    return {
-      dest: "> entering the writing",
-      checkKeys: ["ncs_portal_seen_writing"],
-      setKeys: ["ncs_portal_seen_writing"],
-    };
-  }
-  if (pathname.startsWith("/blog")) {
-    return {
-      dest: "> entering the journal",
-      checkKeys: ["ncs_portal_seen_blog"],
-      setKeys: ["ncs_portal_seen_blog"],
+      checkKeys: ["ncs_portal_seen_arczero"],
+      setKeys: ["ncs_portal_seen_arczero"],
     };
   }
   return null;

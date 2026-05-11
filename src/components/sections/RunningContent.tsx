@@ -153,7 +153,7 @@ const RunningContent = () => (
       <p className="mb-1"><span className="text-phosphor">&gt; </span>that it can't get me a job. i didn't reply. i remember him to this day.</p>
     </div>
 
-    <p className="mb-4 mt-4">i wrote the long answer separately. it lives <Link to="/writing/on-running-for-nothing" className="text-phosphor underline hover:no-underline">here</Link>.</p>
+    <p className="mb-4 mt-4">i wrote the long answer separately. it lives <Link to="/writing/essays/on-running-for-nothing" className="text-phosphor underline hover:no-underline">here</Link>.</p>
 
     {/* ── race log ── */}
     <SectionHeader label="race log" />

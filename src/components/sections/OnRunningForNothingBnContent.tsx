@@ -6,7 +6,7 @@ const OnRunningForNothingBnContent = () => (
     subtitle="nj · মে ২০২৬"
     currentLang="bn"
     alternateLang="en"
-    alternateLangPath="/writing/on-running-for-nothing"
+    alternateLangPath="/writing/essays/on-running-for-nothing"
     readTime="৪ মিনিট"
     wordCount="~৭০০ শব্দ"
     lastUpdated="2026-05"

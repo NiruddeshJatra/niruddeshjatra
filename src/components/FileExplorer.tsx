@@ -21,9 +21,9 @@ export const files: FileItem[] = [
   { name: 'about.md', section: 'about', icon: File, parent: 'me' },
   { name: 'games/', section: 'games', icon: Folder },
   { id: 'writing', name: 'writing/', section: 'writing', icon: Folder, isContainer: true },
-  { name: 'on-running-for-nothing.md', section: 'writing/on-running-for-nothing', icon: File, parent: 'writing' },
-  { name: 'blog.md', section: 'blog', icon: File, parent: 'writing' },
-  { name: 'notes/', section: 'notes', icon: Folder, parent: 'writing' },
+  { id: 'writing-essays', name: 'essays/', section: '', icon: Folder, isContainer: true, parent: 'writing' },
+  { name: 'on-running-for-nothing.md', section: 'writing-essays-on-running-for-nothing', icon: File, parent: 'writing-essays' },
+  { id: 'writing-tech-articles', name: 'tech-articles/', section: '', icon: Folder, isContainer: true, parent: 'writing' },
   { id: 'journey', name: 'journey/', section: 'journey', icon: Folder, isContainer: true },
   { name: 'running.md', section: 'journey-running', icon: File, parent: 'journey' },
   { name: 'hiking.md', section: 'journey-hiking', icon: File, parent: 'journey' },
@@ -76,7 +76,20 @@ const FileExplorer = ({ currentSection, onSectionChange }: FileExplorerProps) =>
     });
   };
 
-  const visibleFiles = files.filter(f => !f.parent || expandedFolders.has(f.parent));
+  const isFileVisible = (f: FileItem): boolean => {
+    if (!f.parent) return true;
+    if (!expandedFolders.has(f.parent)) return false;
+    const parent = files.find(p => p.id === f.parent);
+    return !parent || isFileVisible(parent);
+  };
+
+  const getDepth = (f: FileItem): number => {
+    if (!f.parent) return 0;
+    const parent = files.find(p => p.id === f.parent);
+    return 1 + (parent ? getDepth(parent) : 0);
+  };
+
+  const visibleFiles = files.filter(isFileVisible);
 
   const getFileButtons = () => {
     if (!explorerRef.current) return [];
@@ -151,7 +164,8 @@ const FileExplorer = ({ currentSection, onSectionChange }: FileExplorerProps) =>
             const isActive = currentSection === file.section && !file.isContainer;
             const isFocused = focusedItemIndex === index;
             const isExpanded = file.isContainer && file.id ? expandedFolders.has(file.id) : false;
-            const indent = file.parent ? 'pl-4' : 'pl-1';
+            const depth = getDepth(file);
+            const indentClass = depth === 0 ? 'pl-1' : depth === 1 ? 'pl-4' : 'pl-7';
             const Chevron = isExpanded ? ChevronDown : ChevronRight;
 
             if (file.isContainer) {
@@ -161,7 +175,7 @@ const FileExplorer = ({ currentSection, onSectionChange }: FileExplorerProps) =>
                     data-file-button
                     onClick={() => { if (file.id) toggleFolder(file.id); if (file.section) onSectionChange(file.section); }}
                     className={`
-                      w-full flex items-center gap-1 pl-1 pr-2 py-0.5 text-xs text-left
+                      w-full flex items-center gap-1 ${indentClass} pr-2 py-0.5 text-xs text-left
                       transition-colors duration-150 text-muted-foreground hover:text-foreground
                       ${isFocused ? 'ring-1 ring-primary ring-inset' : ''}
                     `}
@@ -182,7 +196,7 @@ const FileExplorer = ({ currentSection, onSectionChange }: FileExplorerProps) =>
                   data-file-button
                   onClick={() => file.section && onSectionChange(file.section)}
                   className={`
-                    w-full flex items-center gap-1.5 ${indent} pr-2 py-0.5 text-xs text-left
+                    w-full flex items-center gap-1.5 ${indentClass} pr-2 py-0.5 text-xs text-left
                     transition-colors duration-150 focus-visible:focus-visible
                     ${isActive
                       ? 'bg-muted text-primary font-medium'

@@ -242,3 +242,15 @@ Refined several UI details based on review:
 - **FieldNotesContent.tsx** created. New section at `/field-notes`. Pattern: `> prefix` frame paragraph, then `<article>` blocks newest-first (2026-05-08, 2026-05-05, 2026-05-01). Bangla quote in entry 3 uses `<blockquote lang="bn">` + English italic line below — matches the `[lang="bn"]` Noto Sans Bengali rule in `index.css`. No expand/collapse, no pagination, no tags. File-signature footer: `— nj · 3 notes · 2026-05 · more as they come`.
 - **Editor.tsx**: added `FieldNotesContent` lazy import; `field-notes` switch case now routes to it (was `SoonContent`). Fixed `journey-hiking` fall-through that previously shared the `field-notes` case.
 - **Pattern added to CLAUDE.md**: guest design language rule (ArcZero card) and field notes page convention.
+
+---
+
+## Phase G.1 — Writing Taxonomy Restructure + Portal Simplification
+**2026-05-11 — nested writing/essays/ + writing/tech-articles/ subfolders; portal loaders stripped to ArcZero only**
+
+- **FileExplorer.tsx**: writing section gained two nested container subfolders — `essays/` (id: `writing-essays`) and `tech-articles/` (id: `writing-tech-articles`). Added recursive `isFileVisible()` (full parent-chain visibility check) and `getDepth()` (0/1/2 → `pl-1`/`pl-4`/`pl-7` indent) to support arbitrarily nested sidebar items. Previous flat visibility check `!f.parent || expandedFolders.has(f.parent)` was depth-1 only.
+- **Section IDs renamed**: essay sections changed from `writing/on-running-for-nothing` → `writing-essays-on-running-for-nothing` (and `-bn` variant). All references updated: `App.tsx` explicit routes, `StatusBar.tsx` path map, `WritingContent.tsx` links, `sections.ts` aliases, essay components' `alternateLangPath` props.
+- **BlogContent.tsx + NotesContent.tsx deleted**: blog and notes sections removed from the site. Sidebar entries, terminal ls output, and portal loader keys cleaned up accordingly.
+- **useLoader.ts**: portal loaders for `/games`, `/writing`, and `/blog` removed — only ArcZero portal (`ncs_portal_seen_arczero`) remains. Rationale: portals added friction with diminishing novelty; ArcZero's portal survives because it matches the game's own portal-entry aesthetic.
+- **Terminal.tsx**: `ls` output updated (removed `writing/blog.md`, `writing/notes/`; now shows `writing/`). `help` text and `cd`/`cat` command sets updated to match new structure.
+- **WritingContent.tsx**: opening lines updated; essay link paths updated to `/writing/essays/on-running-for-nothing`; `// tech articles` section added (placeholder).

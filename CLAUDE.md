@@ -50,20 +50,20 @@ src/
 
 Canonical folder structure in `FileExplorer.files`:
 ```
-me/           → container (expand/collapse, no section)
-  about.txt   → about
-  experience.txt → experience
-  education.txt  → education
-  skills.json    → skills
-work/         → container
-  projects.txt   → projects
-  lab/           → lab
-writing/      → container
-  blog.md        → blog
-  notes/         → notes
-now.md        → now
-contact.md    → contact
-colophon.md   → colophon
+me/                  → container (expand/collapse, no section)
+  about.md           → about
+games/               → games
+writing/             → writing (container, also navigable)
+  essays/            → container (id: writing-essays, no section)
+    on-running-for-nothing.md → writing-essays-on-running-for-nothing
+  tech-articles/     → container (id: writing-tech-articles, no section)
+journey/             → container (id: journey)
+  running.md         → journey-running
+  hiking.md          → journey-hiking
+field-notes/         → field-notes
+photos/              → photos
+now.md               → now
+contact.md           → contact
 ```
 
 `FileItem` interface (in `FileExplorer.tsx`):
@@ -81,6 +81,8 @@ interface FileItem {
 Adding a new navigable section: add a `FileItem` with `section` set, `parent` pointing to the appropriate container id. `sections.ts` picks it up automatically.
 
 Adding a new container folder: add a `FileItem` with `isContainer: true`, `id` set, `section: ''`. Add children with `parent` matching that id.
+
+**Multi-level nesting**: `FileExplorer` uses `isFileVisible(f)` (recursive parent-chain check) and `getDepth(f)` for indent (`pl-1` / `pl-4` / `pl-7`). Containers can be nested — a child container must have its parent's `id` in `parent`. `sections.ts` skips items where `section === ''`.
 
 ## Key Conventions
 - Functional components + hooks only — no class components

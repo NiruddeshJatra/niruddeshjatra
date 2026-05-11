@@ -19,9 +19,8 @@ const COMMANDS = [
   "ls",
   "cat about.md",
   "cat now.md",
-  "cat blog.md",
+  "cd writing",
   "cd lab",
-  "cd notes",
   "cd /",
   "open about",
   "open now",
@@ -142,8 +141,8 @@ const Terminal = ({ onCommand, currentSection, onThemeChange, isFocused = false,
         "Available commands:",
         "  whoami           - Display information about me",
         "  ls               - List all sections",
-        "  cat <file>       - Display content (about.md, now.md, blog.md)",
-        "  cd <section>     - Navigate (about, lab, notes, now, or '/')",
+        "  cat <file>       - Display content (about.md, now.md)",
+        "  cd <section>     - Navigate (about, writing, lab, now, or '/')",
         "  open <file>      - Alias for cat/cd",
         "  games            - Open games index",
         "  games arczero    - Navigate to ArcZero",
@@ -168,8 +167,7 @@ const Terminal = ({ onCommand, currentSection, onThemeChange, isFocused = false,
       newHistory.push(
         "me/about.md",
         "games/",
-        "writing/blog.md",
-        "writing/notes/",
+        "writing/",
         "journey/running.md",
         "journey/hiking.md",
         "field-notes/",
@@ -223,7 +221,7 @@ const Terminal = ({ onCommand, currentSection, onThemeChange, isFocused = false,
     } else if (trimmedCmd.startsWith("cat ")) {
       const file = trimmedCmd.substring(4).trim();
       const section = SECTION_ALIASES[file];
-      const isDirSection = section === "lab" || section === "notes" || section === "games" || section === "field-notes" || section === "photos";
+      const isDirSection = section === "lab" || section === "games" || section === "field-notes" || section === "photos" || section === "writing";
       if (section && section !== "welcome" && !isDirSection) {
         onCommand(section);
         newHistory.push(`> loading ${file}…`, "");
