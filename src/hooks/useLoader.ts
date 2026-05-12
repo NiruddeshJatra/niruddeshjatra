@@ -84,6 +84,8 @@ export function usePortalLoader() {
     setShouldShow(true);
   }, [location.pathname, prefersReducedMotion]);
 
+  const onCompleteRef = useRef<(() => void) | null>(null);
+
   const dismiss = useCallback(() => {
     const area = currentAreaRef.current;
     if (area) {
@@ -98,7 +100,26 @@ export function usePortalLoader() {
     }
     setShouldShow(false);
     setDestination(null);
+
+    const onComplete = onCompleteRef.current;
+    onCompleteRef.current = null;
+    if (onComplete) onComplete();
   }, []);
 
-  return { shouldShow, destination, dismiss };
+  const triggerPortal = useCallback((config: {
+    destination: PortalDestination;
+    sessionKey?: string;
+    onComplete?: () => void;
+  }) => {
+    if (prefersReducedMotion) {
+      if (config.onComplete) config.onComplete();
+      return;
+    }
+    onCompleteRef.current = config.onComplete ?? null;
+    currentAreaRef.current = null;
+    setDestination(config.destination);
+    setShouldShow(true);
+  }, [prefersReducedMotion]);
+
+  return { shouldShow, destination, dismiss, triggerPortal };
 }

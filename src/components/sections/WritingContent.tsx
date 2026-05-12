@@ -11,6 +11,8 @@ const WritingContent = () => (
     <div className="text-phosphor-dim text-sm mt-10 mb-3 font-mono">// essays</div>
 
     <div className="pl-2 grid grid-cols-[auto_1fr] gap-x-6 gap-y-1">
+      <Link to="/writing/essays/on-staying-small" className="text-phosphor hover:underline">on staying small</Link>
+      <span className="text-foreground/85">why i won't scale my teaching · <span className="text-phosphor-dim">[en]</span> <Link to="/writing/essays/on-staying-small-bn" className="text-phosphor-dim hover:text-phosphor">[bn]</Link></span>
       <Link to="/writing/essays/on-running-for-nothing" className="text-phosphor hover:underline">on running for nothing</Link>
       <span className="text-foreground/85">why I run when there's no career outcome · <span className="text-phosphor-dim">[en]</span> <Link to="/writing/essays/on-running-for-nothing-bn" className="text-phosphor-dim hover:text-phosphor">[bn]</Link></span>
     </div>

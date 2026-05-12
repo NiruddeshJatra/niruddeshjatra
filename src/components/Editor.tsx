@@ -20,6 +20,8 @@ const SoonContent = lazy(() => import("./sections/SoonContent"));
 const WritingContent = lazy(() => import("./sections/WritingContent"));
 const OnRunningForNothingContent = lazy(() => import("./sections/OnRunningForNothingContent"));
 const OnRunningForNothingBnContent = lazy(() => import("./sections/OnRunningForNothingBnContent"));
+const OnStayingSmallContent = lazy(() => import("./sections/OnStayingSmallContent"));
+const OnStayingSmallBnContent = lazy(() => import("./sections/OnStayingSmallBnContent"));
 const VaultEntryContent = lazy(() => import("./sections/VaultEntryContent"));
 const VaultContent = lazy(() => import("./sections/VaultContent"));
 const FieldNotesContent = lazy(() => import("./sections/FieldNotesContent"));
@@ -107,6 +109,8 @@ const getFileName = (section: string) => {
     case "writing": return "writing/";
     case "writing-essays-on-running-for-nothing": return "writing/essays/on-running-for-nothing.md";
     case "writing-essays-on-running-for-nothing-bn": return "writing/essays/on-running-for-nothing.bn.md";
+    case "writing-essays-on-staying-small": return "writing/essays/on-staying-small.md";
+    case "writing-essays-on-staying-small-bn": return "writing/essays/on-staying-small.bn.md";
     case "journey": return "journey/";
     case "journey-running": return "journey/running.md";
     case "journey-hiking": return "journey/hiking.md";
@@ -181,6 +185,8 @@ const Editor = ({ currentSection }: EditorProps) => {
       case "writing": return <WritingContent />;
       case "writing-essays-on-running-for-nothing": return <OnRunningForNothingContent />;
       case "writing-essays-on-running-for-nothing-bn": return <OnRunningForNothingBnContent />;
+      case "writing-essays-on-staying-small": return <OnStayingSmallContent />;
+      case "writing-essays-on-staying-small-bn": return <OnStayingSmallBnContent />;
       case "vault": return <VaultEntryContent />;
       case "vault-content": return <VaultContent />;
       case "404": return <NotFoundContent />;

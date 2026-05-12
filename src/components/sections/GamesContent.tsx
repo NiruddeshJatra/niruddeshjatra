@@ -1,4 +1,21 @@
-const GamesContent = () => (
+import React from "react";
+import { usePortalLoader } from "@/hooks/useLoader";
+
+const GamesContent = () => {
+  const { triggerPortal } = usePortalLoader();
+
+  const handlePlayClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    triggerPortal({
+      destination: "> arczero standby",
+      sessionKey: "ncs_portal_seen_arczero",
+      onComplete: () => {
+        window.location.href = "/games/arczero/";
+      },
+    });
+  };
+
+  return (
   <div className="animate-fade-in font-mono max-w-xl mx-auto px-4 py-6 text-foreground/85">
     <div className="pl-2 mb-6">
       <p className="mb-1"><span className="text-phosphor">&gt; </span>games/</p>
@@ -62,6 +79,7 @@ const GamesContent = () => (
 
       <a
         href="/games/arczero/"
+        onClick={handlePlayClick}
         style={{
           fontFamily: '"Courier New", monospace',
           fontSize: '0.95rem',
@@ -94,6 +112,7 @@ const GamesContent = () => (
       </p>
     </div>
   </div>
-);
+  );
+};
 
 export default GamesContent;

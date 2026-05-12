@@ -254,3 +254,16 @@ Refined several UI details based on review:
 - **useLoader.ts**: portal loaders for `/games`, `/writing`, and `/blog` removed — only ArcZero portal (`ncs_portal_seen_arczero`) remains. Rationale: portals added friction with diminishing novelty; ArcZero's portal survives because it matches the game's own portal-entry aesthetic.
 - **Terminal.tsx**: `ls` output updated (removed `writing/blog.md`, `writing/notes/`; now shows `writing/`). `help` text and `cd`/`cat` command sets updated to match new structure.
 - **WritingContent.tsx**: opening lines updated; essay link paths updated to `/writing/essays/on-running-for-nothing`; `// tech articles` section added (placeholder).
+
+---
+
+## Phase H — Second Essay + ArcZero Portal Click-Intercept Fix
+**2026-05-12 — "on staying small" essay shipped (EN + BN); PLAY button portal fix**
+
+- **OnStayingSmallContent.tsx** created. Second essay: "on staying small" — 7 sections (opening, what coaching is, what coaching sells, why this is personal, the suggestion, the contradiction, what i'd rather build), plus closing `pl-2 mb-4 mt-8` block with `>` prefix lines. Same `EssayContent` wrapper pattern as the medal essay.
+- **OnStayingSmallBnContent.tsx** created. Bengali version: title "কোচিং সেন্টার দিলেই তো পারো!" (user-revised from "ছোট থাকা"). `lang="bn"` propagated via `EssayContent` root div. All 7 sections in Bengali verbatim.
+- **useLoader.ts**: added `triggerPortal()` to `usePortalLoader()` return. Takes `{ destination, sessionKey?, onComplete? }`. Skips sessionStorage gate (manual trigger always fires). Stores `onComplete` in `onCompleteRef`; `dismiss` calls it after portal animation completes. Fixes the ArcZero PLAY button: full-page navigation was tearing down the React SPA before the portal could render.
+- **GamesContent.tsx**: PLAY button converted from bare `<a href>` to click-intercept pattern. `handlePlayClick` calls `triggerPortal({ destination: '> arczero standby', onComplete: () => window.location.href = '/games/arczero/' })`. `href` retained for accessibility (right-click → open in new tab still works).
+- **WritingContent.tsx**: second essay entry added (newest first). "on staying small" links to `/writing/essays/on-staying-small`; `[bn]` link to `-bn` variant.
+- **FileExplorer.tsx**: `on-staying-small.md` added above `on-running-for-nothing.md` in `writing-essays` container (newest first).
+- **App.tsx, Editor.tsx, StatusBar.tsx, sections.ts**: routes, switch cases, lazy imports, getFileName entries, getPath cases, LAST_UPDATED, and SECTION_ALIASES updated for both new essay sections.
