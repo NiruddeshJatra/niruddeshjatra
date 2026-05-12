@@ -1,12 +1,10 @@
 import React from "react";
-import { usePortalLoader } from "@/hooks/useLoader";
+import { firePortal } from "@/hooks/useLoader";
 
 const GamesContent = () => {
-  const { triggerPortal } = usePortalLoader();
-
   const handlePlayClick = (e: React.MouseEvent) => {
     e.preventDefault();
-    triggerPortal({
+    firePortal({
       destination: "> arczero standby",
       sessionKey: "ncs_portal_seen_arczero",
       onComplete: () => {

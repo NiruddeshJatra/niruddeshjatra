@@ -53,6 +53,22 @@ export function useIntroLoader() {
   return { shouldShow: shouldShow && !prefersReducedMotion, dismiss };
 }
 
+// ─── Portal singleton ────────────────────────────────────────────────────────
+// Allows components deep in the tree to fire the portal without prop drilling.
+// Index.tsx's usePortalLoader instance registers itself; firePortal() dispatches to it.
+
+type PortalConfig = {
+  destination: PortalDestination;
+  sessionKey?: string;
+  onComplete?: () => void;
+};
+
+let _registeredTrigger: ((config: PortalConfig) => void) | null = null;
+
+export function firePortal(config: PortalConfig) {
+  if (_registeredTrigger) _registeredTrigger(config);
+}
+
 // ─── PortalLoader hook ───────────────────────────────────────────────────────
 // Fires once per area per session. Per-area flags reset on tab close.
 
@@ -106,11 +122,7 @@ export function usePortalLoader() {
     if (onComplete) onComplete();
   }, []);
 
-  const triggerPortal = useCallback((config: {
-    destination: PortalDestination;
-    sessionKey?: string;
-    onComplete?: () => void;
-  }) => {
+  const triggerPortal = useCallback((config: PortalConfig) => {
     if (prefersReducedMotion) {
       if (config.onComplete) config.onComplete();
       return;
@@ -120,6 +132,12 @@ export function usePortalLoader() {
     setDestination(config.destination);
     setShouldShow(true);
   }, [prefersReducedMotion]);
+
+  // Register this instance as the singleton trigger so firePortal() works
+  useEffect(() => {
+    _registeredTrigger = triggerPortal;
+    return () => { _registeredTrigger = null; };
+  }, [triggerPortal]);
 
   return { shouldShow, destination, dismiss, triggerPortal };
 }
