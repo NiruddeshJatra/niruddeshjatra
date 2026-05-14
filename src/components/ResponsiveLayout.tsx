@@ -204,15 +204,16 @@ const ResponsiveLayout: React.FC<ResponsiveLayoutProps> = ({
           onSectionChange={handleSectionChange}
         />
 
-        {/* Main content — pb-11 clears the collapsed terminal bar */}
+        {/* Main content — same absolute-inset pattern as desktop so Editor's h-full resolves */}
         <main
           id="main-content"
-          className="flex-1 overflow-y-auto pb-11"
+          className="flex-1 relative"
           role="main"
           aria-label="Portfolio content"
         >
           <div
             className={`
+              absolute inset-0 pb-11
               transition-all duration-150 ease-out
               ${isTransitioning ? 'opacity-0' : 'opacity-100'}
             `}
