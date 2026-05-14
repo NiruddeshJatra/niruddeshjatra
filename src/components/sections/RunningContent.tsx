@@ -4,6 +4,17 @@ const SectionHeader = ({ label }: { label: string }) => (
   <div className="text-phosphor-dim text-sm mt-10 mb-3 font-mono">// {label}</div>
 );
 
+const HScrollTable = ({ children, className = "my-6" }: { children: React.ReactNode; className?: string }) => (
+  <>
+    <div className="sm:hidden text-[10px] text-phosphor-dim font-mono mb-2 pl-2">← swipe to scroll →</div>
+    <div className={`${className} overflow-x-auto -mx-4 sm:mx-0 px-4 sm:px-0`}>
+      <div className="font-mono text-xs min-w-[640px] sm:min-w-0">
+        {children}
+      </div>
+    </div>
+  </>
+);
+
 type RaceEntry = {
   date: string;
   dist: string;
@@ -159,18 +170,13 @@ const RunningContent = () => (
     <SectionHeader label="race log" />
     <p className="mb-4">chronological. dates, distances, times, conditions. ▲ flags rough ones.</p>
 
-    <div className="sm:hidden text-[10px] text-phosphor-dim font-mono mb-2 pl-2">← swipe to scroll →</div>
-    <div className="my-6 overflow-x-auto -mx-4 sm:mx-0 px-4 sm:px-0">
-      <div className="font-mono text-xs min-w-[640px] sm:min-w-0">
-        {races.map((r) => <RaceRow key={r.date + r.event} entry={r} />)}
-
-        <div className="my-3 text-phosphor-dim text-xs italic">
-          ───  1.5 year gap  ───  trained briefly. stopped. money was tight.
-        </div>
-
-        {racesAfterGap.map((r) => <RaceRow key={r.date + r.event} entry={r} />)}
+    <HScrollTable>
+      {races.map((r) => <RaceRow key={r.date + r.event} entry={r} />)}
+      <div className="my-3 text-phosphor-dim text-xs italic">
+        ───  1.5 year gap  ───  trained briefly. stopped. money was tight.
       </div>
-    </div>
+      {racesAfterGap.map((r) => <RaceRow key={r.date + r.event} entry={r} />)}
+    </HScrollTable>
 
     {/* ── not a race, but ── */}
     <SectionHeader label="not a race, but" />
@@ -197,12 +203,9 @@ const RunningContent = () => (
 
     <p className="mb-4">every runner has these. mine:</p>
 
-    <div className="sm:hidden text-[10px] text-phosphor-dim font-mono mb-2 pl-2">← swipe to scroll →</div>
-    <div className="my-6 overflow-x-auto -mx-4 sm:mx-0 px-4 sm:px-0">
-      <div className="font-mono text-xs min-w-[640px] sm:min-w-0">
-        {skipped.map((r) => <RaceRow key={r.date + r.event} entry={{ ...r, skip: true }} />)}
-      </div>
-    </div>
+    <HScrollTable>
+      {skipped.map((r) => <RaceRow key={r.date + r.event} entry={{ ...r, skip: true }} />)}
+    </HScrollTable>
 
     <p className="mb-4">
       there are also events i wanted to register for and couldn't, mostly
@@ -256,18 +259,15 @@ const RunningContent = () => (
 
     <p className="mb-4">races i'm watching. weighted by interest. not all of these will happen.</p>
 
-    <div className="sm:hidden text-[10px] text-phosphor-dim font-mono mb-2 pl-2">← swipe to scroll →</div>
-    <div className="my-4 overflow-x-auto -mx-4 sm:mx-0 px-4 sm:px-0">
-      <div className="font-mono text-xs min-w-[640px] sm:min-w-0">
-        {cal.map((c) => (
-          <div key={c.date + c.event} className={`flex gap-x-4 mb-1 ${weightClass[c.weight]}`}>
-            <span className="shrink-0 w-[10ch]">{c.date}</span>
-            <span className="shrink-0 w-[18ch]">{c.dist}</span>
-            <span>{c.event}</span>
-          </div>
-        ))}
-      </div>
-    </div>
+    <HScrollTable className="my-4">
+      {cal.map((c) => (
+        <div key={c.date + c.event} className={`flex gap-x-4 mb-1 ${weightClass[c.weight]}`}>
+          <span className="shrink-0 w-[10ch]">{c.date}</span>
+          <span className="shrink-0 w-[18ch]">{c.dist}</span>
+          <span>{c.event}</span>
+        </div>
+      ))}
+    </HScrollTable>
 
     <div className="mt-12 pt-3 border-t border-border/40 text-[10px] text-phosphor-dim font-mono">
       — nj · last updated 2026-05 · still going
