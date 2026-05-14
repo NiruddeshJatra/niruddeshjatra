@@ -103,6 +103,7 @@ const MobileTerminalSheet: React.FC<MobileTerminalSheetProps> = ({
                 onThemeChange={onThemeChange}
                 isFocused={true}
                 onFocusChange={() => {}}
+                hideStatusFooter={true}
               />
             </Suspense>
           </div>

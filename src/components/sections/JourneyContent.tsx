@@ -10,15 +10,19 @@ const JourneyContent = () => (
 
     <div className="text-phosphor-dim text-sm mt-10 mb-3 font-mono">// pages</div>
 
-    <div className="pl-2 grid grid-cols-[auto_1fr] gap-x-6 gap-y-1">
-      <Link to="/journey-running" className="text-phosphor hover:underline">running/</Link>
-      <span className="text-foreground/85">the race log, the training, the next 100K</span>
-
-      <span className="text-phosphor-dim">hiking/</span>
-      <span className="text-phosphor-dim">bandarban, mountains of bangladesh — soon</span>
-
-      <span className="text-phosphor-dim">mountains/</span>
-      <span className="text-phosphor-dim">eventually</span>
+    <div className="pl-2 space-y-4 sm:space-y-1">
+      <div className="sm:grid sm:grid-cols-[auto_1fr] sm:gap-x-6 sm:items-baseline">
+        <div className="font-mono"><Link to="/journey-running" className="text-phosphor hover:underline">running/</Link></div>
+        <div className="text-foreground/85 mt-1 sm:mt-0 text-sm">the race log, the training, the next 100K</div>
+      </div>
+      <div className="sm:grid sm:grid-cols-[auto_1fr] sm:gap-x-6 sm:items-baseline">
+        <div className="font-mono"><span className="text-phosphor-dim">hiking/</span></div>
+        <div className="text-phosphor-dim mt-1 sm:mt-0 text-sm">bandarban, mountains of bangladesh — soon</div>
+      </div>
+      <div className="sm:grid sm:grid-cols-[auto_1fr] sm:gap-x-6 sm:items-baseline">
+        <div className="font-mono"><span className="text-phosphor-dim">mountains/</span></div>
+        <div className="text-phosphor-dim mt-1 sm:mt-0 text-sm">eventually</div>
+      </div>
     </div>
 
     <div className="mt-12 pt-3 border-t border-border/40 text-[10px] text-phosphor-dim font-mono">
