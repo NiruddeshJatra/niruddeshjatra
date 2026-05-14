@@ -1,4 +1,26 @@
 import { Link } from "react-router-dom";
+import IndexRow from "./IndexRow";
+
+const essays = [
+  {
+    title: "on forgetting",
+    path: "/writing/essays/on-forgetting",
+    bnPath: "/writing/essays/on-forgetting-bn",
+    description: "why the mind forgets, and why that's mercy",
+  },
+  {
+    title: "on staying small",
+    path: "/writing/essays/on-staying-small",
+    bnPath: "/writing/essays/on-staying-small-bn",
+    description: "why i won't scale my teaching",
+  },
+  {
+    title: "on running for nothing",
+    path: "/writing/essays/on-running-for-nothing",
+    bnPath: "/writing/essays/on-running-for-nothing-bn",
+    description: "why I run when there's no career outcome",
+  },
+];
 
 const WritingContent = () => (
   <div className="animate-fade-in font-mono max-w-xl mx-auto px-4 py-6 text-foreground/85">
@@ -11,18 +33,16 @@ const WritingContent = () => (
     <div className="text-phosphor-dim text-sm mt-10 mb-3 font-mono">// essays</div>
 
     <div className="pl-2 space-y-4 sm:space-y-1">
-      <div className="sm:grid sm:grid-cols-[auto_1fr] sm:gap-x-6 sm:items-baseline">
-        <div className="font-mono"><Link to="/writing/essays/on-forgetting" className="text-phosphor hover:underline">on forgetting</Link></div>
-        <div className="text-foreground/85 mt-1 sm:mt-0 text-sm">why the mind forgets, and why that's mercy · <span className="text-phosphor-dim">[en]</span> <Link to="/writing/essays/on-forgetting-bn" className="text-phosphor-dim hover:text-phosphor">[bn]</Link></div>
-      </div>
-      <div className="sm:grid sm:grid-cols-[auto_1fr] sm:gap-x-6 sm:items-baseline">
-        <div className="font-mono"><Link to="/writing/essays/on-staying-small" className="text-phosphor hover:underline">on staying small</Link></div>
-        <div className="text-foreground/85 mt-1 sm:mt-0 text-sm">why i won't scale my teaching · <span className="text-phosphor-dim">[en]</span> <Link to="/writing/essays/on-staying-small-bn" className="text-phosphor-dim hover:text-phosphor">[bn]</Link></div>
-      </div>
-      <div className="sm:grid sm:grid-cols-[auto_1fr] sm:gap-x-6 sm:items-baseline">
-        <div className="font-mono"><Link to="/writing/essays/on-running-for-nothing" className="text-phosphor hover:underline">on running for nothing</Link></div>
-        <div className="text-foreground/85 mt-1 sm:mt-0 text-sm">why I run when there's no career outcome · <span className="text-phosphor-dim">[en]</span> <Link to="/writing/essays/on-running-for-nothing-bn" className="text-phosphor-dim hover:text-phosphor">[bn]</Link></div>
-      </div>
+      {essays.map((essay) => (
+        <IndexRow
+          key={essay.path}
+          name={<Link to={essay.path} className="text-phosphor hover:underline">{essay.title}</Link>}
+          description={<>
+            {essay.description} · <span className="text-phosphor-dim">[en]</span>{" "}
+            <Link to={essay.bnPath} className="text-phosphor-dim hover:text-phosphor">[bn]</Link>
+          </>}
+        />
+      ))}
     </div>
 
     <div className="text-phosphor-dim text-sm mt-10 mb-3 font-mono">// tech articles</div>
