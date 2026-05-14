@@ -279,3 +279,16 @@ Refined several UI details based on review:
 - **FileExplorer.tsx**: `on-forgetting.md` added as first child of `writing-essays` container (newest first).
 - **App.tsx, Editor.tsx, StatusBar.tsx, sections.ts**: routes, switch cases, lazy imports, getFileName entries, getPath cases, LAST_UPDATED, and SECTION_ALIASES updated for both new essay sections.
 - **CLAUDE.md**: sidebar file tree updated to reflect three essays under `essays/`, newest first.
+
+---
+
+## Phase E — Mobile Phase 1: Tear-down + Skeleton
+**2026-05-14 — Delete parallel mobile impl; adapt desktop layout for mobile widths**
+
+- **Deleted**: `MobileShell.tsx` (parallel mobile layout with wrong branding, dead bottom nav, no terminal) and `MobileNavigation.tsx` (custom file list that duplicated FileExplorer)
+- **Created**: `MobileFileDrawer.tsx` — slide-in drawer from left that wraps the existing `FileExplorer` component unchanged; swipe-left + escape + backdrop-tap to close; auto-closes on section select
+- **Created**: `MobileTerminalSheet.tsx` — fixed bottom sheet, 44px collapsed (`$ _` tap target), 60vh expanded with lazy-loaded `Terminal`; tap-outside + escape to dismiss
+- **Modified**: `ResponsiveLayout.tsx` — removed `if (viewport.isMobile) return <MobileShell>` branch; mobile now served by same component: header (`niruddeshjatra` brand + hamburger, no search/shortcuts), `MobileFileDrawer`, `Editor` in `<main pb-11>`, `MobileTerminalSheet`; desktop branch unchanged
+- **Modified**: `Editor.tsx` — ASCII banner no longer gated behind `!isMobile`; responsive font `text-[5px] sm:text-[8px] md:text-[10px]` fits at 360px without horizontal scroll
+- **Modified**: `IntroLoader.tsx` — `text-xs sm:text-sm` + narrower padding; loader lines fit single-line at mobile width
+- **Modified**: `PortalLoader.tsx` — `text-xl sm:text-3xl md:text-4xl`; destination phrase fits at 360px

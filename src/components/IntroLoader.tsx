@@ -108,7 +108,7 @@ const IntroLoader = ({ onComplete, onSkip }: Props) => {
     >
       {/* Terminal block — stop propagation so inner clicks don't skip */}
       <div
-        className="font-mono text-sm leading-loose max-w-[560px] w-full px-8"
+        className="font-mono text-xs sm:text-sm leading-loose max-w-[560px] w-full px-6 sm:px-8"
         onClick={(e) => e.stopPropagation()}
       >
         {LINES.map((_line, i) => (

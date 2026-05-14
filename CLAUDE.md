@@ -21,8 +21,9 @@ src/
 │   ├── Editor.tsx        # Main VS Code-style editor pane; per-section skeleton fallbacks
 │   ├── FileExplorer.tsx  # Sidebar file tree — authoritative `files` array + hierarchy
 │   ├── Terminal.tsx      # Interactive terminal component
-│   ├── ResponsiveLayout.tsx  # Root layout — gates MobileShell at < 768px
-│   ├── MobileShell.tsx   # Mobile-only layout (top bar + editor + bottom nav)
+│   ├── ResponsiveLayout.tsx  # Root layout — single layout, mobile-aware via viewport.isMobile
+│   ├── MobileFileDrawer.tsx  # Slide-in file drawer (mobile only); reuses FileExplorer
+│   ├── MobileTerminalSheet.tsx  # Slide-up terminal sheet (mobile only); reuses Terminal
 │   ├── CommandPalette.tsx    # Cmd+P / Cmd+Shift+P palette (cmdk, lazy-loaded)
 │   ├── ResponsiveHeader.tsx  # Top nav / menu bar
 │   ├── StatusBar.tsx     # Bottom VS Code status bar
@@ -94,7 +95,9 @@ Adding a new container folder: add a `FileItem` with `isContainer: true`, `id` s
 - No `any` types — proper TypeScript interfaces required
 - Project/skills data lives in `src/constants/` — never hardcoded in components
 - **Section aliases** live in `src/constants/sections.ts`, derived from `FileExplorer.files` — never duplicate this map in components. Skips items where `section === ''` (container folders).
-- **Mobile layout**: `ResponsiveLayout` gates `<MobileShell>` when `viewport.isMobile` (< 768px) — the desktop IDE chrome must NOT render on mobile
+- **Mobile layout**: `ResponsiveLayout` serves both mobile and desktop from one component — no separate MobileShell. When `viewport.isMobile`, renders: top header (`niruddeshjatra` brand + hamburger), `MobileFileDrawer` (off-canvas), `<main pb-11>` with `Editor`, and `MobileTerminalSheet` (fixed bottom, 44px collapsed / 60vh expanded). No bottom nav. No search button. No status strip.
+- **MobileFileDrawer**: wraps `FileExplorer` in a slide-in drawer. Never reimplement the file tree — always reuse `FileExplorer`.
+- **MobileTerminalSheet**: wraps `Terminal` in a slide-up sheet. Collapsed bar = 44px. Expanded = 60vh. Terminal is lazy-loaded inside. Never reimplement terminal logic.
 - **CommandPalette** is lazy-loaded; `meta+p` = files, `meta+shift+p` = commands; always guard against `HTMLInputElement` focus before opening
 - **FileExplorer owns its width** — do NOT set `w-*` on the wrapper div in `ResponsiveLayout`. Collapsed = `w-8`, expanded = `w-48`, managed internally.
 - **Lazy section loading** — all sections in `Editor.tsx` are `React.lazy`. Each has a dedicated skeleton fallback (see `getSectionSkeleton`). Do not use generic "loading..." text.

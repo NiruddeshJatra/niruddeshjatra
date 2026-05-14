@@ -1,4 +1,6 @@
 import React, { useState, useCallback, useEffect, useRef, lazy, Suspense } from 'react';
+import { Menu } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { useResponsiveLayout } from '../hooks/useResponsiveLayout';
 import { useGlobalKeyboardShortcuts } from '../hooks/useKeyboardNavigation';
 import { getLayoutClasses, Z_INDEX } from '../utils/responsive';
@@ -6,14 +8,14 @@ import { getLayoutChangeAria, announceToScreenReader } from '../utils/accessibil
 import FileExplorer, { files } from './FileExplorer';
 import Editor from './Editor';
 import ResponsiveHeader from './ResponsiveHeader';
-import MobileNavigation from './MobileNavigation';
 import KeyboardShortcutsHelp from './KeyboardShortcutsHelp';
 import StatusBar from './StatusBar';
-import { LazyTerminal, LazyResponsiveTerminal, ConditionalLazy } from './LazyComponents';
+import { LazyTerminal, ConditionalLazy } from './LazyComponents';
+import MobileFileDrawer from './MobileFileDrawer';
+import MobileTerminalSheet from './MobileTerminalSheet';
 import { MemoryManager } from '@/utils/memoryOptimization';
 import { LayoutMode } from '../hooks/useViewport';
 import { useCommandPalette } from '../hooks/useCommandPalette';
-import MobileShell from './MobileShell';
 
 const LazyCommandPalette = lazy(() => import('./CommandPalette'));
 
@@ -40,6 +42,7 @@ const ResponsiveLayout: React.FC<ResponsiveLayoutProps> = ({
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [isTerminalFocused, setIsTerminalFocused] = useState(false);
   const transitionTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const navigate = useNavigate();
 
   // Memory optimization - register cleanup tasks
   useEffect(() => {
@@ -60,17 +63,14 @@ const ResponsiveLayout: React.FC<ResponsiveLayoutProps> = ({
   // Handle section changes with smooth transitions
   const handleSectionChange = useCallback((section: string) => {
     setIsTransitioning(true);
-    
-    // Close mobile navigation when section changes
+
     if (navigationState.isMobileMenuOpen) {
       actions.closeMobileMenu();
     }
-    
-    // Announce section change to screen readers
+
     const fileName = files.find(f => f.section === section)?.name || section;
     announceToScreenReader(`Loading ${fileName}`, 'polite');
-    
-    // Use optimal animation duration based on device performance
+
     const duration = viewport.isMobile ? 150 : 200;
 
     if (transitionTimeoutRef.current !== null) clearTimeout(transitionTimeoutRef.current);
@@ -82,43 +82,18 @@ const ResponsiveLayout: React.FC<ResponsiveLayoutProps> = ({
     }, duration);
   }, [onSectionChange, navigationState.isMobileMenuOpen, actions, viewport.isMobile]);
 
-  // Handle terminal commands
   const handleCommand = useCallback((command: string) => {
     handleSectionChange(command);
   }, [handleSectionChange]);
 
-  // Handle orientation changes and layout adaptation
+  // Auto-close mobile menu when switching to desktop
   useEffect(() => {
-    // Preserve current state during layout changes
-    const preserveState = () => {
-      // Auto-close mobile menu when switching to desktop
-      if (viewport.isDesktop && navigationState.isMobileMenuOpen) {
-        actions.closeMobileMenu();
-      }
-      
-      // Adjust terminal state based on layout mode
-      if (viewport.isMobile && navigationState.currentLayout === LayoutMode.SINGLE_PANEL) {
-        // On mobile, terminal should be collapsible
-        if (navigationState.isTerminalExpanded) {
-          // Keep terminal expanded if it was already expanded
-        }
-      }
-      
-      // Announce layout changes to screen readers
-      const layoutModeNames = {
-        [LayoutMode.SINGLE_PANEL]: 'mobile',
-        [LayoutMode.DUAL_PANEL]: 'tablet',
-        [LayoutMode.THREE_PANEL]: 'desktop'
-      };
-      
-      const layoutName = layoutModeNames[navigationState.currentLayout] || 'unknown';
-      announceToScreenReader(`Layout changed to ${layoutName} mode`, 'polite');
-    };
+    if (viewport.isDesktop && navigationState.isMobileMenuOpen) {
+      actions.closeMobileMenu();
+    }
+  }, [viewport.isDesktop, navigationState.isMobileMenuOpen, actions]);
 
-    preserveState();
-  }, [viewport.layoutMode, viewport.isDesktop, viewport.isMobile, navigationState, actions]);
-
-  // Click-outside collapses terminal
+  // Click-outside collapses terminal (desktop)
   useEffect(() => {
     const handler = (e: MouseEvent) => {
       const target = e.target as HTMLElement;
@@ -130,21 +105,18 @@ const ResponsiveLayout: React.FC<ResponsiveLayoutProps> = ({
     return () => document.removeEventListener('mousedown', handler);
   }, []);
 
-  // Terminal height: collapsed differs by route type, expanded is fixed
   const isReadingPage = currentSection?.startsWith('writing/');
   const collapsedHeight = isReadingPage ? 72 : 132;
   const terminalHeight = isTerminalFocused ? 288 : collapsedHeight;
 
-  // Get layout classes based on current layout mode
   const layoutClasses = getLayoutClasses(navigationState.currentLayout);
 
-  // Get layout mode name for accessibility
   const layoutModeNames = {
     [LayoutMode.SINGLE_PANEL]: 'mobile',
     [LayoutMode.DUAL_PANEL]: 'tablet',
     [LayoutMode.THREE_PANEL]: 'desktop'
   };
-  
+
   const currentLayoutName = layoutModeNames[navigationState.currentLayout] || 'unknown';
   const [showKeyboardHelp, setShowKeyboardHelp] = useState(false);
   const palette = useCommandPalette();
@@ -157,17 +129,16 @@ const ResponsiveLayout: React.FC<ResponsiveLayoutProps> = ({
       } else if (navigationState.isMobileMenuOpen) {
         actions.closeMobileMenu();
         announceToScreenReader('Navigation menu closed', 'polite');
-      } else if (navigationState.isTerminalExpanded && viewport.isMobile) {
-        actions.setTerminalExpanded(false);
-        announceToScreenReader('Terminal collapsed', 'polite');
       }
     },
     'ctrl+?': () => {
-      setShowKeyboardHelp(!showKeyboardHelp);
-      announceToScreenReader(
-        showKeyboardHelp ? 'Keyboard shortcuts help closed' : 'Keyboard shortcuts help opened',
-        'polite'
-      );
+      if (!viewport.isMobile) {
+        setShowKeyboardHelp(!showKeyboardHelp);
+        announceToScreenReader(
+          showKeyboardHelp ? 'Keyboard shortcuts help closed' : 'Keyboard shortcuts help opened',
+          'polite'
+        );
+      }
     },
     'ctrl+m': () => {
       if (viewport.isMobile) {
@@ -175,15 +146,6 @@ const ResponsiveLayout: React.FC<ResponsiveLayoutProps> = ({
         const message = navigationState.isMobileMenuOpen
           ? 'Navigation menu closed'
           : 'Navigation menu opened';
-        announceToScreenReader(message, 'polite');
-      }
-    },
-    'ctrl+t': () => {
-      if (viewport.isMobile) {
-        actions.toggleTerminal();
-        const message = navigationState.isTerminalExpanded
-          ? 'Terminal expanded'
-          : 'Terminal collapsed';
         announceToScreenReader(message, 'polite');
       }
     },
@@ -206,11 +168,68 @@ const ResponsiveLayout: React.FC<ResponsiveLayoutProps> = ({
     },
   });
 
-  // Mobile: render the dedicated MobileShell (replaces all desktop IDE chrome)
+  // Mobile layout
   if (viewport.isMobile) {
     return (
-      <>
-        <MobileShell onThemeChange={onThemeChange} />
+      <div
+        className="flex flex-col h-screen overflow-hidden"
+        style={{ backgroundColor: theme.bg }}
+      >
+        {/* Mobile header */}
+        <header className="flex items-center justify-between px-4 py-3 border-b border-border bg-black/80 backdrop-blur-sm shrink-0">
+          <button
+            onClick={() => navigate('/')}
+            className="text-sm font-mono font-semibold text-phosphor tracking-wide"
+            aria-label="Go to home"
+            type="button"
+          >
+            niruddeshjatra
+          </button>
+          <button
+            onClick={() => actions.toggleMobileMenu()}
+            className="p-2 -mr-2 min-h-[44px] min-w-[44px] flex items-center justify-center text-foreground/70 hover:text-foreground transition-colors"
+            aria-label="Open file menu"
+            type="button"
+          >
+            <Menu className="w-5 h-5" />
+          </button>
+        </header>
+
+        {/* Off-canvas file drawer */}
+        <MobileFileDrawer
+          isOpen={navigationState.isMobileMenuOpen}
+          onClose={actions.closeMobileMenu}
+          currentSection={currentSection}
+          onSectionChange={handleSectionChange}
+        />
+
+        {/* Main content — pb-11 clears the collapsed terminal bar */}
+        <main
+          id="main-content"
+          className="flex-1 overflow-y-auto pb-11"
+          role="main"
+          aria-label="Portfolio content"
+        >
+          <div
+            className={`
+              transition-all duration-150 ease-out
+              ${isTransitioning ? 'opacity-0' : 'opacity-100'}
+            `}
+            aria-busy={isTransitioning}
+            aria-live="polite"
+          >
+            <Editor currentSection={currentSection} />
+          </div>
+        </main>
+
+        {/* Terminal slide-up sheet */}
+        <MobileTerminalSheet
+          currentSection={currentSection}
+          onCommand={handleCommand}
+          onThemeChange={onThemeChange}
+        />
+
+        {/* Command Palette */}
         <Suspense fallback={null}>
           <LazyCommandPalette
             isOpen={palette.isOpen}
@@ -219,10 +238,11 @@ const ResponsiveLayout: React.FC<ResponsiveLayoutProps> = ({
             onThemeChange={onThemeChange}
           />
         </Suspense>
-      </>
+      </div>
     );
   }
 
+  // Desktop / tablet layout (unchanged)
   return (
     <div
       className={`${layoutClasses} overflow-hidden transition-colors duration-300`}
@@ -235,29 +255,20 @@ const ResponsiveLayout: React.FC<ResponsiveLayoutProps> = ({
         currentSection={currentSection}
       />
 
-      {/* Mobile Navigation */}
-      <MobileNavigation
-        isOpen={navigationState.isMobileMenuOpen}
-        onClose={actions.closeMobileMenu}
-        currentSection={currentSection}
-        onSectionChange={handleSectionChange}
-        files={files}
-      />
-
       {/* Main Content Area */}
       <div className="flex-1 flex overflow-hidden relative" style={{ zIndex: Z_INDEX.content }}>
         {/* File Explorer - Desktop/Tablet Layout */}
         {navigationState.currentLayout !== LayoutMode.SINGLE_PANEL && (
           <div className="shrink-0">
             <FileExplorer
-              currentSection={currentSection} 
-              onSectionChange={handleSectionChange} 
+              currentSection={currentSection}
+              onSectionChange={handleSectionChange}
             />
           </div>
         )}
 
         {/* Editor - Main Content */}
-        <main 
+        <main
           id="main-content"
           className="flex-1 relative"
           style={{
@@ -272,8 +283,8 @@ const ResponsiveLayout: React.FC<ResponsiveLayoutProps> = ({
               ${isTransitioning ? 'opacity-0' : 'opacity-100'}
             `}
             style={{
-              transform: isTransitioning 
-                ? 'translate3d(0, 8px, 0) scale(0.98)' 
+              transform: isTransitioning
+                ? 'translate3d(0, 8px, 0) scale(0.98)'
                 : 'translate3d(0, 0, 0) scale(1)',
               filter: isTransitioning ? 'blur(2px)' : 'blur(0px)'
             }}
@@ -285,56 +296,36 @@ const ResponsiveLayout: React.FC<ResponsiveLayoutProps> = ({
         </main>
       </div>
 
-      {/* Terminal - Responsive Layout with Lazy Loading */}
-      {viewport.isMobile ? (
-        <ConditionalLazy 
+      {/* Terminal - Desktop fixed-height panel */}
+      <div
+        data-terminal-region
+        className="border-t border-border relative transition-all duration-200 ease-out overflow-hidden"
+        style={{ height: terminalHeight, zIndex: Z_INDEX.terminal }}
+      >
+        <ConditionalLazy
           fallback={
-            <div className="h-56 border-t border-border flex items-center justify-center">
-              <span className="text-green-400 font-mono text-sm">Loading terminal...</span>
+            <div className="h-full flex items-center justify-center">
+              <span className="text-green-400 font-mono">Loading terminal...</span>
             </div>
           }
         >
-          <LazyResponsiveTerminal
+          <LazyTerminal
             onCommand={handleCommand}
             currentSection={currentSection}
             onThemeChange={onThemeChange}
-            isMobile={viewport.isMobile}
-            isTablet={viewport.isTablet}
-            isExpanded={navigationState.isTerminalExpanded}
-            onToggleExpanded={actions.toggleTerminal}
+            isFocused={isTerminalFocused}
+            onFocusChange={setIsTerminalFocused}
           />
         </ConditionalLazy>
-      ) : (
-        <div
-          data-terminal-region
-          className="border-t border-border relative transition-all duration-200 ease-out overflow-hidden"
-          style={{ height: terminalHeight, zIndex: Z_INDEX.terminal }}
-        >
-          <ConditionalLazy
-            fallback={
-              <div className="h-full flex items-center justify-center">
-                <span className="text-green-400 font-mono">Loading terminal...</span>
-              </div>
-            }
-          >
-            <LazyTerminal
-              onCommand={handleCommand}
-              currentSection={currentSection}
-              onThemeChange={onThemeChange}
-              isFocused={isTerminalFocused}
-              onFocusChange={setIsTerminalFocused}
-            />
-          </ConditionalLazy>
-        </div>
-      )}
+      </div>
 
-      {/* Status Bar - Desktop/Tablet only (mobile has enough bottom UI) */}
-      {!viewport.isMobile && <StatusBar currentSection={currentSection} />}
+      {/* Status Bar */}
+      <StatusBar currentSection={currentSection} />
 
       {/* Keyboard Shortcuts Help */}
       <KeyboardShortcutsHelp />
 
-      {/* Command Palette — Cmd+P / Cmd+Shift+P */}
+      {/* Command Palette */}
       <Suspense fallback={null}>
         <LazyCommandPalette
           isOpen={palette.isOpen}
