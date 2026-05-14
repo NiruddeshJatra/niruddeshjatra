@@ -214,16 +214,14 @@ const Editor = ({ currentSection }: EditorProps) => {
         const todaysLine = getTodaysOpenerLine();
         return (
           <div className="animate-fade-in font-mono text-sm leading-relaxed py-6 px-4">
-            {!isMobile && (
-              <div className="text-phosphor font-bold leading-tight mb-10">
-                <pre className="text-[10px]">{`███╗   ██╗██╗██████╗ ██╗   ██╗██████╗ ██████╗ ███████╗███████╗██╗  ██╗             ██╗ █████╗ ████████╗██████╗  █████╗
+            <div className="text-phosphor font-bold leading-tight mb-10 overflow-x-auto">
+              <pre className="text-[5px] sm:text-[8px] md:text-[10px] leading-none">{`███╗   ██╗██╗██████╗ ██╗   ██╗██████╗ ██████╗ ███████╗███████╗██╗  ██╗             ██╗ █████╗ ████████╗██████╗  █████╗
 ████╗  ██║██║██╔══██╗██║   ██║██╔══██╗██╔══██╗██╔════╝██╔════╝██║  ██║             ██║██╔══██╗╚══██╔══╝██╔══██╗██╔══██╗
 ██╔██╗ ██║██║██████╔╝██║   ██║██║  ██║██║  ██║█████╗  ███████╗███████║             ██║███████║   ██║   ██████╔╝███████║
 ██║╚██╗██║██║██╔══██╗██║   ██║██║  ██║██║  ██║██╔══╝  ╚════██║██╔══██║        ██   ██║██╔══██║   ██║   ██╔══██╗██╔══██║
 ██║ ╚████║██║██║  ██║╚██████╔╝██████╔╝██████╔╝███████╗███████║██║  ██║        ╚█████╔╝██║  ██║   ██║   ██║  ██║██║  ██║
 ╚═╝  ╚═══╝╚═╝╚═╝  ╚═╝ ╚═════╝ ╚═════╝ ╚═════╝ ╚══════╝╚══════╝╚═╝  ╚═╝         ╚════╝ ╚═╝  ╚═╝   ╚═╝   ╚═╝  ╚═╝╚═╝  ╚═╝`}</pre>
-              </div>
-            )}
+            </div>
 
             <div className="pl-2 mb-6">
               <p><span className="text-phosphor">&gt; </span>i'm nj. this is my workshop.</p>

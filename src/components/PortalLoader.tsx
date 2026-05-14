@@ -167,7 +167,7 @@ const PortalLoader = ({ destination, onComplete }: Props) => {
         {/* Empty span — GSAP sets textContent before first paint via useLayoutEffect */}
         <span
           ref={textRef}
-          className="relative z-10 font-mono text-3xl md:text-4xl text-phosphor tracking-wider select-none"
+          className="relative z-10 font-mono text-xl sm:text-3xl md:text-4xl text-phosphor tracking-wider select-none"
           style={{
             opacity: 0,
             textShadow:
