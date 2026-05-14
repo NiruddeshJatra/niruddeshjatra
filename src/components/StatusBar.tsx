@@ -29,6 +29,8 @@ const getPath = (section: string): string => {
     case "writing-essays-on-running-for-nothing-bn": return "~/niruddeshjatra/writing/essays/on-running-for-nothing.bn.md";
     case "writing-essays-on-staying-small": return "~/niruddeshjatra/writing/essays/on-staying-small.md";
     case "writing-essays-on-staying-small-bn": return "~/niruddeshjatra/writing/essays/on-staying-small.bn.md";
+    case "writing-essays-on-forgetting": return "~/niruddeshjatra/writing/essays/on-forgetting.md";
+    case "writing-essays-on-forgetting-bn": return "~/niruddeshjatra/writing/essays/on-forgetting.bn.md";
     default: return `~/niruddeshjatra/${section}`;
   }
 };
@@ -44,6 +46,8 @@ const LAST_UPDATED: Record<string, string> = {
   "writing-essays-on-running-for-nothing-bn": "2026-05",
   "writing-essays-on-staying-small": "2026-05",
   "writing-essays-on-staying-small-bn": "2026-05",
+  "writing-essays-on-forgetting": "2026-05",
+  "writing-essays-on-forgetting-bn": "2026-05",
   journey: "2026-05",
   "journey-running": "2026-05",
   "journey-hiking": "pending",

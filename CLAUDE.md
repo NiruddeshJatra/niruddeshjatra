@@ -55,7 +55,8 @@ me/                  → container (expand/collapse, no section)
 games/               → games
 writing/             → writing (container, also navigable)
   essays/            → container (id: writing-essays, no section)
-    on-staying-small.md       → writing-essays-on-staying-small (newest first)
+    on-forgetting.md          → writing-essays-on-forgetting (newest first)
+    on-staying-small.md       → writing-essays-on-staying-small
     on-running-for-nothing.md → writing-essays-on-running-for-nothing
   tech-articles/     → container (id: writing-tech-articles, no section)
 journey/             → container (id: journey)

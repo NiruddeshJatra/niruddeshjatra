@@ -22,6 +22,7 @@ export const files: FileItem[] = [
   { name: 'games/', section: 'games', icon: Folder },
   { id: 'writing', name: 'writing/', section: 'writing', icon: Folder, isContainer: true },
   { id: 'writing-essays', name: 'essays/', section: '', icon: Folder, isContainer: true, parent: 'writing' },
+  { name: 'on-forgetting.md', section: 'writing-essays-on-forgetting', icon: File, parent: 'writing-essays' },
   { name: 'on-staying-small.md', section: 'writing-essays-on-staying-small', icon: File, parent: 'writing-essays' },
   { name: 'on-running-for-nothing.md', section: 'writing-essays-on-running-for-nothing', icon: File, parent: 'writing-essays' },
   { id: 'writing-tech-articles', name: 'tech-articles/', section: '', icon: Folder, isContainer: true, parent: 'writing' },

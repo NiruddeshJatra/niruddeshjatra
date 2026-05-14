@@ -22,6 +22,8 @@ const OnRunningForNothingContent = lazy(() => import("./sections/OnRunningForNot
 const OnRunningForNothingBnContent = lazy(() => import("./sections/OnRunningForNothingBnContent"));
 const OnStayingSmallContent = lazy(() => import("./sections/OnStayingSmallContent"));
 const OnStayingSmallBnContent = lazy(() => import("./sections/OnStayingSmallBnContent"));
+const OnForgettingContent = lazy(() => import("./sections/OnForgettingContent"));
+const OnForgettingBnContent = lazy(() => import("./sections/OnForgettingBnContent"));
 const VaultEntryContent = lazy(() => import("./sections/VaultEntryContent"));
 const VaultContent = lazy(() => import("./sections/VaultContent"));
 const FieldNotesContent = lazy(() => import("./sections/FieldNotesContent"));
@@ -111,6 +113,8 @@ const getFileName = (section: string) => {
     case "writing-essays-on-running-for-nothing-bn": return "writing/essays/on-running-for-nothing.bn.md";
     case "writing-essays-on-staying-small": return "writing/essays/on-staying-small.md";
     case "writing-essays-on-staying-small-bn": return "writing/essays/on-staying-small.bn.md";
+    case "writing-essays-on-forgetting": return "writing/essays/on-forgetting.md";
+    case "writing-essays-on-forgetting-bn": return "writing/essays/on-forgetting.bn.md";
     case "journey": return "journey/";
     case "journey-running": return "journey/running.md";
     case "journey-hiking": return "journey/hiking.md";
@@ -187,6 +191,8 @@ const Editor = ({ currentSection }: EditorProps) => {
       case "writing-essays-on-running-for-nothing-bn": return <OnRunningForNothingBnContent />;
       case "writing-essays-on-staying-small": return <OnStayingSmallContent />;
       case "writing-essays-on-staying-small-bn": return <OnStayingSmallBnContent />;
+      case "writing-essays-on-forgetting": return <OnForgettingContent />;
+      case "writing-essays-on-forgetting-bn": return <OnForgettingBnContent />;
       case "vault": return <VaultEntryContent />;
       case "vault-content": return <VaultContent />;
       case "404": return <NotFoundContent />;

@@ -31,6 +31,8 @@ const App = () => (
           <Route path="/writing/essays/on-running-for-nothing-bn" element={<Index forceSection="writing-essays-on-running-for-nothing-bn" />} />
           <Route path="/writing/essays/on-staying-small" element={<Index forceSection="writing-essays-on-staying-small" />} />
           <Route path="/writing/essays/on-staying-small-bn" element={<Index forceSection="writing-essays-on-staying-small-bn" />} />
+          <Route path="/writing/essays/on-forgetting" element={<Index forceSection="writing-essays-on-forgetting" />} />
+          <Route path="/writing/essays/on-forgetting-bn" element={<Index forceSection="writing-essays-on-forgetting-bn" />} />
           <Route path="*" element={<Index forceSection="404" />} />
         </Routes>
       </BrowserRouter>

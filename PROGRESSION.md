@@ -267,3 +267,15 @@ Refined several UI details based on review:
 - **WritingContent.tsx**: second essay entry added (newest first). "on staying small" links to `/writing/essays/on-staying-small`; `[bn]` link to `-bn` variant.
 - **FileExplorer.tsx**: `on-staying-small.md` added above `on-running-for-nothing.md` in `writing-essays` container (newest first).
 - **App.tsx, Editor.tsx, StatusBar.tsx, sections.ts**: routes, switch cases, lazy imports, getFileName entries, getPath cases, LAST_UPDATED, and SECTION_ALIASES updated for both new essay sections.
+
+---
+
+## Phase I — Third Essay: "on forgetting"
+**2026-05-14 — "on forgetting" essay shipped (EN + BN)**
+
+- **OnForgettingContent.tsx** created. Third essay: "on forgetting" — 5 sections (opening, what forgetting actually does, the part that's me, what this looks like in everyday life, what i'd offer to anyone like me, what i didn't say), plus closing `pl-2 mb-4 mt-8` block. Same `EssayContent` wrapper pattern.
+- **OnForgettingBnContent.tsx** created. Bengali version: title "সব মনে রেখে কী লাভ?" — 5 sections + extra section "যে কথাগুলো বলা হয়নি". User revised both EN and BN content post-creation; revisions intentional and accepted.
+- **WritingContent.tsx**: on-forgetting added as first entry (newest first). Three essays now listed.
+- **FileExplorer.tsx**: `on-forgetting.md` added as first child of `writing-essays` container (newest first).
+- **App.tsx, Editor.tsx, StatusBar.tsx, sections.ts**: routes, switch cases, lazy imports, getFileName entries, getPath cases, LAST_UPDATED, and SECTION_ALIASES updated for both new essay sections.
+- **CLAUDE.md**: sidebar file tree updated to reflect three essays under `essays/`, newest first.

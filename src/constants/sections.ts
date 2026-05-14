@@ -27,6 +27,9 @@ export const SECTION_ALIASES: Record<string, string> = (() => {
   map['writing/essays/on-staying-small'] = 'writing-essays-on-staying-small';
   map['writing/essays/on-staying-small.md'] = 'writing-essays-on-staying-small';
   map['on-staying-small'] = 'writing-essays-on-staying-small';
+  map['writing/essays/on-forgetting'] = 'writing-essays-on-forgetting';
+  map['writing/essays/on-forgetting.md'] = 'writing-essays-on-forgetting';
+  map['on-forgetting'] = 'writing-essays-on-forgetting';
   return map;
 })();
 
