@@ -21,6 +21,19 @@ const MobileTerminalSheet: React.FC<MobileTerminalSheetProps> = ({
 }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const sheetRef = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const previouslyFocusedRef = useRef<HTMLElement | null>(null);
+
+  // Focus management: save focus on open, restore on close
+  useEffect(() => {
+    if (isExpanded) {
+      previouslyFocusedRef.current = document.activeElement as HTMLElement | null;
+      sheetRef.current?.focus();
+    } else if (previouslyFocusedRef.current) {
+      previouslyFocusedRef.current.focus();
+      previouslyFocusedRef.current = null;
+    }
+  }, [isExpanded]);
 
   // Tap outside to close
   useEffect(() => {
@@ -51,6 +64,11 @@ const MobileTerminalSheet: React.FC<MobileTerminalSheetProps> = ({
   return (
     <div
       ref={sheetRef}
+      id="mobile-terminal-sheet"
+      role={isExpanded ? 'dialog' : undefined}
+      aria-modal={isExpanded ? true : undefined}
+      aria-label="Terminal"
+      tabIndex={isExpanded ? -1 : undefined}
       className={`
         fixed bottom-0 left-0 right-0 z-50
         bg-black/95 backdrop-blur-sm border-t border-border
@@ -65,6 +83,10 @@ const MobileTerminalSheet: React.FC<MobileTerminalSheetProps> = ({
           <div
             className="h-8 flex items-center justify-center border-b border-border/40 cursor-pointer shrink-0"
             onClick={() => setIsExpanded(false)}
+            aria-label="Collapse terminal"
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') setIsExpanded(false); }}
           >
             <div className="w-12 h-1 bg-phosphor-dim rounded-full" />
           </div>
@@ -87,9 +109,12 @@ const MobileTerminalSheet: React.FC<MobileTerminalSheetProps> = ({
         </>
       ) : (
         <button
+          ref={triggerRef}
           onClick={() => setIsExpanded(true)}
           className="w-full h-full flex items-center px-4 text-phosphor font-mono text-sm"
           aria-label="Open terminal"
+          aria-expanded={isExpanded}
+          aria-controls="mobile-terminal-sheet"
           type="button"
         >
           <span className="text-phosphor mr-2">$</span>

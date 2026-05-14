@@ -22,20 +22,22 @@ const MobileFileDrawer: React.FC<MobileFileDrawerProps> = ({
     onSwipeLeft: () => { if (isOpen) onClose(); },
   });
 
-  // Escape to close + body scroll lock
+  // Escape to close + body scroll lock (restores previous overflow on cleanup)
   useEffect(() => {
     const handleKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape' && isOpen) onClose();
     };
     if (isOpen) {
+      const previousOverflow = document.body.style.overflow;
       document.addEventListener('keydown', handleKey);
       document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = '';
+      return () => {
+        document.removeEventListener('keydown', handleKey);
+        document.body.style.overflow = previousOverflow;
+      };
     }
     return () => {
       document.removeEventListener('keydown', handleKey);
-      document.body.style.overflow = '';
     };
   }, [isOpen, onClose]);
 
