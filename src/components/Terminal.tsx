@@ -11,6 +11,7 @@ interface TerminalProps {
   onThemeChange?: (theme: { name: string; bg: string; accent: string }) => void;
   isFocused?: boolean;
   onFocusChange?: (focused: boolean) => void;
+  hideStatusFooter?: boolean;
 }
 
 const COMMANDS = [
@@ -77,7 +78,7 @@ const EASTER_EGGS: { [key: string]: string[] } = {
   ],
 };
 
-const Terminal = ({ onCommand, currentSection, onThemeChange, isFocused = false, onFocusChange }: TerminalProps) => {
+const Terminal = ({ onCommand, currentSection, onThemeChange, isFocused = false, onFocusChange, hideStatusFooter = false }: TerminalProps) => {
   const navigate = useNavigate();
   const [input, setInput] = useState("");
   const [history, setHistory] = useState<string[]>([
@@ -374,8 +375,8 @@ const Terminal = ({ onCommand, currentSection, onThemeChange, isFocused = false,
         ))}
       </div>
 
-      {/* Stats + Tips — only visible when expanded */}
-      {isFocused && (
+      {/* Stats + Tips — only visible when expanded and not hidden */}
+      {isFocused && !hideStatusFooter && (
         <div className="px-4 py-1 border-t border-border bg-black/80 backdrop-blur-sm shrink-0">
           <div className="flex items-center justify-between text-xs mb-2">
             <div className="flex items-center gap-4">

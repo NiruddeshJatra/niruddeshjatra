@@ -23,13 +23,14 @@ const GamesContent = () => {
 
     <div className="text-phosphor-dim text-sm mt-10 mb-4 font-mono">// deployed</div>
 
-    <div style={{
-      backgroundColor: 'rgba(10, 10, 15, 0.92)',
-      border: '1px solid rgba(68, 170, 255, 0.4)',
-      borderRadius: '4px',
-      padding: '32px 28px',
-      marginBottom: '24px',
-    }} className="font-mono">
+    <div
+      className="font-mono p-6 sm:p-8 mb-6"
+      style={{
+        backgroundColor: 'rgba(10, 10, 15, 0.92)',
+        border: '1px solid rgba(68, 170, 255, 0.4)',
+        borderRadius: '4px',
+      }}
+    >
 
       <h3 style={{
         fontFamily: '"Courier New", monospace',
@@ -104,7 +105,7 @@ const GamesContent = () => {
     <div className="text-phosphor-dim text-sm mt-10 mb-3 font-mono">// the rule</div>
 
     <div className="pl-2">
-      <p className="text-foreground/85 text-sm leading-relaxed mb-4">
+      <p className="text-foreground/85 text-sm leading-relaxed mb-4 pr-2">
         every game is its own world. its own repo, its own deploy,
         its own visual language. this page is the doorway.
       </p>

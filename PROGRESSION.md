@@ -292,3 +292,18 @@ Refined several UI details based on review:
 - **Modified**: `Editor.tsx` — ASCII banner no longer gated behind `!isMobile`; responsive font `text-[5px] sm:text-[8px] md:text-[10px]` fits at 360px without horizontal scroll
 - **Modified**: `IntroLoader.tsx` — `text-xs sm:text-sm` + narrower padding; loader lines fit single-line at mobile width
 - **Modified**: `PortalLoader.tsx` — `text-xl sm:text-3xl md:text-4xl`; destination phrase fits at 360px
+
+---
+
+## Phase M — Mobile Phase 2: Content Density + Layout Polish
+**2026-05-14 — 13 mobile polish changes across 10 files; no desktop regressions**
+
+- **Editor.tsx**: ASCII banner outer div `overflow-x-auto` removed; `<pre>` gets `overflow-hidden whitespace-pre` instead of scrolling — clips at 360px without horizontal scroll. Approach chosen: text-[5px] (already set in Phase E), now properly clipped.
+- **Changelog.tsx**: timeline rows `mb-1` → `mb-3 sm:mb-1` — welcome page "// the last few moves" section breathes on mobile.
+- **MobileFileDrawer.tsx**: outer "FILES" header section removed entirely. Close button repositioned as absolute top-right. `FileExplorer`'s own "WORKSPACE" header is now the sole visual anchor — no double-header.
+- **Terminal.tsx**: `hideStatusFooter?: boolean` prop added; status footer (time/branch/tip) gated by `isFocused && !hideStatusFooter`. Default false — desktop unchanged.
+- **MobileTerminalSheet.tsx**: passes `hideStatusFooter={true}` to Terminal — cramped status footer hidden in mobile sheet.
+- **ResponsiveLayout.tsx**: mobile header rebuilt as two-row: row 1 = brand + GitHub icon + hamburger; row 2 = `tutor · runner · maker` subtitle in dim small text. Imported `Github` from lucide-react. Main content `pb-11` → `pb-16` (64px clearance for terminal bar).
+- **WritingContent.tsx + JourneyContent.tsx**: two-column CSS grid collapsed to stacked on mobile (`space-y-4 sm:space-y-1`; `sm:grid sm:grid-cols-[auto_1fr]`). Title on top, description full-width below. Two-column layout preserved at sm: breakpoint and up.
+- **GamesContent.tsx**: ArcZero card inline `padding: 32px 28px` replaced with Tailwind `p-6 sm:p-8` (24px mobile, 32px tablet+). "the rule" paragraph gets `pr-2` right padding for browser floating UI clearance.
+- **RunningContent.tsx**: race log, skipped races, and 2026 calendar all wrapped in `overflow-x-auto -mx-4 sm:mx-0 px-4 sm:px-0` with `min-w-[640px] sm:min-w-0` inner — extend scroll area to viewport edges on mobile. Mobile-only `← swipe to scroll →` indicator above each.

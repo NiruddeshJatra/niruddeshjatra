@@ -10,13 +10,19 @@ const WritingContent = () => (
 
     <div className="text-phosphor-dim text-sm mt-10 mb-3 font-mono">// essays</div>
 
-    <div className="pl-2 grid grid-cols-[auto_1fr] gap-x-6 gap-y-1">
-      <Link to="/writing/essays/on-forgetting" className="text-phosphor hover:underline">on forgetting</Link>
-      <span className="text-foreground/85">why the mind forgets, and why that's mercy · <span className="text-phosphor-dim">[en]</span> <Link to="/writing/essays/on-forgetting-bn" className="text-phosphor-dim hover:text-phosphor">[bn]</Link></span>
-      <Link to="/writing/essays/on-staying-small" className="text-phosphor hover:underline">on staying small</Link>
-      <span className="text-foreground/85">why i won't scale my teaching · <span className="text-phosphor-dim">[en]</span> <Link to="/writing/essays/on-staying-small-bn" className="text-phosphor-dim hover:text-phosphor">[bn]</Link></span>
-      <Link to="/writing/essays/on-running-for-nothing" className="text-phosphor hover:underline">on running for nothing</Link>
-      <span className="text-foreground/85">why I run when there's no career outcome · <span className="text-phosphor-dim">[en]</span> <Link to="/writing/essays/on-running-for-nothing-bn" className="text-phosphor-dim hover:text-phosphor">[bn]</Link></span>
+    <div className="pl-2 space-y-4 sm:space-y-1">
+      <div className="sm:grid sm:grid-cols-[auto_1fr] sm:gap-x-6 sm:items-baseline">
+        <div className="font-mono"><Link to="/writing/essays/on-forgetting" className="text-phosphor hover:underline">on forgetting</Link></div>
+        <div className="text-foreground/85 mt-1 sm:mt-0 text-sm">why the mind forgets, and why that's mercy · <span className="text-phosphor-dim">[en]</span> <Link to="/writing/essays/on-forgetting-bn" className="text-phosphor-dim hover:text-phosphor">[bn]</Link></div>
+      </div>
+      <div className="sm:grid sm:grid-cols-[auto_1fr] sm:gap-x-6 sm:items-baseline">
+        <div className="font-mono"><Link to="/writing/essays/on-staying-small" className="text-phosphor hover:underline">on staying small</Link></div>
+        <div className="text-foreground/85 mt-1 sm:mt-0 text-sm">why i won't scale my teaching · <span className="text-phosphor-dim">[en]</span> <Link to="/writing/essays/on-staying-small-bn" className="text-phosphor-dim hover:text-phosphor">[bn]</Link></div>
+      </div>
+      <div className="sm:grid sm:grid-cols-[auto_1fr] sm:gap-x-6 sm:items-baseline">
+        <div className="font-mono"><Link to="/writing/essays/on-running-for-nothing" className="text-phosphor hover:underline">on running for nothing</Link></div>
+        <div className="text-foreground/85 mt-1 sm:mt-0 text-sm">why I run when there's no career outcome · <span className="text-phosphor-dim">[en]</span> <Link to="/writing/essays/on-running-for-nothing-bn" className="text-phosphor-dim hover:text-phosphor">[bn]</Link></div>
+      </div>
     </div>
 
     <div className="text-phosphor-dim text-sm mt-10 mb-3 font-mono">// tech articles</div>

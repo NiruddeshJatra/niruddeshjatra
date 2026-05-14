@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useEffect, useRef, lazy, Suspense } from 'react';
-import { Menu } from 'lucide-react';
+import { Menu, Github } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useResponsiveLayout } from '../hooks/useResponsiveLayout';
 import { useGlobalKeyboardShortcuts } from '../hooks/useKeyboardNavigation';
@@ -177,23 +177,41 @@ const ResponsiveLayout: React.FC<ResponsiveLayoutProps> = ({
         style={{ backgroundColor: theme.bg }}
       >
         {/* Mobile header */}
-        <header className="flex items-center justify-between px-4 py-3 border-b border-border bg-black/80 backdrop-blur-sm shrink-0">
-          <button
-            onClick={() => navigate('/')}
-            className="text-sm font-mono font-semibold text-phosphor tracking-wide"
-            aria-label="Go to home"
-            type="button"
-          >
-            niruddeshjatra
-          </button>
-          <button
-            onClick={() => actions.toggleMobileMenu()}
-            className="p-2 -mr-2 min-h-[44px] min-w-[44px] flex items-center justify-center text-foreground/70 hover:text-foreground transition-colors"
-            aria-label="Open file menu"
-            type="button"
-          >
-            <Menu className="w-5 h-5" />
-          </button>
+        <header className="flex flex-col px-4 py-2 border-b border-border bg-black/80 backdrop-blur-sm shrink-0">
+          {/* Row 1: brand + github + hamburger */}
+          <div className="flex items-center justify-between">
+            <button
+              onClick={() => navigate('/')}
+              className="text-base font-mono font-semibold text-phosphor tracking-wide"
+              aria-label="Go to home"
+              type="button"
+            >
+              niruddeshjatra
+            </button>
+            <div className="flex items-center gap-1">
+              <a
+                href="https://github.com/niruddeshjatra"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="p-2 min-h-[44px] min-w-[44px] flex items-center justify-center text-foreground/70 hover:text-foreground transition-colors"
+                aria-label="GitHub profile"
+              >
+                <Github className="w-4 h-4" />
+              </a>
+              <button
+                onClick={() => actions.toggleMobileMenu()}
+                className="p-2 min-h-[44px] min-w-[44px] flex items-center justify-center text-foreground/70 hover:text-foreground transition-colors"
+                aria-label="Open file menu"
+                type="button"
+              >
+                <Menu className="w-5 h-5" />
+              </button>
+            </div>
+          </div>
+          {/* Row 2: subtitle */}
+          <div className="text-[10px] text-phosphor-dim font-mono tracking-wide -mt-1">
+            tutor · runner · maker
+          </div>
         </header>
 
         {/* Off-canvas file drawer */}
@@ -213,7 +231,7 @@ const ResponsiveLayout: React.FC<ResponsiveLayoutProps> = ({
         >
           <div
             className={`
-              absolute inset-0 pb-11
+              absolute inset-0 pb-16
               transition-all duration-150 ease-out
               ${isTransitioning ? 'opacity-0' : 'opacity-100'}
             `}

@@ -159,8 +159,9 @@ const RunningContent = () => (
     <SectionHeader label="race log" />
     <p className="mb-4">chronological. dates, distances, times, conditions. ▲ flags rough ones.</p>
 
-    <div className="my-6 -mx-2 md:-mx-6 px-2 md:px-6 overflow-x-auto">
-      <div className="font-mono text-xs min-w-[32rem]">
+    <div className="sm:hidden text-[10px] text-phosphor-dim font-mono mb-2 pl-2">← swipe to scroll →</div>
+    <div className="my-6 overflow-x-auto -mx-4 sm:mx-0 px-4 sm:px-0">
+      <div className="font-mono text-xs min-w-[640px] sm:min-w-0">
         {races.map((r) => <RaceRow key={r.date + r.event} entry={r} />)}
 
         <div className="my-3 text-phosphor-dim text-xs italic">
@@ -196,8 +197,9 @@ const RunningContent = () => (
 
     <p className="mb-4">every runner has these. mine:</p>
 
-    <div className="my-6 -mx-2 md:-mx-6 px-2 md:px-6 overflow-x-auto">
-      <div className="font-mono text-xs min-w-[32rem]">
+    <div className="sm:hidden text-[10px] text-phosphor-dim font-mono mb-2 pl-2">← swipe to scroll →</div>
+    <div className="my-6 overflow-x-auto -mx-4 sm:mx-0 px-4 sm:px-0">
+      <div className="font-mono text-xs min-w-[640px] sm:min-w-0">
         {skipped.map((r) => <RaceRow key={r.date + r.event} entry={{ ...r, skip: true }} />)}
       </div>
     </div>
@@ -254,8 +256,9 @@ const RunningContent = () => (
 
     <p className="mb-4">races i'm watching. weighted by interest. not all of these will happen.</p>
 
-    <div className="my-4 -mx-2 md:-mx-6 px-2 md:px-6 overflow-x-auto">
-      <div className="font-mono text-xs min-w-[36rem]">
+    <div className="sm:hidden text-[10px] text-phosphor-dim font-mono mb-2 pl-2">← swipe to scroll →</div>
+    <div className="my-4 overflow-x-auto -mx-4 sm:mx-0 px-4 sm:px-0">
+      <div className="font-mono text-xs min-w-[640px] sm:min-w-0">
         {cal.map((c) => (
           <div key={c.date + c.event} className={`flex gap-x-4 mb-1 ${weightClass[c.weight]}`}>
             <span className="shrink-0 w-[10ch]">{c.date}</span>

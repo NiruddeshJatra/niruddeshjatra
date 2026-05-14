@@ -71,21 +71,18 @@ const MobileFileDrawer: React.FC<MobileFileDrawerProps> = ({
         aria-label="File navigation"
         aria-hidden={!isOpen}
       >
-        {/* Header */}
-        <div className="flex items-center justify-between px-4 py-3 border-b border-border shrink-0">
-          <span className="text-xs font-mono text-phosphor-dim uppercase tracking-wide">files</span>
-          <button
-            onClick={onClose}
-            className="p-2 -mr-2 min-h-[44px] min-w-[44px] flex items-center justify-center text-foreground/70 hover:text-foreground transition-colors"
-            aria-label="Close file menu"
-            type="button"
-          >
-            <X className="w-4 h-4" />
-          </button>
-        </div>
+        {/* Close button */}
+        <button
+          onClick={onClose}
+          className="absolute top-3 right-3 z-10 p-2 min-h-[44px] min-w-[44px] flex items-center justify-center text-foreground/70 hover:text-foreground transition-colors"
+          aria-label="Close file menu"
+          type="button"
+        >
+          <X className="w-4 h-4" />
+        </button>
 
         {/* FileExplorer — same tree as desktop */}
-        <div className="flex-1 overflow-hidden">
+        <div className="h-full overflow-y-auto pt-3">
           <FileExplorer
             currentSection={currentSection}
             onSectionChange={handleSectionChange}
