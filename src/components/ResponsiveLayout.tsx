@@ -93,8 +93,9 @@ const ResponsiveLayout: React.FC<ResponsiveLayoutProps> = ({
     }
   }, [viewport.isDesktop, navigationState.isMobileMenuOpen, actions]);
 
-  // Click-outside collapses terminal (desktop)
+  // Click-outside collapses terminal (desktop only — skip on mobile)
   useEffect(() => {
+    if (viewport.isMobile) return;
     const handler = (e: MouseEvent) => {
       const target = e.target as HTMLElement;
       if (!target.closest('[data-terminal-region]')) {
@@ -103,7 +104,7 @@ const ResponsiveLayout: React.FC<ResponsiveLayoutProps> = ({
     };
     document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
-  }, []);
+  }, [viewport.isMobile]);
 
   const isReadingPage = currentSection?.startsWith('writing/');
   const collapsedHeight = isReadingPage ? 72 : 132;
