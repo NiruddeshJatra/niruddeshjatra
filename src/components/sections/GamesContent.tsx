@@ -14,7 +14,7 @@ const GamesContent = () => {
   };
 
   return (
-  <div className="animate-fade-in font-mono max-w-xl mx-auto px-4 py-6 text-foreground/85">
+  <div className="animate-fade-in font-mono max-w-xl mx-auto px-4 py-6 pb-16 sm:pb-4 text-foreground/85">
     <div className="pl-2 mb-6">
       <p className="mb-1"><span className="text-phosphor">&gt; </span>games/</p>
       <p className="mb-1"><span className="text-phosphor">&gt; </span>things i made that you can play.</p>
@@ -35,7 +35,7 @@ const GamesContent = () => {
       <h3 style={{
         fontFamily: '"Courier New", monospace',
         color: '#44aaff',
-        fontSize: '2.5rem',
+        fontSize: 'clamp(2rem, 8vw, 2.5rem)',
         letterSpacing: '0.15em',
         marginBottom: '4px',
         fontWeight: 'normal',
@@ -46,7 +46,7 @@ const GamesContent = () => {
       <p style={{
         fontFamily: '"Courier New", monospace',
         color: 'rgba(255, 255, 255, 0.7)',
-        fontSize: '0.75rem',
+        fontSize: 'clamp(0.7rem, 2.5vw, 0.9rem)',
         letterSpacing: '0.2em',
         textTransform: 'uppercase',
         marginBottom: '20px',
@@ -57,7 +57,7 @@ const GamesContent = () => {
       <p style={{
         fontFamily: '"Courier New", monospace',
         color: 'rgba(255, 255, 255, 0.7)',
-        fontSize: '0.9rem',
+        fontSize: 'clamp(0.8rem, 2.5vw, 0.9rem)',
         lineHeight: '1.6',
         marginBottom: '24px',
       }}>
