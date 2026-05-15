@@ -1,6 +1,25 @@
 import EssayContent from "./EssayContent";
+import SEO from "../SEO";
+import { articleSchema } from "../../lib/structuredData";
 
 const OnRunningForNothingBnContent = () => (
+  <>
+    <SEO
+      title="মেডেল বিক্রি করে কি টাকা পাওয়া যায়?"
+      description="ক্যারিয়ারের ফল না থাকলেও আমি দৌড়াই কেন। গোপনে ট্রেনিং আর কেউ চায়নি এমন মেডেল নিয়ে একটা প্রবন্ধ।"
+      path="/writing/essays/on-running-for-nothing-bn"
+      lang="bn"
+      alternateLangPath="/writing/essays/on-running-for-nothing"
+      ogType="article"
+      articleMeta={{ publishedTime: '2026-05-01', author: 'Nasiful Alam' }}
+      structuredData={articleSchema({
+        title: 'মেডেল বিক্রি করে কি টাকা পাওয়া যায়?',
+        description: 'ক্যারিয়ারের ফল না থাকলেও আমি দৌড়াই কেন।',
+        path: '/writing/essays/on-running-for-nothing-bn',
+        datePublished: '2026-05-01',
+        lang: 'bn',
+      })}
+    />
   <EssayContent
     title="মেডেল বিক্রি করে কি টাকা পাওয়া যায়?"
     subtitle="nj · মে ২০২৬"
@@ -128,6 +147,7 @@ const OnRunningForNothingBnContent = () => (
       <p><span className="text-phosphor">&gt; </span>নিজেকে যাচাই করার জন্য— দেখার জন্য যে, আমি আসলেই এটা পারি কি না— এটাই।</p>
     </div>
   </EssayContent>
+  </>
 );
 
 export default OnRunningForNothingBnContent;

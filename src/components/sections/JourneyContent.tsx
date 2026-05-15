@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import IndexRow from "./IndexRow";
+import SEO from "../SEO";
 
 const pages = [
   {
@@ -23,6 +24,12 @@ const pages = [
 ];
 
 const JourneyContent = () => (
+  <>
+    <SEO
+      title="journey — niruddeshjatra"
+      description="a body project. running, hiking, and eventually mountains. by nj."
+      path="/journey"
+    />
   <div className="animate-fade-in font-mono max-w-xl mx-auto px-4 py-6 text-foreground/85">
     <div className="pl-2 mb-6">
       <p className="mb-1"><span className="text-phosphor">&gt; </span>a body project.</p>
@@ -51,6 +58,7 @@ const JourneyContent = () => (
       — nj · 2026-05 · this is a placeholder
     </div>
   </div>
+  </>
 );
 
 export default JourneyContent;

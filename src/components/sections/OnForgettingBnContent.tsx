@@ -1,6 +1,25 @@
 import EssayContent from "./EssayContent";
+import SEO from "../SEO";
+import { articleSchema } from "../../lib/structuredData";
 
 const OnForgettingBnContent = () => (
+  <>
+    <SEO
+      title="সব মনে রেখে কী লাভ?"
+      description="মন কেন ভুলে যায়, আর এটা যে আসলে দয়া। ব্রেইনি গোল্ডফিশ নিয়ে একটা প্রবন্ধ।"
+      path="/writing/essays/on-forgetting-bn"
+      lang="bn"
+      alternateLangPath="/writing/essays/on-forgetting"
+      ogType="article"
+      articleMeta={{ publishedTime: '2026-05-14', author: 'Nasiful Alam' }}
+      structuredData={articleSchema({
+        title: 'সব মনে রেখে কী লাভ?',
+        description: 'মন কেন ভুলে যায়, আর এটা যে আসলে দয়া।',
+        path: '/writing/essays/on-forgetting-bn',
+        datePublished: '2026-05-14',
+        lang: 'bn',
+      })}
+    />
   <EssayContent
     title="সব মনে রেখে কী লাভ?"
     subtitle="nj · মে ২০২৬"
@@ -117,6 +136,7 @@ const OnForgettingBnContent = () => (
       <p><span className="text-phosphor">&gt; </span>আবার কখনো এটা আশীর্বাদ মনে হয়।</p>
     </div>
   </EssayContent>
+  </>
 );
 
 export default OnForgettingBnContent;

@@ -94,7 +94,8 @@ const IntroLoader = ({ onComplete, onSkip }: Props) => {
       ctx.revert();
       window.removeEventListener("keydown", handleKey);
     };
-  }, [prefersReducedMotion]); // onComplete/onSkip are stable dismissIntro callbacks
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- onComplete/onSkip are stable dismissIntro callbacks
+  }, [prefersReducedMotion]);
 
   if (prefersReducedMotion) return null;
 

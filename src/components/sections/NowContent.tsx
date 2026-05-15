@@ -1,5 +1,13 @@
+import SEO from "../SEO";
+
 const NowContent = () => {
   return (
+    <>
+      <SEO
+        title="now — niruddeshjatra"
+        description="what i'm doing this month. tutoring, training, building. updates whenever life shifts."
+        path="/now"
+      />
     <div className="animate-fade-in font-mono text-sm leading-relaxed max-w-xl mx-auto px-4 py-6">
       <div className="space-y-4 text-foreground/80">
         <p><span className="text-phosphor">&gt; </span>what i'm doing this month, in plain language. updates whenever life shifts.</p>
@@ -40,6 +48,7 @@ const NowContent = () => {
         — nj · 2026-05 · this changes often
       </div>
     </div>
+    </>
   );
 };
 

@@ -1,6 +1,25 @@
 import EssayContent from "./EssayContent";
+import SEO from "../SEO";
+import { articleSchema } from "../../lib/structuredData";
 
 const OnStayingSmallBnContent = () => (
+  <>
+    <SEO
+      title="কোচিং সেন্টার দিলেই তো পারো!"
+      description="শিক্ষাকে কেন আমি ব্যবসা বানাতে চাই না, যত লাভই হোক না কেন।"
+      path="/writing/essays/on-staying-small-bn"
+      lang="bn"
+      alternateLangPath="/writing/essays/on-staying-small"
+      ogType="article"
+      articleMeta={{ publishedTime: '2026-05-10', author: 'Nasiful Alam' }}
+      structuredData={articleSchema({
+        title: 'কোচিং সেন্টার দিলেই তো পারো!',
+        description: 'শিক্ষাকে কেন আমি ব্যবসা বানাতে চাই না।',
+        path: '/writing/essays/on-staying-small-bn',
+        datePublished: '2026-05-10',
+        lang: 'bn',
+      })}
+    />
   <EssayContent
     title="কোচিং সেন্টার দিলেই তো পারো!"
     subtitle="nj · মে ২০২৬"
@@ -147,6 +166,7 @@ const OnStayingSmallBnContent = () => (
       <p><span className="text-phosphor">&gt; </span>দ্বিতীয় দামটা চুকানোর সামর্থ্য আমার নেই।</p>
     </div>
   </EssayContent>
+  </>
 );
 
 export default OnStayingSmallBnContent;

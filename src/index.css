@@ -9,11 +9,25 @@
   font-weight: 500;
   letter-spacing: 0.02em;
   line-height: 1.9;
+  word-break: keep-all;
+  overflow-wrap: normal;
+  hyphens: none;
 }
 
 [lang="bn"] h1, [lang="bn"] h2, [lang="bn"] h3 {
   font-weight: 500;
   letter-spacing: 0.05em;
+}
+
+[lang="en"], body {
+  overflow-wrap: break-word;
+  word-break: normal;
+  hyphens: none;
+}
+
+.font-mono {
+  word-break: normal;
+  overflow-wrap: break-word;
 }
 
 @font-face {

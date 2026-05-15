@@ -9,12 +9,51 @@
   ],
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "generate-og": "node scripts/generate-og.mjs",
+    "generate-favicons": "node scripts/generate-favicons.mjs",
+    "build": "npm run generate-og && npm run generate-favicons && tsc && vite build",
     "build:dev": "vite build --mode development",
     "lint": "eslint .",
     "preview": "vite preview",
     "check:bundle": "node scripts/check-bundle.mjs",
-    "build:check": "vite build && node scripts/check-bundle.mjs"
+    "build:check": "vite build && node scripts/check-bundle.mjs",
+    "prerender": "node scripts/prerender.mjs",
+    "postbuild": "npm run prerender"
+  },
+  "reactSnap": {
+    "source": "dist",
+    "minifyHtml": {
+      "collapseWhitespace": false,
+      "removeComments": false
+    },
+    "crawl": false,
+    "include": [
+      "/",
+      "/about",
+      "/writing",
+      "/writing/essays/on-running-for-nothing",
+      "/writing/essays/on-running-for-nothing-bn",
+      "/writing/essays/on-staying-small",
+      "/writing/essays/on-staying-small-bn",
+      "/writing/essays/on-forgetting",
+      "/writing/essays/on-forgetting-bn",
+      "/journey",
+      "/journey-running",
+      "/journey-hiking",
+      "/games",
+      "/field-notes",
+      "/now",
+      "/contact"
+    ],
+    "skipThirdPartyRequests": true,
+    "viewport": {
+      "width": 1440,
+      "height": 900
+    },
+    "puppeteerArgs": [
+      "--no-sandbox",
+      "--disable-setuid-sandbox"
+    ]
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",
@@ -58,6 +97,7 @@
     "react": "^18.3.1",
     "react-day-picker": "^8.10.1",
     "react-dom": "^18.3.1",
+    "react-helmet-async": "^3.0.0",
     "react-hook-form": "^7.61.1",
     "react-icons": "^5.5.0",
     "react-resizable-panels": "^2.1.9",
@@ -71,20 +111,32 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.32.0",
+    "@prerenderer/prerenderer": "^1.2.5",
+    "@prerenderer/renderer-puppeteer": "^1.2.4",
     "@tailwindcss/typography": "^0.5.16",
     "@types/node": "^22.16.5",
     "@types/react": "^18.3.23",
     "@types/react-dom": "^18.3.7",
+    "@types/serve-handler": "^6",
+    "@vitejs/plugin-legacy": "^5.4.0",
     "@vitejs/plugin-react-swc": "^3.11.0",
     "autoprefixer": "^10.4.21",
     "eslint": "^9.32.0",
     "eslint-plugin-react-hooks": "^5.2.0",
     "eslint-plugin-react-refresh": "^0.4.20",
     "globals": "^15.15.0",
+    "png-to-ico": "^3.0.1",
     "postcss": "^8.5.6",
+    "puppeteer-core": "^24.43.1",
+    "react-snap": "^1.23.0",
+    "serve-handler": "^6.1.7",
+    "sharp": "^0.34.5",
     "tailwindcss": "^3.4.17",
+    "terser": "^5.47.1",
     "typescript": "^5.8.3",
     "typescript-eslint": "^8.38.0",
-    "vite": "^5.4.19"
-  }
+    "vite": "^5.4.19",
+    "vite-plugin-prerender": "^1.0.8"
+  },
+  "packageManager": "npm@11.14.1+sha512.6a8a4d67478497a2dbc6815cad72e64c43f33413717e242756047d466241ab39bee61e691683a64658e94496ec5f1a1c05e4a5ec62dcc773280dfd949443a367"
 }

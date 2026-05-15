@@ -135,7 +135,8 @@ const PortalLoader = ({ destination, onComplete }: Props) => {
       ctx.revert();
       window.removeEventListener("keydown", handleKey);
     };
-  }, [destination, prefersReducedMotion]); // onComplete is stable dismissPortal
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- onComplete is stable dismissPortal
+  }, [destination, prefersReducedMotion]);
 
   if (prefersReducedMotion) return null;
 

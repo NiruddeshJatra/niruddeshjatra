@@ -1,4 +1,12 @@
+import SEO from "../SEO";
+
 const FieldNotesContent = () => (
+  <>
+    <SEO
+      title="field notes — niruddeshjatra"
+      description="short observations from the body, the road, the day. dated. mostly unedited."
+      path="/field-notes"
+    />
   <div className="animate-fade-in font-mono max-w-xl mx-auto px-4 py-6 text-foreground/85">
     <div className="pl-2 mb-6">
       <p className="mb-1"><span className="text-phosphor">&gt; </span>short observations from the body, the road, the day.</p>
@@ -106,6 +114,7 @@ const FieldNotesContent = () => (
       — nj · 3 notes · 2026-05 · more as they come
     </div>
   </div>
+  </>
 );
 
 export default FieldNotesContent;
