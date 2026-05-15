@@ -355,3 +355,13 @@ Refined several UI details based on review:
 - **scripts/prerender.mjs**: replaced hard-coded Windows Chrome path with OS-aware `findChrome()` (checks `CHROME_PATH` env, then platform-specific defaults for win32/darwin/linux). If no browser found → `process.exit(0)` (graceful skip, build does not fail). This fixes the Vercel build failure where Chrome was not present in the CI environment.
 - **vite.config.ts spread**: kept `...legacy({})` — `@vitejs/plugin-legacy@5` returns `Plugin[]`, so spreading is required and correct. Documented in CLAUDE.md.
 - **CLAUDE.md**: added `scripts/` tree section, `src/lib/structuredData.ts` entry, and full SEO section covering: SEO component usage, structured data helpers, prerender route source of truth, Chrome detection, and the legacy plugin spread rationale.
+
+---
+
+## Phase Q — SEO: www→apex Redirect + Production Deployment Unblock
+**2026-05-16 — Add www redirect; diagnose why pre-rendered build wasn't in production**
+
+- **Root cause**: `seo-fix` branch (containing all Puppeteer-based pre-rendering, react-helmet-async SEO, JSON-LD) was committed but never pushed to origin. Vercel deploys from `main`/remote, so production was still serving the old build with no og: tags.
+- **vercel.json**: added `redirects` array with host-conditional 301: any request to `www.niruddeshjatra.space` 301-redirects to `https://niruddeshjatra.space/$1`. Previously www returned 200 with its own content — crawlers (Facebook, Google) could fetch a different URL than canonical. ArcZero rewrites preserved exactly.
+- **Diagnostic confirmed**: local `dist/` is fully correct — `dist/index.html` has all og:title, og:description, og:image, twitter:*, WebSite JSON-LD; `dist/writing/essays/on-staying-small/index.html` has essay-specific og:title, og:description, Article JSON-LD with `datePublished: 2026-05-10`.
+- **google8eaf4159b05eea80.html**: Google Search Console ownership verification file added to project root (served as static asset).
