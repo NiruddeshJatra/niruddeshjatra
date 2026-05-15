@@ -1,4 +1,4 @@
-import { useRef, useState, useEffect } from "react";
+import React, { useRef, useState, useEffect } from "react";
 import { Folder, File, ChevronRight, ChevronLeft, ChevronDown } from "lucide-react";
 import { useListKeyboardNavigation } from '../hooks/useKeyboardNavigation';
 
@@ -14,6 +14,8 @@ export interface FileItem {
 interface FileExplorerProps {
   currentSection: string;
   onSectionChange: (section: string) => void;
+  headerAction?: React.ReactNode;
+  navClassName?: string;
 }
 
 export const files: FileItem[] = [
@@ -53,7 +55,7 @@ const loadExpanded = (): Set<string> => {
   return new Set(defaultExpanded);
 };
 
-const FileExplorer = ({ currentSection, onSectionChange }: FileExplorerProps) => {
+const FileExplorer = ({ currentSection, onSectionChange, headerAction, navClassName }: FileExplorerProps) => {
   const explorerRef = useRef<HTMLElement>(null);
   const [focusedItemIndex, setFocusedItemIndex] = useState(-1);
   const [collapsed, setCollapsed] = useState(
@@ -139,7 +141,7 @@ const FileExplorer = ({ currentSection, onSectionChange }: FileExplorerProps) =>
   return (
     <nav
       ref={explorerRef}
-      className="h-full flex flex-col w-48 bg-black/90 backdrop-blur-sm border-r border-border"
+      className={`h-full flex flex-col w-48 bg-black/90 backdrop-blur-sm border-r border-border ${navClassName ?? ''}`}
       aria-label="Portfolio sections"
       role="navigation"
     >
@@ -149,14 +151,16 @@ const FileExplorer = ({ currentSection, onSectionChange }: FileExplorerProps) =>
           <h2 className="text-[11px] font-semibold uppercase tracking-wide flex-1 text-muted-foreground">
             WORKSPACE
           </h2>
-          <button
-            onClick={() => setCollapsed(true)}
-            className="text-muted-foreground hover:text-foreground transition-colors"
-            aria-label="Collapse file explorer"
-            type="button"
-          >
-            <ChevronLeft className="w-3.5 h-3.5" />
-          </button>
+          {headerAction ?? (
+            <button
+              onClick={() => setCollapsed(true)}
+              className="text-muted-foreground hover:text-foreground transition-colors"
+              aria-label="Collapse file explorer"
+              type="button"
+            >
+              <ChevronLeft className="w-3.5 h-3.5" />
+            </button>
+          )}
         </div>
       </div>
 

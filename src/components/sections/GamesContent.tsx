@@ -105,7 +105,7 @@ const GamesContent = () => {
     <div className="text-phosphor-dim text-sm mt-10 mb-3 font-mono">// the rule</div>
 
     <div className="pl-2">
-      <p className="text-foreground/85 text-sm leading-relaxed mb-4 pr-2">
+      <p className="text-foreground/85 text-sm leading-relaxed mb-4 pr-12 sm:pr-2">
         every game is its own world. its own repo, its own deploy,
         its own visual language. this page is the doorway.
       </p>
