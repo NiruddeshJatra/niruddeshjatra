@@ -1,5 +1,6 @@
 import React from "react";
 import { firePortal } from "@/hooks/useLoader";
+import SEO from "../SEO";
 
 const GamesContent = () => {
   const handlePlayClick = (e: React.MouseEvent) => {
@@ -14,6 +15,12 @@ const GamesContent = () => {
   };
 
   return (
+  <>
+    <SEO
+      title="games — niruddeshjatra"
+      description="games i built. arczero is a physics-based missile interception puzzle. more on the way."
+      path="/games"
+    />
   <div className="animate-fade-in font-mono max-w-xl mx-auto px-4 py-6 pb-16 sm:pb-4 text-foreground/85">
     <div className="pl-2 mb-6">
       <p className="mb-1"><span className="text-phosphor">&gt; </span>games/</p>
@@ -111,6 +118,7 @@ const GamesContent = () => {
       </p>
     </div>
   </div>
+  </>
   );
 };
 

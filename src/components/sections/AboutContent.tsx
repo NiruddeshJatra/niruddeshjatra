@@ -34,6 +34,19 @@ const DraftAbout = () => (
   </div>
 );
 
-const AboutContent = () => <DraftAbout />;
+import SEO from "../SEO";
+import { personSchema } from "../../lib/structuredData";
+
+const AboutContent = () => (
+  <>
+    <SEO
+      title="about — niruddeshjatra"
+      description="who i am, what i make, and how to find me. by nj."
+      path="/about"
+      structuredData={personSchema()}
+    />
+    <DraftAbout />
+  </>
+);
 
 export default AboutContent;

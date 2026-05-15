@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import SEO from "../SEO";
 
 const SectionHeader = ({ label }: { label: string }) => (
   <div className="text-phosphor-dim text-sm mt-10 mb-3 font-mono">// {label}</div>
@@ -157,6 +158,12 @@ const weightClass: Record<CalEntry["weight"], string> = {
 };
 
 const RunningContent = () => (
+  <>
+    <SEO
+      title="running — niruddeshjatra"
+      description="my race log, training notes, and targets. half marathons, ultras, and the road to 100K."
+      path="/journey-running"
+    />
   <div className="animate-fade-in font-mono max-w-2xl mx-auto px-4 py-6 text-[15px] leading-[1.7] text-foreground/85">
 
     <div className="pl-2 mb-6">
@@ -274,6 +281,7 @@ const RunningContent = () => (
       — nj · last updated 2026-05 · still going
     </div>
   </div>
+  </>
 );
 
 export default RunningContent;

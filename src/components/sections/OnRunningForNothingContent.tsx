@@ -1,6 +1,25 @@
 import EssayContent from "./EssayContent";
+import SEO from "../SEO";
+import { articleSchema } from "../../lib/structuredData";
 
 const OnRunningForNothingContent = () => (
+  <>
+    <SEO
+      title="on running for nothing"
+      description="why i run when there is no career outcome. an essay about training in secret and the medals nobody asked for."
+      path="/writing/essays/on-running-for-nothing"
+      lang="en"
+      alternateLangPath="/writing/essays/on-running-for-nothing-bn"
+      ogType="article"
+      articleMeta={{ publishedTime: '2026-05-01', author: 'Nasiful Alam' }}
+      structuredData={articleSchema({
+        title: 'on running for nothing',
+        description: 'why i run when there is no career outcome.',
+        path: '/writing/essays/on-running-for-nothing',
+        datePublished: '2026-05-01',
+        lang: 'en',
+      })}
+    />
   <EssayContent
     title="on running for nothing"
     subtitle="nj · may 2026"
@@ -130,6 +149,7 @@ const OnRunningForNothingContent = () => (
       <p><span className="text-phosphor">&gt; </span>wanted to find out if i could.</p>
     </div>
   </EssayContent>
+  </>
 );
 
 export default OnRunningForNothingContent;

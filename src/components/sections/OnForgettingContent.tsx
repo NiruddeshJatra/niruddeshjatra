@@ -1,6 +1,25 @@
 import EssayContent from "./EssayContent";
+import SEO from "../SEO";
+import { articleSchema } from "../../lib/structuredData";
 
 const OnForgettingContent = () => (
+  <>
+    <SEO
+      title="on forgetting"
+      description="why the mind forgets, and why that is mercy. an essay about being a brainy goldfish."
+      path="/writing/essays/on-forgetting"
+      lang="en"
+      alternateLangPath="/writing/essays/on-forgetting-bn"
+      ogType="article"
+      articleMeta={{ publishedTime: '2026-05-14', author: 'Nasiful Alam' }}
+      structuredData={articleSchema({
+        title: 'on forgetting',
+        description: 'why the mind forgets, and why that is mercy.',
+        path: '/writing/essays/on-forgetting',
+        datePublished: '2026-05-14',
+        lang: 'en',
+      })}
+    />
   <EssayContent
     title="on forgetting"
     subtitle="nj · may 2026"
@@ -156,6 +175,7 @@ const OnForgettingContent = () => (
       <p><span className="text-phosphor">&gt; </span>some days it feels merciful.</p>
     </div>
   </EssayContent>
+  </>
 );
 
 export default OnForgettingContent;

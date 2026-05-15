@@ -333,3 +333,15 @@ Refined several UI details based on review:
 - **MobileTerminalSheet.tsx**: added `viewportHeight` state updated by `visualViewport` handler. Sheet height clamped to `viewportHeight - 8px` when keyboard is open (`keyboardOffset > 0`), preventing sheet from going off-screen. Inner div changed from hardcoded `h-[calc(60vh-2rem)]` to `h-[calc(100%-2rem)]`. Passes `hideMobileTips={true}` and `blurOnCommand={true}` to Terminal — keyboard auto-closes after each command.
 - **GamesContent.tsx**: outer div gets `pb-16 sm:pb-4` for bottom spacing clearance. ArcZero title `fontSize: 2.5rem` → `clamp(2rem, 8vw, 2.5rem)`; subtitle `clamp(0.7rem, 2.5vw, 0.9rem)`; body text `clamp(0.8rem, 2.5vw, 0.9rem)` — card scales down gracefully on narrow screens.
 - **EssayContent.tsx**: `leading-[1.7] sm:leading-[1.8]` → `leading-[1.85] sm:leading-[2]` — increased line height improves readability on both mobile and desktop.
+
+---
+
+## Phase P — Toolchain Migration: Yarn Berry → npm
+**2026-05-16 — Fix broken dev environment caused by Yarn Berry PnP on Windows**
+
+- **Root cause 1**: `~/.npmrc` contained `os=linux` — forced npm to install Linux-only optional binaries (`@esbuild/linux-x64`, skipping `@esbuild/win32-x64`, `@rollup/rollup-win32-x64-msvc`, `@swc/core-win32-x64-msvc`). Cleared.
+- **Root cause 2**: `packageManager: "yarn@4.13.0"` field in `package.json` activated Corepack, which routed all `npm` calls through Yarn Berry PnP. PnP uses `__virtual__/...` path aliases that Vite cannot resolve. Field removed (Corepack auto-added `packageManager: "npm@11.14.1"` on next run).
+- **Root cause 3**: `@vitejs/plugin-legacy@8.0.2` requires Vite 8; project uses Vite 5. Pinned to `^5.4.0`.
+- **package.json scripts**: replaced all `yarn node` → `node` and `yarn <script>` → `npm run <script>` in `build`, `generate-og`, `generate-favicons`, `prerender`, `postbuild`.
+- **Deleted**: `yarn.lock`, `.yarnrc.yml`, `.yarn/` directory.
+- **Result**: `npm run dev` boots Vite 5.4.21 in ~700ms; `tsc --noEmit` passes clean; Windows native binaries all present.

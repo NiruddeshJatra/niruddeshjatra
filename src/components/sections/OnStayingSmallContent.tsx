@@ -1,6 +1,25 @@
 import EssayContent from "./EssayContent";
+import SEO from "../SEO";
+import { articleSchema } from "../../lib/structuredData";
 
 const OnStayingSmallContent = () => (
+  <>
+    <SEO
+      title="on staying small"
+      description="why i refuse to scale my teaching into a coaching business, even when the math is good."
+      path="/writing/essays/on-staying-small"
+      lang="en"
+      alternateLangPath="/writing/essays/on-staying-small-bn"
+      ogType="article"
+      articleMeta={{ publishedTime: '2026-05-10', author: 'Nasiful Alam' }}
+      structuredData={articleSchema({
+        title: 'on staying small',
+        description: 'why i refuse to scale my teaching into a coaching business.',
+        path: '/writing/essays/on-staying-small',
+        datePublished: '2026-05-10',
+        lang: 'en',
+      })}
+    />
   <EssayContent
     title="on staying small"
     subtitle="nj · may 2026"
@@ -201,6 +220,7 @@ const OnStayingSmallContent = () => (
       <p><span className="text-phosphor">&gt; </span>the second cost is the one i can't pay.</p>
     </div>
   </EssayContent>
+  </>
 );
 
 export default OnStayingSmallContent;

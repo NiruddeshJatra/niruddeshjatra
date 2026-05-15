@@ -51,7 +51,9 @@ const loadExpanded = (): Set<string> => {
   try {
     const raw = localStorage.getItem(STORAGE_KEY_EXPANDED);
     if (raw) return new Set(JSON.parse(raw) as string[]);
-  } catch {}
+  } catch {
+    // ignore parse errors — default expanded used as fallback
+  }
   return new Set(defaultExpanded);
 };
 

@@ -2,10 +2,12 @@ import React, { Suspense, lazy, useState, useEffect, useRef } from "react";
 import { FileCode, FileText, FileJson, Mail, ChevronUp } from "lucide-react";
 import MatrixBackground from "./MatrixBackground";
 import Changelog from "./sections/Changelog";
+import SEO from "./SEO";
 import { useViewport } from "../hooks/useViewport";
 import { Link, useLocation } from "react-router-dom";
 import { getTodaysQuote } from "../lib/quotes";
 import { getTodaysOpenerLine } from "../lib/openerLines";
+import { websiteSchema } from "../lib/structuredData";
 
 const AboutContent = lazy(() => import("./sections/AboutContent"));
 const JourneyContent = lazy(() => import("./sections/JourneyContent"));
@@ -213,7 +215,15 @@ const Editor = ({ currentSection }: EditorProps) => {
         const quote = getTodaysQuote();
         const todaysLine = getTodaysOpenerLine();
         return (
-          <div className="animate-fade-in font-mono text-sm leading-relaxed py-6 px-4">
+          <>
+            <SEO
+              title="niruddeshjatra"
+              description="a quiet corner of the internet. essays, games, and field notes by nj."
+              path="/"
+              ogType="website"
+              structuredData={websiteSchema()}
+            />
+            <div className="animate-fade-in font-mono text-sm leading-relaxed py-6 px-4">
             <div className="text-phosphor font-bold leading-tight mb-10">
               <pre className="text-[4px] sm:text-[8px] md:text-[10px] leading-none overflow-x-auto overflow-y-hidden whitespace-pre">{`███╗   ██╗██╗██████╗ ██╗   ██╗██████╗ ██████╗ ███████╗███████╗██╗  ██╗             ██╗ █████╗ ████████╗██████╗  █████╗
 ████╗  ██║██║██╔══██╗██║   ██║██╔══██╗██╔══██╗██╔════╝██╔════╝██║  ██║             ██║██╔══██╗╚══██╔══╝██╔══██╗██╔══██╗
@@ -259,7 +269,8 @@ const Editor = ({ currentSection }: EditorProps) => {
             </div>
 
             <div className="h-12" />
-          </div>
+            </div>
+          </>
         );
       }
     }

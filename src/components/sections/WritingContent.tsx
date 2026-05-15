@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import IndexRow from "./IndexRow";
+import SEO from "../SEO";
 
 const essays = [
   {
@@ -23,6 +24,12 @@ const essays = [
 ];
 
 const WritingContent = () => (
+  <>
+    <SEO
+      title="writing — niruddeshjatra"
+      description="essays and tech articles by nj. mostly about running, teaching, and how i think."
+      path="/writing"
+    />
   <div className="animate-fade-in font-mono max-w-xl mx-auto px-4 py-6 text-foreground/85">
     <div className="pl-2 mb-6">
       <p className="mb-1"><span className="text-phosphor">&gt; </span>a place for things i write down.</p>
@@ -55,6 +62,7 @@ const WritingContent = () => (
       — nj · 2026-05 · this index will grow
     </div>
   </div>
+  </>
 );
 
 export default WritingContent;
