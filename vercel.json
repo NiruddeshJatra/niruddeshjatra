@@ -1,4 +1,17 @@
 {
+  "redirects": [
+    {
+      "source": "/(.*)",
+      "has": [
+        {
+          "type": "host",
+          "value": "www.niruddeshjatra.space"
+        }
+      ],
+      "destination": "https://niruddeshjatra.space/$1",
+      "permanent": true
+    }
+  ],
   "rewrites": [
     {
       "source": "/games/arczero",
