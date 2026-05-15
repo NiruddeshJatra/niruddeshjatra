@@ -215,7 +215,7 @@ const Editor = ({ currentSection }: EditorProps) => {
         return (
           <div className="animate-fade-in font-mono text-sm leading-relaxed py-6 px-4">
             <div className="text-phosphor font-bold leading-tight mb-10">
-              <pre className="text-[5px] sm:text-[8px] md:text-[10px] leading-none overflow-hidden whitespace-pre">{`███╗   ██╗██╗██████╗ ██╗   ██╗██████╗ ██████╗ ███████╗███████╗██╗  ██╗             ██╗ █████╗ ████████╗██████╗  █████╗
+              <pre className="text-[4px] sm:text-[8px] md:text-[10px] leading-none overflow-hidden whitespace-pre">{`███╗   ██╗██╗██████╗ ██╗   ██╗██████╗ ██████╗ ███████╗███████╗██╗  ██╗             ██╗ █████╗ ████████╗██████╗  █████╗
 ████╗  ██║██║██╔══██╗██║   ██║██╔══██╗██╔══██╗██╔════╝██╔════╝██║  ██║             ██║██╔══██╗╚══██╔══╝██╔══██╗██╔══██╗
 ██╔██╗ ██║██║██████╔╝██║   ██║██║  ██║██║  ██║█████╗  ███████╗███████║             ██║███████║   ██║   ██████╔╝███████║
 ██║╚██╗██║██║██╔══██╗██║   ██║██║  ██║██║  ██║██╔══╝  ╚════██║██╔══██║        ██   ██║██╔══██║   ██║   ██╔══██╗██╔══██║
@@ -255,7 +255,7 @@ const Editor = ({ currentSection }: EditorProps) => {
 
             <div className="text-phosphor-dim text-sm mt-10 mb-3 font-mono">// fine print</div>
             <div className="pl-2 mb-2">
-              <p><span className="text-phosphor">&gt; </span><span className="text-foreground/70">type 'help' in the terminal for commands, or just click around.</span></p>
+              <p className="pr-12 sm:pr-0"><span className="text-phosphor">&gt; </span><span className="text-foreground/70">type 'help' in the terminal for commands, or just click around.</span></p>
             </div>
 
             <div className="h-12" />
@@ -288,7 +288,7 @@ const Editor = ({ currentSection }: EditorProps) => {
             animate-fade-in
             transition-all duration-300 ease-out
             ${isMobile ? 'overflow-x-auto' : ''}
-            bg-black/10 backdrop-blur-sm
+            bg-black/10
           `}>
             <div className="min-w-0 w-full">
               {renderContent()}

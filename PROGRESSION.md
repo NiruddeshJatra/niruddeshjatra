@@ -307,3 +307,18 @@ Refined several UI details based on review:
 - **WritingContent.tsx + JourneyContent.tsx**: two-column CSS grid collapsed to stacked on mobile (`space-y-4 sm:space-y-1`; `sm:grid sm:grid-cols-[auto_1fr]`). Title on top, description full-width below. Two-column layout preserved at sm: breakpoint and up.
 - **GamesContent.tsx**: ArcZero card inline `padding: 32px 28px` replaced with Tailwind `p-6 sm:p-8` (24px mobile, 32px tablet+). "the rule" paragraph gets `pr-2` right padding for browser floating UI clearance.
 - **RunningContent.tsx**: race log, skipped races, and 2026 calendar all wrapped in `overflow-x-auto -mx-4 sm:mx-0 px-4 sm:px-0` with `min-w-[640px] sm:min-w-0` inner — extend scroll area to viewport edges on mobile. Mobile-only `← swipe to scroll →` indicator above each.
+
+---
+
+## Phase N — Mobile Phase 3: Touch Polish + Drawer Fixes
+**2026-05-15 — Swipe gestures, keyboard handling, FAB clearance, drawer dedup, matrix fix**
+
+- **Editor.tsx (ASCII banner)**: stacked two-line mobile version (`NIRUDDESH` / `JATRA` at `text-[28px]`, `sm:hidden`) added above existing full ASCII art (now `hidden sm:block`). Desktop banner unchanged. Welcome page fine-print paragraph gets `pr-12 sm:pr-0` to clear Chrome's scroll-to-top FAB on Android.
+- **EssayContent.tsx (language toggle)**: refactored from two `<span>` elements that could wrap to a single `flex items-baseline gap-3` row. Active lang = `<span className="text-phosphor">`, inactive = `<Link className="text-phosphor-dim hover:text-phosphor">`. Never wraps.
+- **EssayContent.tsx (font size)**: outer div changed from `text-base leading-[1.8]` to `text-[13px] sm:text-[15px] leading-[1.7] sm:leading-[1.8]`. Reduces cramped feel on mobile; heading/footer overrides still apply.
+- **GamesContent.tsx**: "the rule" paragraph `pr-2` → `pr-12 sm:pr-2` for FAB clearance on mobile.
+- **MobileFileDrawer.tsx**: eliminated double-header. Removed outer absolute X button and explicit `w-72`. `FileExplorer` now receives `headerAction` (X button) that replaces the collapse chevron in the WORKSPACE header row — one header, one control. Drawer width driven by FileExplorer's `navClassName="!w-64"` (256px mobile vs 192px desktop).
+- **FileExplorer.tsx**: added `headerAction?: React.ReactNode` and `navClassName?: string` props. `headerAction` slots into the WORKSPACE header in place of the collapse chevron. `navClassName` appends to the expanded nav's class list (enables width override for mobile drawer).
+- **MobileTerminalSheet.tsx**: swipe-down dismissal wired to drag handle (`handleTouchStart/Move/End`, 50px threshold, `touch-none` on handle). `visualViewport` API listener adjusts `keyboardOffset` state when on-screen keyboard appears; sheet uses `style={{ bottom: keyboardOffset, height: ... }}` instead of Tailwind height class. Degrades gracefully when API absent.
+- **MatrixBackground overlay fix**: removed `backdrop-blur-sm` from `editor-content` div in `Editor.tsx`. Root cause: `Editor.css` applies `transform: translateZ(0); will-change: transform` to `.editor-content` on mobile, creating a GPU compositing layer boundary that caused `backdrop-filter` to blur the wrong layer — a solid dark background instead of the canvas — producing a visible dark overlay on mobile only.
+- **RunningContent.tsx**: Sylhet International Marathon 2026 (42.2K, 2026-08-08) added to 2026 calendar with `weight: "phosphor"` (A-race marker).

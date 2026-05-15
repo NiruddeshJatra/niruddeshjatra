@@ -24,16 +24,20 @@ const EssayContent = ({
   children,
 }: EssayContentProps) => (
   <div
-    className="animate-fade-in font-mono max-w-2xl mx-auto px-4 py-6 text-base leading-[1.8] text-foreground/85"
+    className="animate-fade-in font-mono max-w-2xl mx-auto px-4 py-6 text-[13px] sm:text-[15px] leading-[1.7] sm:leading-[1.8] text-foreground/85"
     {...(currentLang === "bn" ? { lang: "bn" } : {})}
   >
-    <div className="flex justify-end gap-3 mb-6 text-xs font-mono">
-      <span className={currentLang === "en" ? "text-phosphor" : "text-phosphor-dim hover:text-phosphor"}>
-        {currentLang === "en" ? "[en]" : <Link to={alternateLangPath}>[en]</Link>}
-      </span>
-      <span className={currentLang === "bn" ? "text-phosphor" : "text-phosphor-dim hover:text-phosphor"}>
-        {currentLang === "bn" ? "[bn]" : <Link to={alternateLangPath}>[bn]</Link>}
-      </span>
+    <div className="flex justify-end items-baseline gap-3 mb-6 text-xs font-mono">
+      {currentLang === "en" ? (
+        <span className="text-phosphor">[en]</span>
+      ) : (
+        <Link to={alternateLangPath} className="text-phosphor-dim hover:text-phosphor">[en]</Link>
+      )}
+      {currentLang === "bn" ? (
+        <span className="text-phosphor">[bn]</span>
+      ) : (
+        <Link to={alternateLangPath} className="text-phosphor-dim hover:text-phosphor">[bn]</Link>
+      )}
     </div>
 
     <div className="mb-2">

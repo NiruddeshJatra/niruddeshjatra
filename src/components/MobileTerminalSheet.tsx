@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, lazy, Suspense } from 'react';
+import { useState, useEffect, useRef, lazy, Suspense, useCallback } from 'react';
 
 const LazyTerminal = lazy(() => import('./Terminal'));
 
@@ -20,6 +20,9 @@ const MobileTerminalSheet: React.FC<MobileTerminalSheetProps> = ({
   onThemeChange,
 }) => {
   const [isExpanded, setIsExpanded] = useState(false);
+  const [touchStartY, setTouchStartY] = useState<number | null>(null);
+  const [touchCurrentY, setTouchCurrentY] = useState<number | null>(null);
+  const [keyboardOffset, setKeyboardOffset] = useState(0);
   const sheetRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const previouslyFocusedRef = useRef<HTMLElement | null>(null);
@@ -61,6 +64,46 @@ const MobileTerminalSheet: React.FC<MobileTerminalSheetProps> = ({
     return () => document.removeEventListener('keydown', handler);
   }, [isExpanded]);
 
+  // Swipe-down to dismiss
+  const handleTouchStart = useCallback((e: React.TouchEvent) => {
+    setTouchStartY(e.touches[0].clientY);
+    setTouchCurrentY(e.touches[0].clientY);
+  }, []);
+
+  const handleTouchMove = useCallback((e: React.TouchEvent) => {
+    setTouchCurrentY(e.touches[0].clientY);
+  }, []);
+
+  const handleTouchEnd = useCallback(() => {
+    if (touchStartY !== null && touchCurrentY !== null) {
+      if (touchCurrentY - touchStartY > 50) {
+        setIsExpanded(false);
+      }
+    }
+    setTouchStartY(null);
+    setTouchCurrentY(null);
+  }, [touchStartY, touchCurrentY]);
+
+  // visualViewport keyboard offset
+  useEffect(() => {
+    if (!isExpanded) {
+      setKeyboardOffset(0);
+      return;
+    }
+    const handleViewportChange = () => {
+      if (window.visualViewport) {
+        const offset = window.innerHeight - window.visualViewport.height - window.visualViewport.offsetTop;
+        setKeyboardOffset(Math.max(0, offset));
+      }
+    };
+    window.visualViewport?.addEventListener('resize', handleViewportChange);
+    window.visualViewport?.addEventListener('scroll', handleViewportChange);
+    return () => {
+      window.visualViewport?.removeEventListener('resize', handleViewportChange);
+      window.visualViewport?.removeEventListener('scroll', handleViewportChange);
+    };
+  }, [isExpanded]);
+
   return (
     <div
       ref={sheetRef}
@@ -69,20 +112,19 @@ const MobileTerminalSheet: React.FC<MobileTerminalSheetProps> = ({
       aria-modal={isExpanded ? true : undefined}
       aria-label="Terminal"
       tabIndex={isExpanded ? -1 : undefined}
-      className={`
-        fixed bottom-0 left-0 right-0 z-50
-        bg-black/95 backdrop-blur-sm border-t border-border
-        transition-all duration-200 ease-out
-        ${isExpanded ? 'h-[60vh]' : 'h-11'}
-      `}
+      className="fixed left-0 right-0 z-50 bg-black/95 backdrop-blur-sm border-t border-border transition-all duration-200 ease-out"
+      style={{ bottom: keyboardOffset, height: isExpanded ? '60vh' : '44px' }}
       data-mobile-terminal-sheet
     >
       {isExpanded ? (
         <>
           {/* Drag handle / collapse affordance */}
           <div
-            className="h-8 flex items-center justify-center border-b border-border/40 cursor-pointer shrink-0"
+            className="h-8 flex items-center justify-center border-b border-border/40 cursor-pointer shrink-0 touch-none"
             onClick={() => setIsExpanded(false)}
+            onTouchStart={handleTouchStart}
+            onTouchMove={handleTouchMove}
+            onTouchEnd={handleTouchEnd}
             aria-label="Collapse terminal"
             role="button"
             tabIndex={0}
