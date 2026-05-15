@@ -345,3 +345,13 @@ Refined several UI details based on review:
 - **package.json scripts**: replaced all `yarn node` → `node` and `yarn <script>` → `npm run <script>` in `build`, `generate-og`, `generate-favicons`, `prerender`, `postbuild`.
 - **Deleted**: `yarn.lock`, `.yarnrc.yml`, `.yarn/` directory.
 - **Result**: `npm run dev` boots Vite 5.4.21 in ~700ms; `tsc --noEmit` passes clean; Windows native binaries all present.
+
+---
+
+## Phase P.1 — SEO: Code Review Fixes + Docs
+**2026-05-16 — Address prerender portability, route centralization, and missing SEO docs**
+
+- **scripts/routes.mjs** created: single source of truth for all prerenderable routes. `prerender.mjs` now imports from it instead of defining routes inline. `sitemap.xml` still maintained separately (carries extra metadata: `changefreq`, `priority`, `hreflang`).
+- **scripts/prerender.mjs**: replaced hard-coded Windows Chrome path with OS-aware `findChrome()` (checks `CHROME_PATH` env, then platform-specific defaults for win32/darwin/linux). If no browser found → `process.exit(0)` (graceful skip, build does not fail). This fixes the Vercel build failure where Chrome was not present in the CI environment.
+- **vite.config.ts spread**: kept `...legacy({})` — `@vitejs/plugin-legacy@5` returns `Plugin[]`, so spreading is required and correct. Documented in CLAUDE.md.
+- **CLAUDE.md**: added `scripts/` tree section, `src/lib/structuredData.ts` entry, and full SEO section covering: SEO component usage, structured data helpers, prerender route source of truth, Chrome detection, and the legacy plugin spread rationale.

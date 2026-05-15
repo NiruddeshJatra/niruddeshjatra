@@ -1,36 +1,51 @@
 import puppeteer from 'puppeteer-core';
 import { createServer } from 'http';
-import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'fs';
+import { writeFileSync, mkdirSync, existsSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import handler from 'serve-handler';
+import { ROUTES } from './routes.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const distDir = join(__dirname, '..', 'dist');
 
-const ROUTES = [
-  '/',
-  '/about',
-  '/writing',
-  '/writing/essays/on-running-for-nothing',
-  '/writing/essays/on-running-for-nothing-bn',
-  '/writing/essays/on-staying-small',
-  '/writing/essays/on-staying-small-bn',
-  '/writing/essays/on-forgetting',
-  '/writing/essays/on-forgetting-bn',
-  '/journey',
-  '/journey-running',
-  '/journey-hiking',
-  '/games',
-  '/field-notes',
-  '/now',
-  '/contact',
-];
-
-const CHROME_PATH = process.env.CHROME_PATH ||
-  'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe';
-
 const PORT = 5050;
+
+function findChrome() {
+  if (process.env.CHROME_PATH) return process.env.CHROME_PATH;
+
+  const candidates = {
+    win32: [
+      'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
+      'C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe',
+      `${process.env.LOCALAPPDATA}\\Google\\Chrome\\Application\\chrome.exe`,
+    ],
+    darwin: [
+      '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
+      '/Applications/Chromium.app/Contents/MacOS/Chromium',
+    ],
+    linux: [
+      '/usr/bin/google-chrome',
+      '/usr/bin/google-chrome-stable',
+      '/usr/bin/chromium-browser',
+      '/usr/bin/chromium',
+      '/snap/bin/chromium',
+    ],
+  };
+
+  const paths = candidates[process.platform] ?? candidates.linux;
+  return paths.find(p => existsSync(p)) ?? null;
+}
+
+const chromePath = findChrome();
+
+if (!chromePath) {
+  console.warn(
+    'Pre-render skipped: Chrome/Chromium not found.\n' +
+    'Set CHROME_PATH env var to enable pre-rendering in this environment.'
+  );
+  process.exit(0);
+}
 
 // Serve dist as SPA (all routes → index.html)
 const server = createServer((req, res) => {
@@ -44,7 +59,7 @@ await new Promise((resolve) => server.listen(PORT, resolve));
 console.log(`Static server on http://localhost:${PORT}`);
 
 const browser = await puppeteer.launch({
-  executablePath: CHROME_PATH,
+  executablePath: chromePath,
   args: ['--no-sandbox', '--disable-setuid-sandbox'],
   headless: true,
 });
