@@ -14,6 +14,11 @@ A developer portfolio site built with React 19 + TypeScript + Vite + Tailwind. F
 
 ## File Structure
 ```
+scripts/
+├── routes.mjs            # SINGLE SOURCE OF TRUTH for all prerenderable routes — import here, not in prerender.mjs
+├── prerender.mjs         # Post-build SSG: serves dist, crawls ROUTES via puppeteer-core, writes index.html per route
+├── generate-og.mjs       # Generates public/og-image.png via sharp (runs before vite build)
+├── generate-favicons.mjs # Generates all favicon variants in public/ via sharp (runs before vite build)
 src/
 ├── components/
 │   ├── sections/         # Page content sections; EssayContent.tsx is shared wrapper for prose essays
@@ -41,6 +46,7 @@ src/
 ├── lib/
 │   ├── matrixChars.ts    # Shared katakana/digit char arrays — source of truth for MatrixBackground
 │   ├── quotes.ts         # QUOTES array (30 entries) + getTodaysQuote() — day-stable rotating quote
+│   ├── structuredData.ts # JSON-LD structured data helpers (WebSite, Person, Article schemas)
 │   └── ...               # Other shared utilities
 └── constants/
     ├── sections.ts       # SECTION_ALIASES — derived from FileExplorer.files (skips containers)
@@ -147,15 +153,23 @@ All keys namespaced `ncs_*` to avoid collisions.
 | `ncs_portal_seen_blog` | `"true"` | PortalLoader gate for /blog area |
 | `ncs_portal_seen_arczero` | `"true"` | PortalLoader gate for /games/arczero (set alongside games key) |
 
+## SEO
+- **SEO component**: `src/components/SEO.tsx` — wraps `react-helmet-async`. Every section rendered by `Editor.tsx` should have a corresponding `<SEO>` block with `title`, `description`, `canonicalPath`, and `type` (`"website"` or `"article"`).
+- **Structured data**: `src/lib/structuredData.ts` exports `getWebSiteSchema()`, `getPersonSchema()`, `getArticleSchema(title, description, url, datePublished)`. Inject via `<script type="application/ld+json">` in the `<SEO>` component or directly in `index.html` for site-wide schemas.
+- **Prerender routes**: `scripts/routes.mjs` is the single source of truth for all routes that get prerendered and appear in `sitemap.xml`. When adding a new section, update this file. `prerender.mjs` imports from it. `sitemap.xml` must be kept in sync manually (it carries extra metadata like `changefreq`, `priority`, `hreflang` that can't auto-derive).
+- **Prerender**: runs as `postbuild` via `scripts/prerender.mjs`. Requires Chrome/Chromium locally — set `CHROME_PATH` env var if detection fails. Gracefully skips (exit 0) if no browser found — build does not fail.
+- **`@vitejs/plugin-legacy` spread**: `vite.config.ts` uses `...legacy({})` (spread). This is intentional — the plugin returns `Plugin[]`, so spread is required. Do not remove the spread.
+
 ## Commands
 ```bash
 npm run dev          # Start dev server (Vite)
-npm run build        # Production build
+npm run build        # Production build (generates OG image, favicons, vite build, then prerenders)
 npm run preview      # Preview production build
 npm run lint         # ESLint check
 npx tsc --noEmit     # Type check
 npx vitest           # Run unit tests
 npx playwright test  # Run E2E tests
+CHROME_PATH=/path/to/chrome npm run prerender  # Run prerender manually
 ```
 
 ## AI Agents Available
