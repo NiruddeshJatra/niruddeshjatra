@@ -21,7 +21,7 @@ const MobileTerminalSheet: React.FC<MobileTerminalSheetProps> = ({
 }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [keyboardOffset, setKeyboardOffset] = useState(0);
-  const [viewportHeight, setViewportHeight] = useState(() => window.innerHeight);
+  const [viewportHeight, setViewportHeight] = useState(() => typeof window !== 'undefined' ? window.innerHeight : 0);
   const touchStartY = useRef<number | null>(null);
   const touchCurrentY = useRef<number | null>(null);
   const sheetRef = useRef<HTMLDivElement>(null);
