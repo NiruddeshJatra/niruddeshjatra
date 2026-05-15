@@ -133,6 +133,7 @@ Adding a new container folder: add a `FileItem` with `isContainer: true`, `id` s
 - **Terminal auto-collapse**: `ResponsiveLayout` owns `isTerminalFocused` state. Reading pages (`writing/*`): collapsed = 72px, others: collapsed = 132px. Expanded = 288px. Transitions 200ms ease-out. Click-outside (`data-terminal-region` attribute) and Escape key both collapse. Do NOT persist to localStorage. Terminal input row is a standalone `shrink-0` element between header and history — always visible in collapsed state.
 - **404 sentinel**: unmatched React Router routes render `<Index forceSection="404" />`. `Editor.tsx` maps `"404"` → `<NotFoundContent />` and uses `useLocation()` to display `location.pathname + ".404"` in the file header. Do NOT use the legacy `NotFound.tsx` page for new 404 handling.
 - **vercel.json rewrite order**: ArcZero proxy rewrites must come BEFORE the SPA fallback `/(.*) → /index.html`. First match wins. Never move the SPA fallback above the game rewrites.
+- **vercel.json www redirect**: `redirects` array contains a host-conditional 301 redirect: `www.niruddeshjatra.space/(.*)` → `https://niruddeshjatra.space/$1`. Redirects run before rewrites in Vercel. The redirect must stay in `redirects`, not `rewrites`. Canonical is always the apex domain (no www).
 - Commit format: `type(scope): description` (feat/fix/chore/refactor/docs)
 
 ## Storage Keys
