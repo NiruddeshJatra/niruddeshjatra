@@ -322,3 +322,14 @@ Refined several UI details based on review:
 - **MobileTerminalSheet.tsx**: swipe-down dismissal wired to drag handle (`handleTouchStart/Move/End`, 50px threshold, `touch-none` on handle). `visualViewport` API listener adjusts `keyboardOffset` state when on-screen keyboard appears; sheet uses `style={{ bottom: keyboardOffset, height: ... }}` instead of Tailwind height class. Degrades gracefully when API absent.
 - **MatrixBackground overlay fix**: removed `backdrop-blur-sm` from `editor-content` div in `Editor.tsx`. Root cause: `Editor.css` applies `transform: translateZ(0); will-change: transform` to `.editor-content` on mobile, creating a GPU compositing layer boundary that caused `backdrop-filter` to blur the wrong layer — a solid dark background instead of the canvas — producing a visible dark overlay on mobile only.
 - **RunningContent.tsx**: Sylhet International Marathon 2026 (42.2K, 2026-08-08) added to 2026 calendar with `weight: "phosphor"` (A-race marker).
+
+---
+
+## Phase O — Mobile Polish: Keyboard UX + Readability Fixes
+**2026-05-15 — 5 files; terminal keyboard handling, essay line height, games card scaling**
+
+- **Editor.tsx (ASCII banner)**: `overflow-hidden` → `overflow-x-auto overflow-y-hidden` on `<pre>` — banner now scrolls horizontally on narrow screens instead of clipping.
+- **Terminal.tsx**: added `hideMobileTips?: boolean` prop (skips "tab = autocomplete" line from initial history) and `blurOnCommand?: boolean` prop (blurs input after command executes, dismissing on-screen keyboard). Both default false — desktop unchanged.
+- **MobileTerminalSheet.tsx**: added `viewportHeight` state updated by `visualViewport` handler. Sheet height clamped to `viewportHeight - 8px` when keyboard is open (`keyboardOffset > 0`), preventing sheet from going off-screen. Inner div changed from hardcoded `h-[calc(60vh-2rem)]` to `h-[calc(100%-2rem)]`. Passes `hideMobileTips={true}` and `blurOnCommand={true}` to Terminal — keyboard auto-closes after each command.
+- **GamesContent.tsx**: outer div gets `pb-16 sm:pb-4` for bottom spacing clearance. ArcZero title `fontSize: 2.5rem` → `clamp(2rem, 8vw, 2.5rem)`; subtitle `clamp(0.7rem, 2.5vw, 0.9rem)`; body text `clamp(0.8rem, 2.5vw, 0.9rem)` — card scales down gracefully on narrow screens.
+- **EssayContent.tsx**: `leading-[1.7] sm:leading-[1.8]` → `leading-[1.85] sm:leading-[2]` — increased line height improves readability on both mobile and desktop.

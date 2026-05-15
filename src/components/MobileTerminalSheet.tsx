@@ -21,6 +21,7 @@ const MobileTerminalSheet: React.FC<MobileTerminalSheetProps> = ({
 }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [keyboardOffset, setKeyboardOffset] = useState(0);
+  const [viewportHeight, setViewportHeight] = useState(() => window.innerHeight);
   const touchStartY = useRef<number | null>(null);
   const touchCurrentY = useRef<number | null>(null);
   const sheetRef = useRef<HTMLDivElement>(null);
@@ -94,6 +95,7 @@ const MobileTerminalSheet: React.FC<MobileTerminalSheetProps> = ({
       if (window.visualViewport) {
         const offset = window.innerHeight - window.visualViewport.height - window.visualViewport.offsetTop;
         setKeyboardOffset(Math.max(0, offset));
+        setViewportHeight(window.visualViewport.height);
       }
     };
     handleViewportChange();
@@ -114,7 +116,7 @@ const MobileTerminalSheet: React.FC<MobileTerminalSheetProps> = ({
       aria-label="Terminal"
       tabIndex={isExpanded ? -1 : undefined}
       className="fixed left-0 right-0 z-50 bg-black/95 backdrop-blur-sm border-t border-border transition-all duration-200 ease-out"
-      style={{ bottom: keyboardOffset, height: isExpanded ? '60vh' : '44px' }}
+      style={{ bottom: keyboardOffset, height: isExpanded ? (keyboardOffset > 0 ? `${viewportHeight - 8}px` : '60vh') : '44px' }}
       data-mobile-terminal-sheet
     >
       {isExpanded ? (
@@ -134,7 +136,7 @@ const MobileTerminalSheet: React.FC<MobileTerminalSheetProps> = ({
             <div className="w-12 h-1 bg-phosphor-dim rounded-full" />
           </div>
           {/* Terminal fills the rest */}
-          <div className="h-[calc(60vh-2rem)] overflow-hidden">
+          <div className="h-[calc(100%-2rem)] overflow-hidden">
             <Suspense fallback={
               <div className="h-full flex items-center justify-center">
                 <span className="text-green-400 font-mono text-sm">Loading terminal...</span>
@@ -147,6 +149,8 @@ const MobileTerminalSheet: React.FC<MobileTerminalSheetProps> = ({
                 isFocused={true}
                 onFocusChange={() => {}}
                 hideStatusFooter={true}
+                hideMobileTips={true}
+                blurOnCommand={true}
               />
             </Suspense>
           </div>

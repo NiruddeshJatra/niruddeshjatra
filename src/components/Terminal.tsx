@@ -12,6 +12,8 @@ interface TerminalProps {
   isFocused?: boolean;
   onFocusChange?: (focused: boolean) => void;
   hideStatusFooter?: boolean;
+  hideMobileTips?: boolean;
+  blurOnCommand?: boolean;
 }
 
 const COMMANDS = [
@@ -78,15 +80,20 @@ const EASTER_EGGS: { [key: string]: string[] } = {
   ],
 };
 
-const Terminal = ({ onCommand, currentSection, onThemeChange, isFocused = false, onFocusChange, hideStatusFooter = false }: TerminalProps) => {
+const Terminal = ({ onCommand, currentSection, onThemeChange, isFocused = false, onFocusChange, hideStatusFooter = false, hideMobileTips = false, blurOnCommand = false }: TerminalProps) => {
   const navigate = useNavigate();
   const [input, setInput] = useState("");
-  const [history, setHistory] = useState<string[]>([
-    "$ welcome to niruddeshjatra.space",
-    "$ type 'help' for commands, or click a file in the sidebar",
-    "$ tab = autocomplete · ↑/↓ = recall · 'secrets' = hidden commands",
-    "",
-  ]);
+  const [history, setHistory] = useState<string[]>(() => {
+    const lines: string[] = [
+      "$ welcome to niruddeshjatra.space",
+      "$ type 'help' for commands, or click a file in the sidebar",
+    ];
+    if (!hideMobileTips) {
+      lines.push("$ tab = autocomplete · ↑/↓ = recall · 'secrets' = hidden commands");
+    }
+    lines.push("");
+    return lines;
+  });
   const [commandHistory, setCommandHistory] = useState<string[]>([]);
   const [historyIndex, setHistoryIndex] = useState(-1);
   const [suggestions, setSuggestions] = useState<string[]>([]);
@@ -268,6 +275,9 @@ const Terminal = ({ onCommand, currentSection, onThemeChange, isFocused = false,
     setCommandHistory([...commandHistory, cmd]);
     setHistoryIndex(-1);
     setInput("");
+    if (blurOnCommand) {
+      inputRef.current?.blur();
+    }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {

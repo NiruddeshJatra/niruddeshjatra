@@ -24,7 +24,7 @@ const EssayContent = ({
   children,
 }: EssayContentProps) => (
   <div
-    className="animate-fade-in font-mono max-w-2xl mx-auto px-4 py-6 text-[13px] sm:text-[15px] leading-[1.7] sm:leading-[1.8] text-foreground/85"
+    className="animate-fade-in font-mono max-w-2xl mx-auto px-4 py-6 text-[13px] sm:text-[15px] leading-[1.85] sm:leading-[2] text-foreground/85"
     {...(currentLang === "bn" ? { lang: "bn" } : {})}
   >
     <div className="flex justify-end items-baseline gap-3 mb-6 text-xs font-mono">
