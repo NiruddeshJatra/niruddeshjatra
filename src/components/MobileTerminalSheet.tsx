@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, lazy, Suspense, useCallback } from 'react';
+import { useState, useEffect, useRef, lazy, Suspense } from 'react';
 
 const LazyTerminal = lazy(() => import('./Terminal'));
 
@@ -20,9 +20,9 @@ const MobileTerminalSheet: React.FC<MobileTerminalSheetProps> = ({
   onThemeChange,
 }) => {
   const [isExpanded, setIsExpanded] = useState(false);
-  const [touchStartY, setTouchStartY] = useState<number | null>(null);
-  const [touchCurrentY, setTouchCurrentY] = useState<number | null>(null);
   const [keyboardOffset, setKeyboardOffset] = useState(0);
+  const touchStartY = useRef<number | null>(null);
+  const touchCurrentY = useRef<number | null>(null);
   const sheetRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const previouslyFocusedRef = useRef<HTMLElement | null>(null);
@@ -64,25 +64,25 @@ const MobileTerminalSheet: React.FC<MobileTerminalSheetProps> = ({
     return () => document.removeEventListener('keydown', handler);
   }, [isExpanded]);
 
-  // Swipe-down to dismiss
-  const handleTouchStart = useCallback((e: React.TouchEvent) => {
-    setTouchStartY(e.touches[0].clientY);
-    setTouchCurrentY(e.touches[0].clientY);
-  }, []);
+  // Swipe-down to dismiss — refs avoid re-renders during drag
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartY.current = e.touches[0].clientY;
+    touchCurrentY.current = e.touches[0].clientY;
+  };
 
-  const handleTouchMove = useCallback((e: React.TouchEvent) => {
-    setTouchCurrentY(e.touches[0].clientY);
-  }, []);
+  const handleTouchMove = (e: React.TouchEvent) => {
+    touchCurrentY.current = e.touches[0].clientY;
+  };
 
-  const handleTouchEnd = useCallback(() => {
-    if (touchStartY !== null && touchCurrentY !== null) {
-      if (touchCurrentY - touchStartY > 50) {
+  const handleTouchEnd = () => {
+    if (touchStartY.current !== null && touchCurrentY.current !== null) {
+      if (touchCurrentY.current - touchStartY.current > 50) {
         setIsExpanded(false);
       }
     }
-    setTouchStartY(null);
-    setTouchCurrentY(null);
-  }, [touchStartY, touchCurrentY]);
+    touchStartY.current = null;
+    touchCurrentY.current = null;
+  };
 
   // visualViewport keyboard offset
   useEffect(() => {
@@ -96,6 +96,7 @@ const MobileTerminalSheet: React.FC<MobileTerminalSheetProps> = ({
         setKeyboardOffset(Math.max(0, offset));
       }
     };
+    handleViewportChange();
     window.visualViewport?.addEventListener('resize', handleViewportChange);
     window.visualViewport?.addEventListener('scroll', handleViewportChange);
     return () => {
