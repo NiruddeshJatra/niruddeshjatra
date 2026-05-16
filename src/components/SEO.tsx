@@ -1,4 +1,5 @@
 import { Helmet } from 'react-helmet-async';
+import { toISOWithTimezone } from '../lib/structuredData';
 
 interface SEOProps {
   title: string;
@@ -61,8 +62,8 @@ const SEO: React.FC<SEOProps> = ({
 
       {ogType === 'article' && articleMeta && (
         <>
-          {articleMeta.publishedTime && <meta property="article:published_time" content={articleMeta.publishedTime} />}
-          {articleMeta.modifiedTime && <meta property="article:modified_time" content={articleMeta.modifiedTime} />}
+          {articleMeta.publishedTime && <meta property="article:published_time" content={toISOWithTimezone(articleMeta.publishedTime)} />}
+          {articleMeta.modifiedTime && <meta property="article:modified_time" content={toISOWithTimezone(articleMeta.modifiedTime)} />}
           <meta property="article:author" content={articleMeta.author || SITE_AUTHOR} />
         </>
       )}

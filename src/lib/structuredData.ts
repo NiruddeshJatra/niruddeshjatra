@@ -33,11 +33,19 @@ export const websiteSchema = () => ({
   inLanguage: ['en', 'bn'],
 });
 
+const toISOWithTimezone = (date: string): string => {
+  if (date.includes('T')) return date;
+  return `${date}T00:00:00+06:00`;
+};
+
+export { toISOWithTimezone };
+
 export const articleSchema = (params: {
   title: string;
   description: string;
   path: string;
   datePublished: string;
+  dateModified?: string;
   lang: 'en' | 'bn';
 }) => ({
   '@context': 'https://schema.org',
@@ -45,8 +53,8 @@ export const articleSchema = (params: {
   headline: params.title,
   description: params.description,
   url: `${SITE_URL}${params.path}`,
-  datePublished: params.datePublished,
-  dateModified: params.datePublished,
+  datePublished: toISOWithTimezone(params.datePublished),
+  dateModified: toISOWithTimezone(params.dateModified || params.datePublished),
   inLanguage: params.lang === 'bn' ? 'bn-BD' : 'en-US',
   author: {
     '@type': 'Person',

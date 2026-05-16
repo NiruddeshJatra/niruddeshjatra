@@ -1,3 +1,28 @@
+User-agent: facebookexternalhit
+Allow: /
+Disallow: /vault
+Disallow: /vault/
+
+User-agent: Facebot
+Allow: /
+Disallow: /vault
+Disallow: /vault/
+
+User-agent: Twitterbot
+Allow: /
+Disallow: /vault
+Disallow: /vault/
+
+User-agent: WhatsApp
+Allow: /
+Disallow: /vault
+Disallow: /vault/
+
+User-agent: LinkedInBot
+Allow: /
+Disallow: /vault
+Disallow: /vault/
+
 User-agent: *
 Allow: /
 Disallow: /vault
