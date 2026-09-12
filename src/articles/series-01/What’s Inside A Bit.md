@@ -1,4 +1,4 @@
-# Bit-এর ভেতরে কী থাকে?
+﻿# Bit-এর ভেতরে কী থাকে?
 
 ## Transistor, voltage, আর memory-র শুরু
 
@@ -167,6 +167,16 @@ Write Enable
 যখন Write Enable = 0, AND gate ইনপুট আটকে দেয়। নতুন ডেটা latch-এর ভেতরে ঢুকতেই পারে না। তাই পুরোনো ভ্যালুই থেকে যায়। যখন Write Enable = 1, AND gate দরজা খুলে দেয়। এবার নতুন ভ্যালু latch-এর ভেতরে ঢুকে feedback loop-এর অংশ হয়ে যায়।
 
 Latch-এর একটা ছোট্ট সমস্যা আছে। যতক্ষণ Write Enable চালু থাকে, ততক্ষণ ইনপুট বদলালে আউটপুটও বদলাতে থাকে। কিন্তু CPU এটা চায় না। CPU চায়—"একটা নির্দিষ্ট মুহূর্তে মাত্র ডেটা বদলাবে।" নাহলে কম্পিউটারের একেক অংশ একেক সময় আউটপুট জেনারেট করবে এবং তাদের মধ্যে কোনো সমন্বয় থাকবে না। সেই জন্য latch-এর সাথে clock যুক্ত করা হয়। (Clock নিয়ে পরে আরও বিস্তারিত লিখবো।) এবার আর যেকোনো সময় ডেটা লেখা যায় না। Clock-এর নির্দিষ্ট tick এলেই কেবল নতুন ডেটা ঢুকতে পারে। এই clock-controlled latch-ই হলো flip-flop।
+
+▾ আরেকটু গভীরে যাই — শুধু Clock জুড়ে দিলেই কি Flip-flop হয়ে যায়?
+
+এখানে একটা স্বাভাবিক খটকা লাগতে পারে— Latch-এর সাথে শুধু একটা Clock জুড়ে দিলেই কি সেটা নিজে থেকেই প্রতিবার ঠিক একবার করে মান বদলাবে?
+
+আসলে ব্যাপারটা এত সহজ না। যতক্ষণ Clock (বা Write Enable) চালু থাকবে, Latch কিন্তু পুরোটা সময়জুড়ে "transparent" থাকে— অর্থাৎ এই পুরো সময়টাতে Input বদলালেই সাথে সাথে Output-ও বদলে যাবে। এখন Counter-এর মতো কোনো circuit-এ যদি এই Output ঘুরে এসে নিজের Input-কেই আবার বদলে দেয়, তবেই সমস্যা বাঁধবে। Clock যতক্ষণ High (1) থাকে, Latch ততক্ষণ transparent থাকে। ফলে Output বদলানোর সাথে সাথে সেই নতুন মান ব্যাক-ফিড হয়ে Input-কে আবার পাল্টে দেয়। Gate-এর অভ্যন্তরীণ delay ($\Delta t_{prop}$) মাত্র কয়েক নানোসেকেন্ড, যা Clock Pulse-এর স্থায়িত্বের চেয়ে অনেক কম। ফলে Clock High থাকা অবস্থাতেই Output অতি দ্রুত একাধিকবার 0 ও 1-এর মধ্যে চেঞ্জ হতে থাকে (oscillate করে)। Clock বন্ধ হওয়ার মুহূর্তে Output-এর মান 0 নাকি 1 হবে—তা সম্পূর্ণ অনিশ্চিত হয়ে পড়ে। এটিই race-around সমস্যা।
+
+এই কারণেই আসল Flip-flop একটা Latch দিয়ে বানানো হয় না; বানানো হয় দুটো Latch জোড়া দিয়ে— যার একটিকে বলে Master আর অন্যটিকে Slave। Clock 0 থাকলে Master চালু হয়, আর 1 থাকলে Slave চালু হয়— অর্থাৎ দুটো কখনোই একসাথে খোলা থাকে না। ফলে Input একবার Master-এ ধরা পড়ে, আর সেখান থেকে ঠিক একবারই Slave-এ গিয়ে পৌঁছায়। পুরো প্রক্রিয়াটি Clock-এর প্রতি Tick-এ ঠিক একবারই ঘটে।
+
+এর বিস্তারিত আলোচনা এই Article-এর বিষয় না— সেটা আসবে যখন Clock নিয়ে আলাদা করে লিখব। আপাতত এটুকু মনে রাখলেই চলবে: শুধু Clock জুড়ে দেওয়াটাই কিন্তু গল্পের শেষ নয়।
 
 আবার একটা ডিসক্লেইমার দিই — বাস্তব RAM ঠিক এই সরল latch দিয়ে তৈরি হয় না। আধুনিক DRAM আরও জটিল, আরও কম জায়গায় বেশি data রাখার জন্য ভিন্ন কৌশল ব্যবহার করে। কিন্তু "একটা bit মনে রাখার" মৌলিক ধারণাটা এই feedback থেকেই আসে।
 
@@ -413,6 +423,16 @@ When Write Enable = 0, the AND gate blocks the input. New data can't get into th
 There's still a small problem with the plain latch. As long as Write Enable stays on, any change on the input keeps changing the output. But a CPU doesn't want that. A CPU wants — "data changes only at a specific moment." Otherwise different parts of the computer would generate outputs at different times and there'd be no coordination.
 
 For that reason, the latch gets paired with a clock. (More on clocks later in the series.) Now new data can't be written at just any moment. It only gets written on a specific tick of the clock. This clock-controlled latch is what we call a [HOVER: flip-flop].
+
+▾ go deeper — does attaching a clock alone make it a flip-flop?
+
+A natural doubt here: if we just attach a clock to the latch, does it automatically change exactly once, cleanly?
+
+Not quite. For as long as the clock (or Write Enable) is on, the latch stays "transparent" the whole time — the output changes the instant the input does, for the entire window. In a circuit like a counter, a problem arises if the output loops back to drive its own input. As long as the Clock is High (1), the latch remains transparent. Consequently, any output change immediately feeds back to flip the input again. Because gate propagation delays ($\Delta t_{prop}$) are in nanoseconds—much shorter than the clock pulse—the output rapidly oscillates between 0 and 1 multiple times during a single clock cycle. When the clock drops low, the final state of $Q$ becomes completely unpredictable. This is the race-around condition.
+
+So a real flip-flop isn’t one latch — it’s two, chained: a master and a slave. The master is open while the clock is 0; the slave is open while the clock is 1 — opposite windows, never both open. The input gets caught once by the master, then handed off once to the slave — the whole thing happens exactly once per tick.
+
+The full detail isn’t this article’s job — that’s for when we cover clocks directly. For now: just attaching a clock isn’t the whole story.
 
 One important note — real RAM isn't actually built from these simple latches. Modern DRAM is more complex and uses different tricks to pack more data into less space. But the fundamental idea of "one bit that remembers" comes from feedback.
 

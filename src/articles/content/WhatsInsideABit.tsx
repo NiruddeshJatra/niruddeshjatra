@@ -199,6 +199,26 @@ export function WhatsInsideABit() {
               <p style={{ margin: 0 }}>A clock attached to the latch makes a <Term id="flipflop">flip-flop</Term> — new data can enter only on the clock's tick.</p>
             </div>
           )}
+          <Deeper
+            bnLabel="আরেকটু গভীরে যাই — শুধু Clock জুড়ে দিলেই কি Flip-flop হয়ে যায়?"
+            enLabel="go deeper — does attaching a clock alone make it a flip-flop?"
+          >
+            {bn ? (
+              <div lang="bn" style={{ fontFamily: "'Anek Bangla','Anek Latin',sans-serif", marginTop: 14 }}>
+                <p style={{ margin: '0 0 12px' }}>এখানে একটা স্বাভাবিক খটকা লাগতে পারে — Latch-এর সাথে শুধু একটা Clock জুড়ে দিলেই কি সেটা নিজে থেকেই প্রতিবার ঠিক একবার করে মান বদলাবে?</p>
+                <p style={{ margin: '0 0 12px' }}>আসলে ব্যাপারটা এত সহজ না। যতক্ষণ Clock (বা Write Enable) চালু থাকবে, Latch কিন্তু পুরোটা সময়জুড়ে "transparent" থাকে — অর্থাৎ এই পুরো সময়টাতে Input বদলালেই সাথে সাথে Output-ও বদলে যাবে। এখন Counter-এর মতো কোনো circuit-এ যদি এই Output ঘুরে এসে নিজের Input-কেই আবার বদলে দেয়, তবেই সমস্যা বাঁধবে। Clock যতক্ষণ High (1) থাকে, Latch ততক্ষণ transparent থাকে। ফলে Output বদলানোর সাথে সাথে সেই নতুন মান ব্যাক-ফিড হয়ে Input-কে আবার পাল্টে দেয়। Gate-এর অভ্যন্তরীণ delay (Δt<sub>prop</sub>) মাত্র কয়েক নানোসেকেন্ড, যা Clock Pulse-এর স্থায়িত্বের চেয়ে অনেক কম। ফলে Clock High থাকা অবস্থাতেই Output অতি দ্রুত একাধিকবার 0 ও 1-এর মধ্যে চেঞ্জ হতে থাকে (oscillate করে)। Clock বন্ধ হওয়ার মুহূর্তে Output-এর মান 0 নাকি 1 হবে — তা সম্পূর্ণ অনিশ্চিত হয়ে পড়ে। এটিই race-around সমস্যা।</p>
+                <p style={{ margin: '0 0 12px' }}>এই কারণেই আসল Flip-flop একটা Latch দিয়ে বানানো হয় না; বানানো হয় দুটো Latch জোড়া দিয়ে — যার একটিকে বলে Master আর অন্যটিকে Slave। Clock 0 থাকলে Master চালু হয়, আর 1 থাকলে Slave চালু হয় — অর্থাৎ দুটো কখনোই একসাথে খোলা থাকে না। ফলে Input একবার Master-এ ধরা পড়ে, আর সেখান থেকে ঠিক একবারই Slave-এ গিয়ে পৌঁছায়। পুরো প্রক্রিয়াটি Clock-এর প্রতি Tick-এ ঠিক একবারই ঘটে।</p>
+                <p style={{ margin: 0 }}>এর বিস্তারিত আলোচনা এই Article-এর বিষয় না — সেটা আসবে যখন Clock নিয়ে আলাদা করে লিখব। আপাতত এটুকু মনে রাখলেই চলবে: শুধু Clock জুড়ে দেওয়াটাই কিন্তু গল্পের শেষ নয়।</p>
+              </div>
+            ) : (
+              <div style={{ fontFamily: "'Anek Latin',sans-serif", marginTop: 14 }}>
+                <p style={{ margin: '0 0 12px' }}>A natural doubt here: if we just attach a clock to the latch, does it automatically change exactly once, cleanly?</p>
+                <p style={{ margin: '0 0 12px' }}>Not quite. For as long as the clock (or Write Enable) is on, the latch stays "transparent" the whole time — the output changes the instant the input does, for the entire window. In a circuit like a counter, a problem arises if the output loops back to drive its own input. As long as the Clock is High (1), the latch remains transparent. Consequently, any output change immediately feeds back to flip the input again. Because gate propagation delays (Δt<sub>prop</sub>) are in nanoseconds — much shorter than the clock pulse — the output rapidly oscillates between 0 and 1 multiple times during a single clock cycle. When the clock drops low, the final state of <em>Q</em> becomes completely unpredictable. This is the race-around condition.</p>
+                <p style={{ margin: '0 0 12px' }}>So a real flip-flop isn't one latch — it's two, chained: a master and a slave. The master is open while the clock is 0; the slave is open while the clock is 1 — opposite windows, never both open. The input gets caught once by the master, then handed off once to the slave — the whole thing happens exactly once per tick.</p>
+                <p style={{ margin: 0 }}>The full detail isn't this article's job — that's for when we cover clocks directly. For now: just attaching a clock isn't the whole story.</p>
+              </div>
+            )}
+          </Deeper>
         </Deeper>
         {bn ? (
           <div lang="bn" style={bodyStyle}>
