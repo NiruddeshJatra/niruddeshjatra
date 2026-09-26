@@ -40,16 +40,16 @@ export function MemoryPyramid() {
           })}
         </div>
         <div
-          className="flex flex-wrap gap-x-6 gap-y-1 px-4 pb-4 font-mono text-[12px]"
+          className="px-4 pb-4 font-mono text-[12px]"
           style={{ borderTop: '1px solid #2e392e', paddingTop: 12, color: '#8aa893' }}
+          {...(bn ? { lang: 'bn' } : {})}
         >
-          <span>{bn ? 'আকার' : 'size'}: <span style={{ color: '#00d26a' }}>{active.size}</span></span>
-          <span>{bn ? 'গতি' : 'speed'}: <span style={{ color: '#00d26a' }}>{active.speedLabel}</span></span>
+          <span style={{ color: '#00d26a' }}>{bn ? active.bnRole : active.enRole}</span>
         </div>
       </Instrument>
       <Caption
-        bn="ওপর থেকে নিচে — ছোট থেকে বড়, দ্রুত থেকে ধীর, দামি থেকে সস্তা।"
-        en="Top to bottom — small to big, fast to slow, expensive to cheap."
+        bn="ওপর থেকে নিচে — ছোট থেকে বড়, দ্রুত থেকে ধীর, প্রতি unit capacity-তে দামি থেকে সস্তা। এটা একটা conceptual hierarchy; বাস্তব processor-এ layer-এর সংখ্যা আর সাজানো আলাদা হতে পারে।"
+        en="Top to bottom — smaller to larger, faster to slower, more to less expensive per unit of capacity. This is a conceptual hierarchy; real processors can organise or omit layers differently."
       />
     </>
   );

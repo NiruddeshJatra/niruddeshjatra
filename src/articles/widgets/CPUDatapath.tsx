@@ -13,6 +13,8 @@ const IDLE = '#8aa893';
 const wc = (active: boolean) => (active ? ON : DIM);
 
 interface Step {
+  bnTitle: string;
+  enTitle: string;
   bn: string;
   en: string;
   // which components are active
@@ -25,37 +27,50 @@ interface Step {
   decoder: boolean;
   wireDec: boolean;
   regC: boolean;
+  clockEdge: boolean;
   aluVal: string;
   cVal: string;
 }
 
 const STEPS: Step[] = [
   {
-    bn: 'Register A-তে ২ (0010) আর Register B-তে ৩ (0011) voltage হিসেবে জমা আছে।',
-    en: 'Register A holds 2 (0010) and Register B holds 3 (0011) as static voltage patterns.',
+    bnTitle: 'current state',
+    enTitle: 'current state',
+    bn: 'Register A-তে ২ (0010) আর Register B-তে ৩ (0011) state হিসেবে ধরা আছে, আর সেই মান দুটো register-এর output-এ available।',
+    en: 'Register A holds 2 (0010) and Register B holds 3 (0011) as stored state, and those values are available at the registers’ outputs.',
     regA: true, regB: true, mux: false, wireIn: false,
     alu: false, wireOut: false, decoder: false, wireDec: false, regC: false,
+    clockEdge: false,
     aluVal: '', cVal: '?',
   },
   {
-    bn: 'Clock Tick ১: Multiplexer চালু হলো — Register A ও B-র ডেটা ALU-র দিকে রওনা হলো।',
-    en: 'Clock Tick 1: Multiplexer fires — data from Register A and B races toward the ALU.',
+    bnTitle: 'control configures',
+    enTitle: 'control configures',
+    bn: 'Control logic signal তৈরি করে: MUX-এর select A ও B-কে বেছে নেয়, ALU-কে ADD-এর জন্য configure করা হয়, decoder WE_C = 1 করে। এখনো কোনো clock edge আসেনি।',
+    en: 'Control logic asserts its signals: the MUX selects A and B, the ALU is configured for ADD, and the decoder raises WE_C = 1. No clock edge has arrived yet.',
     regA: true, regB: true, mux: true, wireIn: true,
-    alu: false, wireOut: false, decoder: false, wireDec: false, regC: false,
-    aluVal: '...', cVal: '?',
+    alu: false, wireOut: false, decoder: true, wireDec: true, regC: false,
+    clockEdge: false,
+    aluVal: '~~~~', cVal: '?',
   },
   {
-    bn: 'ALU-র logic gate-গুলো মুহূর্তের মধ্যে ২+৩ = ৫ (0101) হিসাব করে ফেলল।',
-    en: 'ALU logic gates settle: 2+3 = 5 (0101) in under a nanosecond.',
-    regA: true, regB: true, mux: true, wireIn: false,
-    alu: true, wireOut: true, decoder: false, wireDec: false, regC: false,
+    bnTitle: 'combinational logic settles',
+    enTitle: 'combinational logic settles',
+    bn: 'Signal gate-গুলোর মধ্য দিয়ে propagate করে, আর propagation delay পেরোনোর পর ALU output ৫ (0101)-এ settle করে। কেউ ALU-কে "শুরু করো" বলেনি — input অনুযায়ী সে responding করছিল।',
+    en: 'Signals propagate through the gates and, after the propagation delay, the ALU output settles at 5 (0101). Nothing told the ALU to “start” — it was responding to its inputs all along.',
+    regA: true, regB: true, mux: true, wireIn: true,
+    alu: true, wireOut: true, decoder: true, wireDec: true, regC: false,
+    clockEdge: false,
     aluVal: '5 · 0101', cVal: '?',
   },
   {
-    bn: 'Clock Tick ২: Decoder Register C-এর দরজা খুলল। ৫ ফ্লিপ-ফ্লপে জমা হয়ে গেল।',
-    en: 'Clock Tick 2: Decoder unlocks Register C. Voltage for 5 settles into its flip-flops.',
-    regA: true, regB: true, mux: false, wireIn: false,
+    bnTitle: 'clock edge — capture',
+    enTitle: 'clock edge — capture',
+    bn: 'Clock edge এলো। WE_C active থাকায় Register C তার input-এ দাঁড়িয়ে থাকা মানটা capture করল। এই মুহূর্তে ৫ CPU-র state-এর অংশ হলো।',
+    en: 'The clock edge arrives. Because WE_C is active, Register C captures the value standing at its input. Only now does 5 become part of the CPU’s state.',
+    regA: true, regB: true, mux: true, wireIn: true,
     alu: true, wireOut: true, decoder: true, wireDec: true, regC: true,
+    clockEdge: true,
     aluVal: '5 · 0101', cVal: '5 · 0101',
   },
 ];
@@ -81,8 +96,8 @@ export function CPUDatapath() {
   const nextStep = () => setStep(v => (v + 1) % TOTAL);
   const reset = () => setStep(0);
 
-  const nextLabelBn = step === TOTAL - 1 ? '↺ ফিরে শুরুতে' : `পরের step (${step + 1}/${TOTAL - 1}) ▶`;
-  const nextLabelEn = step === TOTAL - 1 ? '↺ restart' : `next step (${step + 1}/${TOTAL - 1}) ▶`;
+  const nextLabelBn = step === TOTAL - 1 ? '↺ ফিরে শুরুতে' : `পরের step (${step + 2}/${TOTAL}) ▶`;
+  const nextLabelEn = step === TOTAL - 1 ? '↺ restart' : `next step (${step + 2}/${TOTAL}) ▶`;
 
   const btnBase: React.CSSProperties = {
     fontFamily: "'Departure Mono',monospace",
@@ -98,10 +113,10 @@ export function CPUDatapath() {
   return (
     <>
       <Instrument
-        bnTitle={`CPU datapath — step ${step + 1}/${TOTAL}`}
-        enTitle={`CPU datapath — step ${step + 1}/${TOTAL}`}
+        bnTitle={`CPU datapath — ${s.bnTitle}`}
+        enTitle={`CPU datapath — ${s.enTitle}`}
         control={
-          <span style={{ fontFamily: "'Departure Mono',monospace", fontSize: 11.5, color: ON, whiteSpace: 'nowrap' }}>
+          <span style={{ fontFamily: "'Departure Mono',monospace", fontSize: 11.5, color: s.clockEdge ? ON : TEXT_LIT, whiteSpace: 'nowrap' }}>
             step {step + 1}/{TOTAL}
           </span>
         }
@@ -170,10 +185,12 @@ export function CPUDatapath() {
             <path d="M200 210 H265" stroke={wireDecCol} strokeWidth={2} fill="none"
               strokeDasharray={s.wireDec ? '6 4' : undefined} />
 
-            {/* Clock line (dashed, spans all components) */}
-            <path d="M15 244 H365 M65 244 V126 M162 244 V226 M250 244 V133 M330 244 V230"
-              stroke="#3a5847" strokeWidth={1.5} fill="none" strokeDasharray="3 4" />
-            <text x={18} y={239} fill={TEXT_DIM} fontSize={8} fontFamily="Departure Mono,monospace">clock</text>
+            {/* Clock line — only reaches storage elements, never the combinational blocks */}
+            <path d="M15 244 H365 M65 244 V126 M330 244 V230"
+              stroke={s.clockEdge ? ON : '#3a5847'} strokeWidth={s.clockEdge ? 2 : 1.5} fill="none" strokeDasharray="3 4" />
+            <text x={18} y={239} fill={s.clockEdge ? ON : TEXT_DIM} fontSize={8} fontFamily="Departure Mono,monospace">
+              {s.clockEdge ? 'clock ⌐ edge' : 'clock'}
+            </text>
           </svg>
         </div>
 
@@ -193,8 +210,8 @@ export function CPUDatapath() {
         </div>
       </Instrument>
       <Caption
-        bn="CPU-র ভেতরের ডেটা ফ্লো: register → MUX → ALU → decoder → register। clock সব synchronize করে।"
-        en="CPU internal data flow: register → MUX → ALU → decoder → register. The clock synchronizes everything."
+        bn="Current state → control configures → combinational logic settles → clock edge → new current state। খেয়াল করুন, clock line শুধু register-এ যায় — MUX বা ALU-তে নয়।"
+        en="Current state → control configures → combinational logic settles → clock edge → new current state. Note that the clock line reaches only the registers — never the MUX or the ALU."
       />
     </>
   );

@@ -102,8 +102,8 @@ export function RowColumnTraversal() {
         </div>
       </Instrument>
       <Caption
-        bn="Row-major-এ পাশাপাশি address পড়ায় বেশিরভাগ access-ই cache HIT। Column-major-এ প্রতিবার লাফ দিয়ে নতুন line-এ যেতে হয় — প্রায় সব access-ই MISS।"
-        en="Row-major reads neighboring addresses, so most accesses are cache HITs. Column-major jumps to a new line almost every time — nearly every access is a MISS."
+        bn="Row-major-এ পাশাপাশি address পড়া হয়, তাই একই line বারবার কাজে লাগে — HIT বেশি। Column-major-এ প্রতিবার লাফ দিয়ে নতুন line-এ যেতে হয়, তাই miss অনেক বেড়ে যায়।"
+        en="Row-major reads neighbouring addresses, so the same line keeps getting reused — more HITs. Column-major jumps to a different line each step, so misses climb sharply."
       />
     </>
   );

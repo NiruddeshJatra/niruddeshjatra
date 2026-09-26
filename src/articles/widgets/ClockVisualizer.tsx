@@ -117,12 +117,16 @@ export function ClockVisualizer() {
   }, []);
 
   const unstable = ghz >= 5;
-  const statusBn = unstable ? 'অস্থির — circuit অতিরিক্ত গরম' : `স্থিতিশীল — ${ghz} GHz`;
-  const statusEn = unstable ? 'unstable — circuit overheating' : `stable — ${ghz} GHz`;
+  const statusBn = unstable ? 'timing violation — settle করার আগেই edge' : `timing met — ${ghz} GHz`;
+  const statusEn = unstable ? 'timing violation — edge before settle' : `timing met — ${ghz} GHz`;
   const statusCol = unstable ? '#b87c2a' : '#00d26a';
 
-  const readBn = `প্রতি সেকেন্ডে ${(ghz * 1e9).toLocaleString('bn-BD')} বার pulse — প্রতিটা flip-flop এই তালে নতুন value save করে।`;
-  const readEn = `${ghz} × 10⁹ pulses per second — every flip-flop saves its new value on each tick.`;
+  const readBn = unstable
+    ? `clock period এত ছোট হয়ে গেছে যে combinational logic-এর propagation delay আর তার মধ্যে ধরছে না — register একটা অর্ধেক-settle হওয়া pattern capture করছে।`
+    : `প্রতি সেকেন্ডে ${(ghz * 1e9).toLocaleString('bn-BD')} বার edge — প্রতিটা edge হলো একটা timing boundary, যেখানে storage element নতুন state capture করতে পারে।`;
+  const readEn = unstable
+    ? `The clock period is now shorter than the combinational logic's propagation delay — the register captures a half-settled pattern.`
+    : `${ghz} × 10⁹ edges per second — each edge is a timing boundary at which a storage element may capture new state.`;
 
   return (
     <>
@@ -167,8 +171,8 @@ export function ClockVisualizer() {
         </div>
       </Instrument>
       <Caption
-        bn="slider দিয়ে clock speed বাড়ান। ৫ GHz-এর উপরে circuit অস্থির হয়ে পড়ে।"
-        en="Drag the slider to change clock speed. Above 5 GHz the circuit becomes unstable."
+        bn="slider দিয়ে clock frequency বাড়ান। এই কাল্পনিক circuit-এ ৫ GHz পেরোলেই period propagation delay-র চেয়ে ছোট হয়ে যায় — তখন capture করা মান আর নির্ভরযোগ্য থাকে না। আসল সীমাটা প্রতিটা design-এর নিজস্ব।"
+        en="Drag the slider to raise the clock frequency. In this imaginary circuit, past 5 GHz the period falls below the propagation delay — and the captured value stops being reliable. The real limit is specific to each design."
       />
     </>
   );

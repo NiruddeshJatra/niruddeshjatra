@@ -3,10 +3,10 @@ import { useLang } from '../context/LanguageContext';
 import { Instrument } from '../primitives/Instrument';
 import { Caption } from '../primitives/Caption';
 
-type Mode = 'rr' | 'prio' | 'cfs';
+type Mode = 'rr' | 'prio' | 'fair';
 
 const PROCS = [
-  { bnName: 'UI / cursor', enName: 'UI / cursor', pri: 1 },
+  { bnName: 'UI', enName: 'UI', pri: 1 },
   { bnName: 'compile',     enName: 'compile',     pri: 3 },
   { bnName: 'music',       enName: 'music',       pri: 2 },
   { bnName: 'bg sync',     enName: 'bg sync',     pri: 3 },
@@ -67,13 +67,13 @@ export function Scheduler() {
   if (total === 0) narr = bn ? '"run slice" চাপুন — নীতিভেদে দেখুন কে CPU পায়।' : 'Press "run slice" — watch who gets the CPU under each policy.';
   else if (mode === 'rr') narr = bn ? 'round-robin: সবাই পালা করে সমান স্লাইস — priority যা-ই হোক। fair, কিন্তু জরুরি UI বাড়তি কিছু পায় না।' : 'round-robin: everyone takes equal turns regardless of priority. Fair, but the urgent UI gets nothing extra.';
   else if (mode === 'prio') narr = bn ? 'priority: উচ্চ-priority UI প্রতিবার জিতছে — নিম্ন-priority compile আর bg sync অনাহারে (starvation)।' : 'priority: the high-priority UI wins every time — low-priority compile and bg sync are starving.';
-  else narr = bn ? 'CFS: যে সবচেয়ে কম CPU পেয়েছে, পরের বার সে-ই পায়। bar-গুলো সমান হয়ে আসছে — এটাই "completely fair"।' : 'CFS: whoever got the least CPU goes next. The bars even out — that\'s "completely fair".';
+  else narr = bn ? 'fair-share: যে এখন পর্যন্ত সবচেয়ে কম CPU পেয়েছে, পরের বার সে-ই পায় — bar-গুলো সমান হয়ে আসছে। Linux-এর CFS আর এখনকার EEVDF, দুটোরই ভিত্তি এই ধারণা।' : 'fair-share: whoever has had the least CPU so far goes next, so the bars even out. This is the idea behind Linux CFS and, now, EEVDF.';
 
   const modeControl = (
     <div style={{ display: 'flex', border: '1px solid #3a5847', fontFamily: "'Departure Mono',monospace", fontSize: 11 }}>
-      {(['rr', 'prio', 'cfs'] as Mode[]).map((m) => (
+      {(['rr', 'prio', 'fair'] as Mode[]).map((m) => (
         <button key={m} style={segBtn(mode === m)} onClick={() => setMode(m)}>
-          {m === 'rr' ? 'round-robin' : m === 'prio' ? 'priority' : 'CFS'}
+          {m === 'rr' ? 'round-robin' : m === 'prio' ? 'priority' : 'fair-share'}
         </button>
       ))}
     </div>

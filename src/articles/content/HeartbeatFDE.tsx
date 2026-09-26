@@ -3,6 +3,7 @@ import { useLang } from '../context/LanguageContext';
 import { Section } from '../primitives/Section';
 import { Term } from '../primitives/Term';
 import { Deeper } from '../primitives/Deeper';
+import { Diagram } from '../primitives/Diagram';
 import { Recap } from '../primitives/Recap';
 import { RelayNav, SERIES_HUB_CARD } from '../primitives/RelayNav';
 import { Colophon } from '../primitives/Colophon';
@@ -14,6 +15,70 @@ import { PipelineVisualizer } from '../widgets/PipelineVisualizer';
 
 const LINK = { color: '#00753F' };
 
+/* ── shared flow art, identical in both languages ─────────────────────── */
+
+const ART_FDE = `Fetch
+  ↓
+Decode
+  ↓
+Execute / state update`;
+
+const ART_A3 = `Current State
+     ↓
+Combinational Logic
+     ↓
+Next State
+     ↓
+Clock Edge
+     ↓
+New State`;
+
+const ART_A4 = `Instruction bits
+       ↓
+     Decode
+       ↓
+Control signals
+       ↓
+Current State
+       ↓
+Combinational Datapath
+       ↓
+Next State
+       ↓
+Clock Edge
+       ↓
+New State`;
+
+const ART_FETCH = `PC
+ ↓
+instruction address
+ ↓
+memory subsystem
+ ↓
+instruction bits
+ ↓
+IR`;
+
+const ART_DECODE = `Instruction bits
+      ↓
+   Decode
+      ↓
+Control signals
+      ↓
+Configured datapath`;
+
+const ART_CAPTURE = `ALU result = 0101
+       │
+       ▼
+   Clock edge
+       │
+       ▼
+Register C captures 0101`;
+
+const ART_PIPE = `Cycle 1:  I1 Fetch
+Cycle 2:  I1 Decode   | I2 Fetch
+Cycle 3:  I1 Execute  | I2 Decode  | I3 Fetch`;
+
 export function HeartbeatFDE() {
   const { bn } = useLang();
 
@@ -23,312 +88,412 @@ export function HeartbeatFDE() {
 
   const p = (s: string | ReactNode) => <p style={{ margin: '0 0 16px', ...bodyStyle }}>{s}</p>;
 
-  const mono = (s: string) => (
-    <span style={{ fontFamily: "'Departure Mono',monospace", fontSize: '0.85em' }}>{s}</span>
-  );
-
   const pre = (s: string) => (
     <pre style={{ fontFamily: "'Departure Mono',monospace", fontSize: '13px', background: 'rgba(255,252,243,0.65)', border: '1px solid #c9bda0', color: '#33301F', padding: '13px 18px', margin: '0 0 20px', overflowX: 'auto' }}>
       {s}
     </pre>
   );
 
-  const h3Style = { fontFamily: bn ? "'Anek Bangla',sans-serif" : "'Bricolage Grotesque',sans-serif", fontWeight: 700, fontSize: '20px', lineHeight: bn ? 1.5 : 1.4, margin: '24px 0 12px' };
+  const blockquote = (s: ReactNode) => (
+    <blockquote style={{ margin: '0 0 20px', padding: '12px 18px', borderLeft: '3px solid #c9bda0', background: 'rgba(255,252,243,0.5)', color: '#3c382b', ...bodyStyle }}>
+      {s}
+    </blockquote>
+  );
 
-  const ulStyle = { margin: '0 0 16px', paddingLeft: 22, lineHeight: 1.9, ...bodyStyle };
+  const ul = (items: ReactNode[]) => (
+    <ul style={{ margin: '0 0 20px', paddingLeft: 24, ...bodyStyle }}>
+      {items.map((it, i) => <li key={i} style={{ marginBottom: 8 }}>{it}</li>)}
+    </ul>
+  );
+
+  const h3 = (s: string) => (
+    <h3 style={{ fontFamily: "'Departure Mono',monospace", fontSize: '13px', letterSpacing: '0.08em', color: '#5a5444', margin: '30px 0 14px' }}>{s}</h3>
+  );
+
+  /* The bridge from article 03's clock model into this article's story. */
+  const mentalModel = (
+    <aside
+      style={{ margin: '44px 0 10px', border: '2px solid #00753F', padding: '22px 24px', background: 'rgba(255,252,243,0.55)', ...bodyStyle }}
+      {...(bn ? { lang: 'bn' } : {})}
+    >
+      <div style={{ fontFamily: "'Departure Mono',monospace", fontSize: '11.5px', letterSpacing: '0.1em', color: '#00753F', marginBottom: 14, textTransform: 'uppercase' }}>
+        {bn ? '// একটা mental model মনে রাখুন' : '// one mental model to remember'}
+      </div>
+      <p style={{ margin: '0 0 8px', ...bodyStyle }}>
+        {bn ? <>আগের <a href="/writing/cpu-blueprint" style={LINK}>article-এ</a> আমরা দেখেছিলাম:</> : <>In the <a href="/writing/cpu-blueprint" style={LINK}>previous article</a> we saw:</>}
+      </p>
+      <Diagram art={ART_A3} bnLabel="flow · article ০৩" enLabel="flow · article 03" />
+      <p style={{ margin: '0 0 8px', ...bodyStyle }}>
+        {bn ? 'এবার instruction যোগ করলে ছবিটা দাঁড়ায়:' : 'Now add the instruction, and the picture becomes:'}
+      </p>
+      <Diagram art={ART_A4} bnLabel="flow · এই article" enLabel="flow · this article" />
+      <p style={{ margin: 0, ...bodyStyle }}>
+        {bn
+          ? <><strong>Instruction বলে কী করতে হবে।</strong> Control logic সেই কাজের configuration তৈরি করে। Datapath result তৈরি করে। আর clock দেয় নতুন state capture করার timing boundary।</>
+          : <><strong>The instruction specifies WHAT should happen.</strong> Control logic configures the operation. The datapath produces the result. And the clock provides the timing boundary for capturing the new state.</>}
+      </p>
+    </aside>
+  );
 
   return (
     <article style={{ marginTop: 40, fontSize: '16.5px', lineHeight: 1.9 }}>
-      {/* Hook */}
+      {/* ── Hook ─────────────────────────────────────────────────────── */}
       <div>
         {bn ? (
           <div lang="bn" style={bodyStyle}>
-            {p(<><a href="/writing/cpu-blueprint" style={LINK}>আগের আর্টিকেলে</a> দেখা গেছে — ২ আর ৩ কীভাবে যোগ হয়ে ৫ হয়। কিন্তু পুরো কাহিনী শেষ হয়নি। একটা প্রশ্নের উত্তর দেয়া বাকি ছিল।</>)}
-            {p(<>CPU জানল কীভাবে যে এই মুহূর্তে তাকে <em>যোগ</em> করতে হবে? বিয়োগ না, গুণ না — যোগ। আর <em>এই</em> দুইটা register-এর ডেটা নিতে হবে, বাকিগুলো না। এই instruction তাকে কে দিল?</>)}
+            {p(<><a href="/writing/cpu-blueprint" style={LINK}>আগের আর্টিকেলে</a> দেখা গেছে — ২ আর ৩ কীভাবে যোগ হয়ে ৫ হয়। কিন্তু পুরো কাহিনী শেষ হয়নি। একটা প্রশ্নের উত্তর বাকি ছিল।</>)}
+            {p(<>CPU জানল কীভাবে যে এই মুহূর্তে তাকে <em>যোগ</em> করতে হবে? বিয়োগ না, গুণ না — যোগ। আর <em>এই</em> দুইটা register-এর ডেটা নিতে হবে, বাকিগুলো না। সেই control signal-গুলো এল কোথা থেকে?</>)}
             {p('আজকের গল্পটা ঠিক এখান থেকেই শুরু।')}
             <div style={{ border: '1px solid #c9bda0', background: 'rgba(255,252,243,0.65)', padding: '14px 18px', margin: '0 0 16px' }}>
               <div style={{ fontFamily: "'Departure Mono',monospace", fontSize: '11.5px', color: '#00753F', letterSpacing: '0.08em', marginBottom: 8 }}>
                 // সিলিকন সিটির time-lapse
               </div>
               <p style={{ margin: 0, fontSize: '15.5px', ...bodyStyle }}>
-                আমরা এখনও সিলিকনের সেই ছোট্ট শহরের ভেতরেই আছি, যেখানে ALU, Register, Data Bus আর Clock একসাথে কাজ করছে। তবে আজকে আমাদের ফোকাস পার্টসগুলোর ওপর নয়, বরং সময়ের ওপর। আগের আর্টিকেলটি ছিল একটি স্থিরচিত্র — সিলিকনের ভেতরে কী কী যন্ত্রাংশ সাজানো থাকে তার বিবরণ। আর এই আর্টিকেলটি হবে একটি চলমান ভিডিও। এক মুহূর্ত থেকে আরেক মুহূর্তে সিপিইউ-র ভেতরে ঠিক কী ঘটে, কীভাবে একটি ইন্সট্রাকশন মেমোরি থেকে বেরিয়ে এসে প্রসেসরের ভেতরে ঢোকে, নিজের অর্থ প্রকাশ করে এবং একটি বাস্তব কাজে পরিণত হয় — আজ আমরা সেটাই দেখব।
+                আমরা এখনও সিলিকনের সেই ছোট্ট শহরের ভেতরেই আছি, যেখানে ALU, register, datapath আর clock একসাথে কাজ করছে। তবে আজকের ফোকাস যন্ত্রাংশের ওপর নয়, কাজের ধারাবাহিকতার ওপর। আগের আর্টিকেলটি ছিল একটি স্থিরচিত্র — ভেতরে কী কী আছে তার বিবরণ। আজকেরটা চলমান ছবি: একটা instruction কীভাবে memory থেকে CPU-তে আসে, নিজের অর্থ control signal-এ রূপ নেয়, আর শেষে CPU-র state বদলে দেয়।
               </p>
             </div>
           </div>
         ) : (
           <div style={bodyStyle}>
-            {p(<>In the <a href="/writing/cpu-blueprint" style={LINK}>last article</a>, we traced the exact hardware path of how the numbers 2 and 3 combine to form 5. Yet, the core mystery of execution remains unsolved.</>)}
-            {p(<>How did the CPU actually know it was supposed to perform an <em>ADD</em> operation at that exact moment? Why not a subtraction or a multiplication? And how did it know to pull data from those two specific registers while ignoring the rest? Who issued that command?</>)}
-            {p('That is the story we are breaking down today.')}
+            {p(<>In the <a href="/writing/cpu-blueprint" style={LINK}>last article</a> we traced how 2 and 3 become 5 inside the hardware. But the story wasn't finished. One question was left open.</>)}
+            {p(<>How did the CPU know it was supposed to <em>add</em> at that moment? Not subtract, not multiply — add. And to take the data from <em>those</em> two registers and no others. Where did those control signals come from?</>)}
+            {p('That is where today\'s story starts.')}
             <div style={{ border: '1px solid #c9bda0', background: 'rgba(255,252,243,0.65)', padding: '14px 18px', margin: '0 0 16px' }}>
               <div style={{ fontFamily: "'Departure Mono',monospace", fontSize: '11.5px', color: '#00753F', letterSpacing: '0.08em', marginBottom: 8 }}>
                 // a silicon time-lapse
               </div>
               <p style={{ margin: 0, fontSize: '15.5px', ...bodyStyle }}>
-                We are still operating inside that same compact silicon landscape where the ALU, registers, bus, and clock coexist. However, our focus today shifts from physical components to time itself. If the previous article was a still photograph detailing the internal hardware topography of the chip, this article is a moving picture. We will track exactly what happens inside the CPU from one clock cycle to the next — watching how an instruction leaves system memory, enters the processor, decodes its own meaning, and translates into raw execution.
+                We're still inside the same small silicon town where the ALU, registers, datapath and clock all work together. But today the focus shifts from the parts to the sequence of work. The previous article was a still photograph — what sits inside the chip. This one is a moving picture: how an instruction travels from memory into the CPU, turns its own meaning into control signals, and finally changes the CPU's state.
               </p>
             </div>
           </div>
         )}
       </div>
 
-      {/* Section 01 — instructions are just bits */}
-      <Section num="01" bnH2="instruction-ও শুধু bit" enH2="Instructions are just bits">
+      {/* ── 01 — Instructions are just bits ──────────────────────────── */}
+      <Section num="01" bnH2="Instruction-ও শুধু bits" enH2="Instructions are just bits">
         {bn ? (
           <div lang="bn" style={bodyStyle}>
-            {p('আমরা যখন কোনো কোড লিখি, তখন আমাদের মনে হয় "কোড" আর "ডেটা" সম্পূর্ণ ভিন্ন দুটি জিনিস। কিন্তু সিলিকনের একদম গভীরে নেমে দেখলে দেখা যাবে, instruction আর ডেটা — দুটোই memory-তে ঠিক একই রকম দেখতে। শুধু voltage-এর pattern। ০ আর ১-এর একটা sequence।')}
-            {p('তার মানে, "যোগ করো" — এই instruction-টাও শেষ পর্যন্ত একটা bit sequence। "লাল pixel" — সেটাও একটা bit sequence। "42" সংখ্যাটা memory-তে যেভাবে বসে থাকে, "ADD" instruction-ও ঠিক সেভাবেই বসে থাকে। শুধু voltage। memory চিনে না কোনটা instruction, কোনটা ডেটা। memory-র কাছে সবই একই ধরনের bit।')}
-            {p(<>এটা <a href="/writing/the-machine-beneath-your-code" style={LINK}>প্রথম আর্টিকেলের</a> সেই কথারই আরেকটা রূপ — <strong>CPU is blind, software gives meaning</strong>। এখানেও তেমনই। একই bit sequence, context ভেদে instruction হতে পারে, ডেটাও হতে পারে।</>)}
-            {p('তাহলে CPU একটা bit sequence-কে "instruction" হিসেবে treat করবে কেন? এই প্রশ্নে আসছি একটু পরে। আগে দেখা যাক, একটা instruction আসলে দেখতে কেমন হয়।')}
+            {p(<>আমরা যখন code লিখি, তখন "code" আর "data" সম্পূর্ণ আলাদা জিনিস মনে হয়। কিন্তু memory-র স্তরে instruction আর data — দুটোই শেষ পর্যন্ত <strong>bit pattern</strong>।</>)}
+            {pre('ADD instruction   →  একটা bit pattern\n42                →  একটা bit pattern\nএকটা pixel value  →  একটা bit pattern')}
+            {p('Memory নিজে বসে সিদ্ধান্ত নেয় না — "এই bit-গুলো instruction" আর "ওগুলো data"।')}
+            {p(<>তবে তাই বলে CPU যেকোনো bit-কে ইচ্ছামতো instruction বানিয়ে ফেলে না। CPU যখন <strong>instruction fetch</strong> করার জন্য একটা নির্দিষ্ট memory address থেকে bit pattern আনে, তখনই সেই bits instruction হিসেবে decode হওয়ার process-এ ঢোকে।</>)}
+            {blockquote('Instruction নাকি data — সেটা bit pattern-এর গায়ে লেখা থাকে না; CPU কোন কাজে সেই bits ব্যবহার করছে, তার ওপরই interpretation নির্ভর করে।')}
+            {p('তাহলে প্রশ্নটা দাঁড়ায় — CPU কোন address থেকে instruction আনবে, সেটা ঠিক হয় কীভাবে? তার আগে দেখা যাক, একটা instruction দেখতে কেমন।')}
           </div>
         ) : (
           <div style={bodyStyle}>
-            {p('When we write programs, we naturally treat "code" and "data" as fundamentally distinct concepts. But at the silicon level, instructions and data look identical in memory. Both are nothing more than physical voltage patterns — a sequence of 0s and 1s.')}
-            {p('The command "ADD," the color values of a red pixel on your screen, and the integer "42" are all stored in memory using the exact same physical mechanism. Memory is entirely passive; it cannot differentiate between an execution command and a raw variable. To the hardware, it is all just electrical charges.')}
-            {p(<>This reinforces our core architectural rule from the <a href="/writing/the-machine-beneath-your-code" style={LINK}>first article</a> — <strong>the CPU is blind; software gives meaning</strong>. The exact same bit sequence can represent an instruction or a piece of data depending entirely on the context.</>)}
-            {p("How, then, does the CPU distinguish a command sequence from data? We'll get to that question shortly. First, let's dissect what an instruction actually looks like under the hood.")}
+            {p(<>When we write programs, "code" and "data" feel like completely different things. But at the memory level, instructions and data are both ultimately <strong>bit patterns</strong>.</>)}
+            {pre('ADD instruction   →  a bit pattern\n42                →  a bit pattern\na pixel value     →  a bit pattern')}
+            {p('Memory itself never looks at those bits and decides "this is an instruction" or "that is data."')}
+            {p(<>That doesn't mean the CPU can treat any bit pattern as a command, though. When the CPU <strong>fetches</strong> bits from a particular address as part of instruction fetching, those bits enter the instruction-decoding process.</>)}
+            {blockquote("Whether a bit pattern is treated as an instruction or as data isn't written into the bits; it depends on how the CPU is using them.")}
+            {p("So the question becomes — how does the CPU decide which address to fetch an instruction from? Before that, let's see what an instruction actually looks like.")}
           </div>
         )}
       </Section>
 
-      {/* Section 02 — anatomy of an instruction */}
+      {/* ── 02 — Anatomy of an instruction ───────────────────────────── */}
       <Section num="02" bnH2="একটা instruction-এর ব্যবচ্ছেদ" enH2="Anatomy of an instruction">
         {bn ? (
           <div lang="bn" style={bodyStyle}>
-            {p('ধরুন CPU-কে বলতে চাই: "Register A আর Register B যোগ করে ফলাফল Register C-তে রাখো।" এই পুরো বাক্যটি মেমোরিতে কীভাবে সাজানো থাকে?')}
-            {p('বাস্তব প্রসেসরে একটি instruction ৩২ বা ৬৪ বিটের হয়ে থাকে। তবে বোঝার সুবিধার জন্য আমরা ধরে নিই আমাদের instruction ১৩ বিটের একটি নির্দিষ্ট ফরম্যাট বা কাঠামো মেনে চলে:')}
-            {pre('0001   | 001   | 010   | 011\nOpcode | Reg A | Reg B | Reg C')}
-            {p('একটি স্ট্যান্ডার্ড instruction প্রধানত দুটি অংশে বিভক্ত থাকে:')}
-            <ul style={ulStyle}>
-              <li>
-                <Term id="opcode">Opcode</Term> <strong>(Operation Code):</strong> instruction-এর প্রথম অংশ, যা CPU-কে বলে দেয় <em>কী</em> কাজ করতে হবে। আমাদের কাল্পনিক ডিজাইনে, প্রথম ৪টি বিট হলো Opcode। প্রসেসরের হার্ডওয়্যারে ফিক্সড করা থাকে যে {mono('0001')} মানে ADD (যোগ), {mono('0010')} মানে SUB (বিয়োগ), আর {mono('0011')} মানে LOAD।
-              </li>
-              <li>
-                <strong>Operand:</strong> instruction-এর পরের অংশগুলো, যা বলে দেয় <em>কার ওপর</em> অপারেশনটি চালানো হবে। এখানে বাকি বিটগুলো হলো রেজিস্টারগুলোর ৩-বিটের বাইনারি অ্যাড্রেস বা ঠিকানা (যেমন: Register A = {mono('001')}, B = {mono('010')}, C = {mono('011')})।
-              </li>
-            </ul>
-            {p('CPU যখন মেমোরি থেকে এই ১৩টি বিট নিজের ভেতরে টেনে নেয়, সে তার Control Unit-এর decoder দিয়ে প্রথম ৪ বিট কেটে আলাদা করে এবং মুহূর্তে বুঝে যায় — "আমাকে এখন যোগ করতে হবে।" এরপর সে পরের বিটগুলো দেখে চিনে নেয় ডেটার উৎস এবং গন্তব্য। নিচের যন্ত্রে opcode আর operand পাল্টে দেখুন — বিটগুলো কীভাবে বদলায়:')}
+            {p(<>ধরুন CPU-কে বলতে চাই: <strong>"Register A আর Register B যোগ করে ফলাফল Register C-তে রাখো।"</strong> এই বাক্যটা CPU-র কাছে মানুষের ভাষায় যায় না। Machine instruction-এর একটা নির্দিষ্ট binary format থাকে, যেখানে আলাদা আলাদা bit field-এর আলাদা মানে।</>)}
+            {p('বাস্তব processor-এ instruction format নির্ভর করে তার architecture বা ISA-র ওপর। সব processor-এ instruction একই মাপের — এমন নয়।')}
+            {p('বোঝার সুবিধার জন্য আমরা একটা কাল্পনিক ১৩-bit format ধরে নিচ্ছি:')}
+            {pre('  0001  |  001  |  010  |  011\n Opcode | Reg A | Reg B | Reg C')}
+            {ul([
+              <><Term id="opcode">Opcode</Term> — কোন operation হবে সেটা নির্দেশ করে। আমাদের কাল্পনিক CPU-তে ধরা যাক <code>0001</code> = ADD, <code>0010</code> = SUB, <code>0011</code> = LOAD।</>,
+              <><strong>Register field</strong> — কোন register থেকে operand নিতে হবে আর কোন register-এ result রাখতে হবে, সেগুলোর পরিচয় নম্বর।</>,
+            ])}
+            {p(<>খেয়াল করুন, <code>001</code>, <code>010</code>, <code>011</code> কোনো memory address নয় — এগুলো CPU-র register-গুলোর identifier।</>)}
+            {p('এই field-গুলো decode করার পর CPU এমন control signal তৈরি করতে পারে, যা A আর B-এর value ALU-তে পাঠায়, ALU-কে ADD-এর জন্য configure করে, আর destination হিসেবে Register C বেছে নেয়। এখানেই instruction-এর bit pattern থেকে CPU-র ভেতরের আচরণের যোগসূত্র তৈরি হয়। নিচের যন্ত্রে opcode আর operand পাল্টে দেখুন:')}
           </div>
         ) : (
           <div style={bodyStyle}>
-            {p('Suppose we want to command the CPU to: "Add the contents of Register A and Register B, then store the result in Register C." How is that entire sentence laid out in memory?')}
-            {p('While modern production processors utilize 32-bit or 64-bit instruction sets, we can illustrate the concept using a simplified 13-bit instruction format:')}
-            {pre('0001   | 001   | 010   | 011\nOpcode | Reg A | Reg B | Reg C')}
-            {p('Every hardware instruction is cleanly partitioned into specific bit fields:')}
-            <ul style={ulStyle}>
-              <li>
-                <Term id="opcode">Opcode</Term> <strong>(Operation Code):</strong> The opening segment of the bit sequence that dictates the nature of the operation. In our 13-bit model, the first 4 bits serve as the opcode. The CPU's hardwired logic recognizes {mono('0001')} as ADD, {mono('0010')} as SUB, and {mono('0011')} as LOAD.
-              </li>
-              <li>
-                <strong>Operand fields:</strong> The remaining segments of the instruction that specify what the operation should act upon. Here, these fields contain the 3-bit binary addresses pointing directly to the internal registers (Register A = {mono('001')}, B = {mono('010')}, C = {mono('011')}).
-              </li>
-            </ul>
-            {p('The moment the CPU pulls these 13 bits into its core, it isolates the first 4 bits. The internal control circuitry decodes this pattern instantly: "Execute an addition." It then reads the remaining operands to locate its data sources and target destination. Change the opcode and operands on the instrument below and watch the bits follow:')}
+            {p(<>Suppose we want to tell the CPU: <strong>"Add the contents of Register A and Register B, then store the result in Register C."</strong> The CPU doesn't receive that sentence in human language. Machine instructions use a defined binary format, where different bit fields carry different meanings.</>)}
+            {p('Real instruction formats depend on the processor\'s architecture, or ISA. Not all processors use instructions of the same size.')}
+            {p("To keep things simple, let's invent a 13-bit format:")}
+            {pre('  0001  |  001  |  010  |  011\n Opcode | Reg A | Reg B | Reg C')}
+            {ul([
+              <><Term id="opcode">Opcode</Term> — identifies which operation to perform. In our fictional CPU, say <code>0001</code> = ADD, <code>0010</code> = SUB, <code>0011</code> = LOAD.</>,
+              <><strong>Register fields</strong> — identify which registers supply the operands and which one receives the result.</>,
+            ])}
+            {p(<>Note that <code>001</code>, <code>010</code>, and <code>011</code> are not memory addresses — they are identifiers for the CPU's registers.</>)}
+            {p("Once those fields are decoded, the CPU can generate control signals that route A and B into the ALU, configure the ALU for ADD, and select Register C as the destination. This is where an instruction's bit pattern connects to the CPU's internal behaviour. Change the opcode and operands on the instrument below:")}
           </div>
         )}
-
         <InstructionAnatomy />
       </Section>
 
-      {/* Section 03 — program counter */}
+      {/* ── 03 — Program Counter ─────────────────────────────────────── */}
       <Section num="03" bnH2="Program Counter: কার পালা এখন?" enH2="Program Counter: whose turn is it?">
         {bn ? (
           <div lang="bn" style={bodyStyle}>
-            {p('মেমোরির কাছে যদি instruction আর ডেটা হুবহু একই রকম দেখতে হয়, তাহলে CPU কীভাবে বোঝে যে মেমোরির কোন অংশটি একটি কমান্ড আর কোন অংশটি সাধারণ ডেটা? আর memory-তে এত এত instruction — একটার পর একটা কীভাবে ঠিক ক্রমে execute হবে?')}
-            {p(<>এই সমস্যার সমাধানের জন্য CPU-র ভেতরে একটা বিশেষ register থাকে — যার নাম <Term id="pc">Program Counter</Term> (সংক্ষেপে PC)। কোনো কোনো আর্কিটেকচারে একে Instruction Pointer-ও বলে।</>)}
-            {p('এই PC-র কাজ একটাই — এই মুহূর্তে memory-র কোন address থেকে পরের instruction পড়তে হবে, সেই address-টা ধরে রাখা।')}
-            {p('কম্পিউটার যখন কোনো প্রোগ্রাম চালু করে, তখন অপারেটিং সিস্টেম PC-র ভেতরে ওই প্রোগ্রামের ঠিক প্রথম instruction-এর address বসিয়ে দেয়। ব্যস, প্রসেসরের ইঞ্জিন চালু হয়ে গেল। সিপিইউ চোখ বন্ধ করে PC-র নির্দেশ করা address-এ যায় এবং ওখান থেকে যে bit sequence পায়, সেটিকে instruction হিসেবে ধরে নেয়। কাজ শেষে PC নিজে থেকে এক ধাপ বাড়ে — পরের instruction-এর দিকে ইঙ্গিত করে।')}
+            {p('Memory-র কাছে instruction আর data দেখতে একইরকম হলে স্বাভাবিক প্রশ্ন আসে — CPU কীভাবে জানে এখন কোন bits-কে instruction হিসেবে fetch করতে হবে?')}
+            {p(<>এর জন্য CPU-তে একটা গুরুত্বপূর্ণ register আছে — <Term id="pc">Program Counter</Term> (PC)। কোনো কোনো architecture-এ একে Instruction Pointer-ও বলে। সহজভাবে, PC ধরে রাখে <strong>পরবর্তী instruction কোন memory address থেকে fetch হবে</strong>।</>)}
+            {p('আমাদের simplified CPU-তে instruction-গুলো যদি fixed-size হয়, তাহলে একটা instruction fetch করার পর PC পরেরটার address-এ এগিয়ে যেতে পারে।')}
+            {pre('[ Memory ]\n\n0x004: 0001001010011   ← PC\n0x008: 0000000000010   ← data\n0x00C: 0000000000011   ← data')}
+            {p('PC এখন 0x004 নির্দেশ করছে। CPU সেখান থেকে fetch করলে ওই bit pattern instruction হিসেবে decode হওয়ার পথে যায়। তারপর simplified model-এ PC পরের instruction-এর দিকে এগোয়।')}
+            {p('কোনো program চালু হলে system সেটির entry point থেকে execution শুরুর ব্যবস্থা করে — আমাদের model-এ ধরে নিতে পারি, PC-তে প্রথম instruction-এর address বসানো হয়।')}
           </div>
         ) : (
           <div style={bodyStyle}>
-            {p('If instructions and raw data look identical within memory, why does the CPU interpret one sequence of bits as a command rather than a simple number? And with billions of instructions packed into system memory, how does the hardware guarantee they execute in the exact order intended by the software?')}
-            {p(<>To manage this sequence, the CPU relies on a dedicated internal register known as the <Term id="pc">Program Counter</Term> (PC for short), frequently referred to as the Instruction Pointer.</>)}
-            {p('The PC is bound to a single architectural task: it continuously holds the exact memory address of the next instruction scheduled for execution.')}
-            {p('When the operating system launches an application, it loads the memory address of the program\'s very first instruction directly into the PC. From that moment, the hardware engine is locked in. The CPU accesses the address stored in the PC and implicitly treats whatever bit sequence it retrieves as a valid machine command. Once done, the PC increments on its own — pointing at the next instruction.')}
+            {p('If instructions and data look the same in memory, a natural question follows — how does the CPU know which bits to fetch as the next instruction?')}
+            {p(<>That's the job of an important register: the <Term id="pc">Program Counter</Term> (PC), called the Instruction Pointer in some architectures. In simple terms, the PC holds <strong>the memory address the next instruction should be fetched from</strong>.</>)}
+            {p('If our simplified CPU uses fixed-size instructions, then after fetching one instruction the PC can advance to the address of the next.')}
+            {pre('[ Memory ]\n\n0x004: 0001001010011   ← PC\n0x008: 0000000000010   ← data\n0x00C: 0000000000011   ← data')}
+            {p('The PC points at 0x004. When the CPU fetches from that address, the bit pattern it gets enters the instruction-decoding process. In our simplified model the PC then advances to the next instruction.')}
+            {p("When a program starts, the system arranges for execution to begin at the program's entry point — in our model, we can picture the address of the first instruction being placed into the PC.")}
           </div>
         )}
-
         <ProgramCounterDemo />
-
         {bn ? (
           <div lang="bn" style={bodyStyle}>
-            {p(<>সহজ কথায়, "কোনটা instruction, কোনটা data" — এই পার্থক্যটা memory-তে <em>নেই</em>। কোথাও লেখা থাকে না। পার্থক্যটা তৈরি হয় PC-র মাধ্যমে। PC প্রসেসরের কাজের সময়ে মেমোরির যে অংশকে ইঙ্গিত করে, ভেতরের সার্কিটগুলো সেই bit-গুলোকে instruction হিসেবে treat করে। বাকি অংশগুলো সাধারণ data হিসেবে মেমোরিতে পড়ে থাকে।</>)}
-            {p('এবার সব উপাদান হাতে আছে। Instruction memory-তে বসে আছে। PC ঠিক জানে কোনটা এখন পড়তে হবে। এবার actual cycle-টা কীভাবে ঘটে?')}
+            {p('তবে বাস্তব CPU-তে PC সবসময় শুধু "এক ধাপ বাড়ে" — এমন নয়। Instruction-এর size, branch, jump, function call, return — এসবের কারণে পরের instruction কোথা থেকে আসবে, সেটা বদলে যেতে পারে।')}
+            {blockquote('Memory-তে instruction আর data-র জন্য আলাদা কোনো label থাকে না। CPU-র instruction-fetch process ঠিক করে, কোন memory location-এর bits instruction হিসেবে decode হবে।')}
+            {p('এবার সব উপাদান হাতে আছে। Instruction memory-তে বসে আছে, PC জানে কোনটা এখন পড়তে হবে। কিন্তু সেই bits থেকে আসল কাজটা হয় কীভাবে?')}
           </div>
         ) : (
           <div style={bodyStyle}>
-            {p('To put it plainly, the boundary between "instruction" and "data" does not exist as a physical marker inside the memory cells. The distinction is defined entirely by the Program Counter. Whatever the PC targets during the command phase is isolated as an instruction; everything else remains inert data.')}
-            {p('With our operational units defined, the instructions queued in memory, and the PC tracking the active address, we can now map the execution engine.')}
+            {p('In a real CPU, though, the PC does not always simply "add one step." Instruction size, branches, jumps, function calls and returns can all change where the next instruction comes from.')}
+            {blockquote("Memory holds no label marking instructions apart from data. The CPU's instruction-fetch process is what determines which location's bits get decoded as an instruction.")}
+            {p('Now we have all the pieces. The instruction sits in memory, and the PC knows which one to read. But how do those bits turn into actual work?')}
           </div>
         )}
       </Section>
 
-      {/* Section 04 — the FDE cycle */}
-      <Section num="04" bnH2="Fetch-Decode-Execute: কম্পিউটিং-এর মৌলিক রিদম" enH2="Fetch-Decode-Execute: the core computing rhythm">
+      {mentalModel}
+
+      {/* ── 04 — Fetch, Decode, Execute ──────────────────────────────── */}
+      <Section num="04" bnH2="Fetch-Decode-Execute: মৌলিক flow" enH2="Fetch-Decode-Execute: the basic flow">
         {bn ? (
           <div lang="bn" style={bodyStyle}>
-            {p(<>একটি instruction মেমোরি থেকে এসে পুরোপুরি সম্পন্ন হওয়া পর্যন্ত পুরো প্রক্রিয়াটি তিনটি প্রধান ধাপে বিভক্ত। একে বলা হয় <strong>Instruction Cycle</strong> বা প্রসেসরের মৌলিক লাইফ-সাইকেল। ধাপ তিনটি হলো: Fetch, Decode, এবং Execute।</>)}
-
-            <h3 style={h3Style}>১. Fetch (instruction টেনে আনা)</h3>
-            {p('এই প্রথম ধাপে কোনো মগজ খাটানোর কাজ নেই, এটি স্রেফ ট্রান্সপোর্টেশন বা পরিবহনের ধাপ।')}
-            {p(<>CPU-র Control Unit প্রথমে PC-তে থাকা মেমোরি address-টি পড়ে নেয়। এরপর প্রসেসরের Address Bus-এর মাধ্যমে সেই ঠিকানাটি র‍্যামে (RAM) পাঠানো হয়। মেমোরি সেই নির্দিষ্ট address-টি খুঁজে বের করে তার ভেতরে থাকা ১৩টি bit-কে Data Bus-এর তার দিয়ে CPU-র কাছে ফেরত পাঠায়। এই bit-গুলো এসে প্রসেসরের ভেতরের আরেকটি বিশেষ register-এ জমা হয়, যার নাম <Term id="ir">Instruction Register</Term> (সংক্ষেপে IR)।</>)}
-            {p('ঠিক এই মুহূর্তেই, PC মেমোরির পরবর্তী instruction-টি ধরার জন্য নিজের ভেতরের address value এক ধাপ বাড়িয়ে নেয় (increment করে)।')}
-
-            <h3 style={h3Style}>২. Decode (instruction-এর অর্থ উদ্ধার)</h3>
-            {p('Instruction-এর bit-গুলো এখন প্রসেসরের ভেতরে, IR register-এ এসে বসে আছে। কিন্তু প্রসেসরের ভেতরের হার্ডওয়্যার এখনো জানে না এই ভোল্টেজের হিজিবিজি প্যাটার্নটি আসলে কী করতে বলছে।')}
-            {p(<>এই ধাপে চার্জ নেয় প্রসেসরের আসল ডিরেক্টর — <Term id="cu">Control Unit</Term> (সংক্ষেপে CU)। Control Unit নিজে কোনো গাণিতিক হিসাব করে না, সে মূলত অন্য পার্টসগুলোকে পরিচালনা করে।</>)}
-            {p(<>CU প্রথমে IR-এ থাকা instruction-এর প্রথম ৪টি bit (Opcode) কেটে নেয়। এরপর একটি অভ্যন্তরীণ ডিকোডার সার্কিটের মাধ্যমে সেই ৪টি bit-কে অ্যানালাইসিস করে। বিট প্যাটার্ন যদি হয় {mono('0001')} (ADD), তবে Control Unit মুহূর্তে বুঝে যায় এখন যোগ করতে হবে। সে সাথে সাথে পুরো চিপের ভেতরে থাকা বিভিন্ন control wire বা নিয়ন্ত্রণ তারের ভোল্টেজ বদলে দেয়:</>)}
-            <ul style={ulStyle}>
-              <li><strong>ALU-কে বলে:</strong> "তোমার ভেতরের যোগ করার সার্কিট (Add Mode) অন করো।"</li>
-              <li><strong>Multiplexer-কে বলে:</strong> "রাস্তা খুলে দাও, যেন Register A আর Register B-র data সরাসরি ALU-র ইনপুটে চলে যায়।"</li>
-              <li><strong>Destination Decoder-কে বলে:</strong> "তুমি তৈরি থাকো, ALU-র আউটপুট কিন্তু সরাসরি Register C-তে যাবে।"</li>
-            </ul>
-
-            <h3 style={h3Style}>৩. Execute (বাস্তব রূপায়ণ)</h3>
-            {p('সব সিগন্যাল রেডি, ট্রাফিক লাইট গ্রিন। এবার শুরু হয় আসল অ্যাকশন।')}
-            {p(<>ক্লকের টাইমিং সিগন্যাল অনুযায়ী Register A-এর value (২) এবং Register B-এর value (৩) মাল্টিপ্লেক্সার পার হয়ে ALU-র ফুল-অ্যাডার সার্কিটে প্রবেশ করে। লজিক গেটের মধ্য দিয়ে কারেন্ট প্রবাহিত হয়ে আউটপুট লাইনে ৫ ({mono('0101')}) তৈরি হয়। এই নতুন ভোল্টেজ প্যাটার্নটি অভ্যন্তরীণ data বাসের তার বেয়ে সরাসরি Register C-তে গিয়ে পৌঁছায়। ক্লকের পরবর্তী ট্রানজিশনে সেই ৫ value-টি Register C-র ফ্লিপ-ফ্লপগুলোতে পার্মানেন্টলি ল্যাচ বা সেভ হয়ে যায়।</>)}
-            {p('নিচের যন্ত্রে পুরো সাইকেলটা নিজে একবার চালিয়ে দেখতে পারেন:')}
+            {p('একটা instruction CPU-তে আসা থেকে তার effect CPU-র state-এ বসা পর্যন্ত পুরো ব্যাপারটাকে তিনটি বড় conceptual phase-এ ভাগ করে দেখা যায়: Fetch → Decode → Execute।')}
+            {p('এটা একটা কাজে দেওয়া mental model। কিন্তু একটা কথা গুরুত্বপূর্ণ:')}
+            {blockquote(<><strong>Fetch, Decode আর Execute মানেই তিনটা clock tick — এমন নয়।</strong> কোনো processor-এ একটা instruction একাধিক clock cycle নিতে পারে; আবার pipelined CPU-তে একই সময়ে ভিন্ন instruction এই তিন phase-এর ভিন্ন অংশে থাকতে পারে।</>)}
+            {p('তাই "phase" বলতে এখানে বোঝাচ্ছি কাজের ধরন, নির্দিষ্ট সময় নয়।')}
           </div>
         ) : (
           <div style={bodyStyle}>
-            {p(<>The transition of an instruction from system memory to finished execution is governed by a recurring cycle divided into three structural phases. This is the <strong>Instruction Cycle</strong> — the processor's fundamental life-cycle: Fetch, Decode, and Execute.</>)}
-
-            <h3 style={h3Style}>1. Fetch</h3>
-            {p('The cycle opens with the Fetch stage — a purely logistical phase focused on data transport rather than processing.')}
-            {p(<>The CPU's control unit samples the memory address currently held inside the PC. It pushes this address across the Address Bus out to the system RAM. The memory hardware locates the specified address, samples the 13-bit configuration stored within it, and sends those bits back across the Data Bus directly to the CPU core. These bits are immediately latched into another specialized internal repository: the <Term id="ir">Instruction Register</Term> (IR for short).</>)}
-            {p('Simultaneously, the PC increments its internal value, automatically pointing to the address of the next instruction in line for the subsequent cycle.')}
-
-            <h3 style={h3Style}>2. Decode</h3>
-            {p('The instruction is now sitting inside the CPU within the IR, but the underlying execution hardware cannot yet interpret this specific configuration of voltages.')}
-            {p(<>This is where the director of the microprocessor takes control: the <Term id="cu">Control Unit</Term> (CU). The CU does not compute numbers or alter variables; its sole purpose is to orchestrate the rest of the CPU components.</>)}
-            {p(<>The CU isolates the opening 4 bits (the Opcode field) from the IR. It routes these bits through a hardware network called a decoder circuit. By decoding the binary configuration — such as {mono('0001')} for an ADD command — the CU determines exactly which execution paths must activate. It instantly alters the electrical state of the internal control wires:</>)}
-            <ul style={ulStyle}>
-              <li><strong>To the ALU:</strong> "Engage the internal addition circuitry (Add Mode)."</li>
-              <li><strong>To the Multiplexer:</strong> "Open the internal data paths so the contents of Register A and Register B route straight to the ALU inputs."</li>
-              <li><strong>To the Destination Decoder:</strong> "Prime the gating logic of Register C to intercept and latch the upcoming output from the ALU."</li>
-            </ul>
-
-            <h3 style={h3Style}>3. Execute</h3>
-            {p('With all control vectors set and the hardware paths stabilized, the execution phase begins.')}
-            {p(<>Driven by the clock timing rhythm, the value from Register A (2) and the value from Register B (3) clear the multiplexer gates and hit the ALU's full-adder architecture. The current propagates through the interconnected logic gates, stabilizing at the output as binary 5 ({mono('0101')}). This voltage pattern is driven onto the internal data bus lines directly to the input gates of Register C. On the final timing boundary, the value 5 is latched cleanly into Register C's flip-flops, finalizing the state transition.</>)}
-            {p('Step through the full cycle yourself on the instrument below — every press is one moment of the clock:')}
+            {p("The journey of an instruction — from entering the CPU to leaving its mark on the CPU's state — can be split into three broad conceptual phases: Fetch → Decode → Execute.")}
+            {p("That's a useful mental model. But one thing matters:")}
+            {blockquote(<><strong>Fetch, Decode and Execute do not mean three clock ticks.</strong> In some processors an instruction takes several clock cycles; in a pipelined CPU, different instructions can sit in different parts of these phases at the same time.</>)}
+            {p('So "phase" here describes the kind of work being done, not a fixed amount of time.')}
           </div>
         )}
+        <Diagram
+          art={ART_FDE}
+          bnLabel="flow · simplified model"
+          enLabel="flow · simplified model"
+          bnCaption="Fetch-Decode-Execute বলে কী ধরনের কাজ হচ্ছে; clock বলে stored state কখন update হওয়ার সুযোগ পাবে। দুটো এক জিনিস নয়।"
+          enCaption="Fetch-Decode-Execute describes what kind of work happens; the clock describes when stored state gets a chance to update. They are not the same thing."
+        />
 
+        {bn ? (
+          <div lang="bn" style={bodyStyle}>
+            {h3('১ · Fetch — instruction আনা')}
+            {p('Fetch phase-এর কাজ একটাই — পরবর্তী instruction-এর bits CPU-র execution machinery-র কাছে আনা।')}
+            {ul([
+              'PC-তে পরবর্তী instruction-এর address আছে।',
+              'CPU সেই address ব্যবহার করে memory subsystem-এর কাছে instruction চায়।',
+              'Memory থেকে instruction-এর bits CPU-র কাছে আসে।',
+              <>CPU-র একটা internal storage element — আমাদের model-এ <Term id="ir">Instruction Register</Term> (IR) — সেই bits ধরে রাখে।</>,
+            ])}
+            {p('একই সঙ্গে simplified model-এ PC পরবর্তী instruction-এর দিকে এগোয়।')}
+            {blockquote('Fetch মানে clock tick এসে data-কে ঠেলে এক জায়গা থেকে আরেক জায়গায় পাঠানো নয়। Signal propagate করে, আর data ready হলে CPU নির্দিষ্ট timing boundary-তে নিজের state update করতে পারে।')}
+          </div>
+        ) : (
+          <div style={bodyStyle}>
+            {h3('1 · Fetch — bringing in the instruction')}
+            {p("The Fetch phase has one job — bring the bits of the next instruction to the CPU's execution machinery.")}
+            {ul([
+              'The PC holds the address of the next instruction.',
+              'The CPU uses that address to request the instruction from the memory subsystem.',
+              'The instruction bits arrive from memory.',
+              <>An internal storage element — in our model the <Term id="ir">Instruction Register</Term> (IR) — holds those bits.</>,
+            ])}
+            {p('At the same time, in our simplified model, the PC advances toward the next instruction.')}
+            {blockquote("Fetch doesn't mean a clock tick shoves data from one place to another. Signals propagate, and once the data is ready the CPU can update its state at the appropriate timing boundary.")}
+          </div>
+        )}
+        <Diagram art={ART_FETCH} bnLabel="flow · fetch" enLabel="flow · fetch" />
+
+        {bn ? (
+          <div lang="bn" style={bodyStyle}>
+            {h3('২ · Decode — instruction থেকে control তৈরি')}
+            {p(<>Instruction-এর bits এখন CPU-র ভেতরে। এবার সেই bits থেকে পরবর্তী কাজের control information তৈরি করতে হবে। এই কাজটা করে <Term id="cu">Control Unit</Term> (CU) আর তার decoding logic।</>)}
+            {pre('0001 | 001 | 010 | 011\n  ↓     ↓     ↓     ↓\n ADD    A     B     C')}
+            {p('Instruction-এর field দেখে control logic এমন signal তৈরি করতে পারে:')}
+            {pre('Select Register A\nSelect Register B\nALU operation = ADD\nDestination = Register C\nWrite Enable for C = 1')}
+            {p('খেয়াল করুন — CU এখানে ALU-কে "চালু" করেনি, MUX-কে "রাস্তা খুলতে" বলেনি।')}
+            {blockquote('Control logic datapath-এর বিভিন্ন অংশকে নির্দিষ্ট configuration-এ সেট করে। তারপর combinational logic সেই configuration আর current input অনুযায়ী output তৈরি করে।')}
+          </div>
+        ) : (
+          <div style={bodyStyle}>
+            {h3('2 · Decode — generating control signals')}
+            {p(<>The instruction bits are inside the CPU now. Those fields have to become the control information the operation needs. That's the work of the <Term id="cu">Control Unit</Term> (CU) and its decoding logic.</>)}
+            {pre('0001 | 001 | 010 | 011\n  ↓     ↓     ↓     ↓\n ADD    A     B     C')}
+            {p('Reading those fields, the control logic can generate signals such as:')}
+            {pre('Select Register A\nSelect Register B\nALU operation = ADD\nDestination = Register C\nWrite Enable for C = 1')}
+            {p('Notice what is not happening: the CU is not "switching the ALU on" or "opening the MUX."')}
+            {blockquote('Control logic configures the parts of the datapath for the required operation. The combinational logic then produces its output from that configuration and the current inputs.')}
+          </div>
+        )}
+        <Diagram art={ART_DECODE} bnLabel="flow · decode" enLabel="flow · decode" />
+
+        {bn ? (
+          <div lang="bn" style={bodyStyle}>
+            {h3('৩ · Execute — computation আর state update')}
+            {p('Control signal এখন datapath-কে configure করে রেখেছে। Register A আর B-এর বর্তমান value MUX-এর input-এ আছে; select signal অনুযায়ী সেগুলো ALU-র input-এ পৌঁছায়।')}
+            {p(<>ALU-র combinational logic সেই input নিয়ে কাজ করে, আর propagation delay পেরোনোর পর output-এ দাঁড়ায় ৫ (<code>0101</code>)।</>)}
+            {blockquote(<><strong>Clock ALU-কে হিসাব শুরু করায়নি।</strong> Control signal datapath configure করেছে, আর combinational logic current input থেকে result তৈরি করেছে।</>)}
+            {p(<>এখন সেই result Register C-এর input-এ available, আর <code>WE_C</code> active। পরবর্তী appropriate clock edge-এ Register C সেটা capture করতে পারে:</>)}
+          </div>
+        ) : (
+          <div style={bodyStyle}>
+            {h3('3 · Execute — computation and state update')}
+            {p("The control signals have configured the datapath. The current values in Register A and B sit at the MUX inputs, and the select signals present them to the ALU.")}
+            {p(<>The ALU's combinational logic works on those inputs, and after the propagation delay its output settles at 5 (<code>0101</code>).</>)}
+            {blockquote(<><strong>The clock did not tell the ALU to start calculating.</strong> The control signals configured the datapath, and the combinational logic produced the result from its current inputs.</>)}
+            {p(<>That result is now available at Register C's input, and <code>WE_C</code> is active. At the next appropriate clock edge, Register C can capture it:</>)}
+          </div>
+        )}
+        <Diagram art={ART_CAPTURE} bnLabel="flow · capture" enLabel="flow · capture" />
+
+        {bn ? (
+          <div lang="bn" style={bodyStyle}>
+            {p('অর্থাৎ পুরো hardware pattern-টা এই:')}
+            {blockquote(<strong>Instruction-এর bits → control signals → datapath configuration → combinational computation → state update</strong>)}
+            {p('নিচের যন্ত্রে পুরো পথটা ধাপে ধাপে চালিয়ে দেখুন:')}
+          </div>
+        ) : (
+          <div style={bodyStyle}>
+            {p('So the core hardware pattern is this:')}
+            {blockquote(<strong>Instruction bits → control signals → datapath configuration → combinational computation → state update</strong>)}
+            {p('Step through the whole path on the instrument below:')}
+          </div>
+        )}
         <FetchDecodeExecute />
       </Section>
 
-      {/* Section 05 — the continuous heartbeat */}
-      <Section num="05" bnH2="অবিরাম হার্টবিট" enH2="The continuous heartbeat">
+      {/* ── 05 — The continuous loop ─────────────────────────────────── */}
+      <Section num="05" bnH2="অবিরাম চক্র" enH2="The continuous loop">
         {bn ? (
           <div lang="bn" style={bodyStyle}>
-            {p('একটি instruction-এর গল্প শেষ হলো। কিন্তু CPU-র ডিকশনারিতে "বিশ্রাম" বলে কোনো শব্দ নেই।')}
-            {p('ক্লকের পরের পালস আসার সাথে সাথেই CPU আবার প্রথম ধাপ অর্থাৎ Fetch-এ ফেরত চলে যায়। PC যেহেতু আগের ধাপেই এক ধাপ বেড়ে মেমোরির পরের address-টি ধরে রেখেছে, তাই CPU এবার মেমোরির নতুন ঠিকানা থেকে পরের instruction-টি টেনে আনে, সেটিকে ডিকোড করে এবং execute করে।')}
-            {p('এই চক্রটি কম্পিউটারে অবিরাম চলতে থাকে: Fetch → Decode → Execute → Fetch... যতক্ষণ না কম্পিউটারটি বন্ধ করা হচ্ছে। একটি 3.0 GHz ক্লক স্পিডের প্রসেসরে প্রতি সেকেন্ডে এই সাইকেলটি কোটি কোটি বার সম্পন্ন হয়।')}
+            {p('একটা instruction-এর state update হয়ে গেলেই CPU থেমে যায় না। পরের instruction-এর জন্য আবার fetch শুরু হয় — আর modern processor-এ একই সময়ে অন্য instruction-গুলো ভিন্ন stage-এ থাকতে পারে।')}
           </div>
         ) : (
           <div style={bodyStyle}>
-            {p('The execution of the instruction wraps up, but the CPU does not pause.')}
-            {p('The moment the next clock pulse arrives, the CPU loops back to the Fetch stage. Because the PC updated its address tracking during the previous phase, the CPU smoothly pulls the next command from memory, decodes its operational signals, and drives it through the execution stage.')}
-            {p('This loop repeats indefinitely: Fetch → Decode → Execute → Fetch... for as long as the machine remains powered on. In a 3.0 GHz processor, this cycle executes billions of times every single second.')}
+            {p("Once an instruction's state update has happened, the CPU doesn't stop. Fetching begins again for the next one — and in a modern processor other instructions may be sitting in different stages at the same time.")}
           </div>
         )}
-
         <InstructionCycleLoop />
-
         {bn ? (
           <div lang="bn" style={bodyStyle}>
-            {p('আপনি যখন স্ক্রিনে এই আর্টিকেলটি স্ক্রল করছেন, মাউস নড়াচ্ছেন, ব্যাকগ্রাউন্ডে গান শুনছেন কিংবা কোনো AI চ্যাটবটের সাথে কথা বলছেন — তার পেছনে রয়েছে এই তিনটি ধাপের কোটি কোটি বারের অবিরাম পুনরাবৃত্তি। সফটওয়্যারের যত জটিল লেয়ারই আমরা উপরে তৈরি করি না কেন, একদম নিচে সিলিকনের বাস্তবতায় সবকিছু এই সাধারণ রিদমে এসে থিতু হয়।')}
+            {p('তবে এই loop দেখে ভাববেন না যে প্রতিটা instruction ঠিক এই তিন ধাপে, নির্দিষ্ট সংখ্যক clock tick-এ শেষ হয়।')}
+            {blockquote(<><strong>Clock cycle হলো timing-এর একক; Fetch-Decode-Execute হলো কাজের conceptual stage।</strong></>)}
+            {p('একটা 3 GHz CPU-তে প্রতি সেকেন্ডে প্রায় ৩ বিলিয়ন clock cycle থাকে। কিন্তু প্রতি সেকেন্ডে ঠিক ৩ বিলিয়ন instruction পুরো fetch-decode-execute সেরে ফেলে — তা নয়। একটা cycle-এ একাধিক instruction-এর কাজ এগোতে পারে, আবার একটা instruction একাধিক cycle নিতেও পারে।')}
           </div>
         ) : (
           <div style={bodyStyle}>
-            {p('Every single interaction on a modern computer — from the vertical scrolling of a browser window to tracking mouse coordinates or querying an AI language model — reduces to the relentless repetition of these three stages. Regardless of how many abstract software frameworks are layered on top, everything ultimately resolves down to this hardware rhythm running on silicon.')}
+            {p("But don't read this loop as saying every instruction finishes in exactly these three steps, in a fixed number of clock ticks.")}
+            {blockquote(<><strong>A clock cycle is a unit of timing; Fetch-Decode-Execute describes conceptual stages of work.</strong></>)}
+            {p('A 3 GHz CPU has roughly 3 billion clock cycles per second. That does not mean it completes exactly 3 billion full fetch-decode-execute cycles per second. Work from several instructions can progress in one cycle, and a single instruction can also take several cycles.')}
           </div>
         )}
       </Section>
 
-      {/* Section 06 — the whole story once through */}
+      {/* ── 06 — The whole story ─────────────────────────────────────── */}
       <Section num="06" bnH2="পুরো গল্পটা একবার" enH2="The whole story, once through">
         {bn ? (
           <div lang="bn" style={bodyStyle}>
-            {p('এবার সেই যোগ করার instruction-এর পুরো যাত্রা একবার চালিয়ে দেখা যাক।')}
-            {p(<>কোথাও memory-তে একটা bit sequence বসে আছে — {mono('0001 001 010 011')}। কেউ জানে না এটা কী। শুধু voltage-এর একটা pattern।</>)}
-            {p(<>কিন্তু PC-তে সেই bit sequence-এর address রাখা আছে। Clock একটা tick দিল। <strong>Fetch</strong> শুরু। CPU সেই address-এ গেল, bit-গুলো তুলে আনল, IR-এ বসিয়ে দিল। এই মুহূর্তে PC নিজে থেকে বেড়ে গেল — এখন পরের address-এ point করছে।</>)}
-            {p(<>Clock আরেকটা tick দিল। <strong>Decode</strong> শুরু। Control Unit IR-এর প্রথম ৪ bit দেখে বলল — "ADD।" সঙ্গে সঙ্গে control signal ছড়িয়ে পড়ল CPU-র বিভিন্ন অংশে। ALU যোগ mode-এ গেল। Mux Register A আর Register B বেছে নিল। Decoder Register C-কে প্রস্তুত করল।</>)}
-            {p(<>Clock আরেকটা tick দিল — এবার <strong>Execute</strong>। ২ আর ৩ চলে গেল ALU-র দিকে, ৫ বেরিয়ে এল, Register C-তে বসে গেল।</>)}
-            {p('তিনটা ধাপে একটা instruction সম্পন্ন। CPU-র কাছে এটা মাত্র একটা হার্টবিট। আর এই মুহূর্তেই — কোনো বিরাম নেই — PC পরের instruction-এর দিকে ইঙ্গিত করছে। সেটাও fetch হবে। Decode হবে। Execute হবে।')}
-            {p('আপনার React app। YouTube video। Photoshop। AI chatbot। সব — literally সব — এই তিনটা stage-এর অবিরাম repetition। উপরের সব software layer একসাথে যা করে, সেটা শেষে এই তিনটা stage-এই এসে দাঁড়ায়।')}
+            {p(<>Memory-তে কোথাও একটা bit pattern বসে আছে — <code>0001 001 010 011</code>। তার গায়ে "instruction" লেখা নেই।</>)}
+            {p('কিন্তু PC-তে সেই address রাখা আছে। CPU সেখান থেকে fetch করে, আর bits চলে আসে IR-এ। PC এগিয়ে যায় পরেরটার দিকে।')}
+            {p('Control logic সেই bits-এর field পড়ে control signal তৈরি করে: কোন register select হবে, ALU কোন operation করবে, কোন register result নেবে।')}
+            {p(<>Configured datapath-এ ২ আর ৩ ALU-তে পৌঁছায়, combinational logic settle করে ৫-এ, আর একটা clock edge-এ Register C সেই ৫ capture করে। এই মুহূর্তে result CPU-র state-এর অংশ।</>)}
+            {p('তারপর আবার পরের instruction। এই loop চলতেই থাকে।')}
+            {p('আপনার React app, YouTube, Photoshop বা AI chatbot — সবই শেষ পর্যন্ত machine instruction-এ নেমে আসে, আর সেই instruction-গুলো fetch, decode আর execution-এর বিভিন্ন stage-এর মধ্য দিয়ে process হয়। বাস্তব CPU-তে এই stage-গুলো অনেক বেশি জটিল, একসাথে overlap-ও করে — কিন্তু conceptual flow-টা এখান থেকেই শুরু।')}
           </div>
         ) : (
           <div style={bodyStyle}>
-            {p("Let's replay the full journey of that ADD instruction one more time.")}
-            {p(<>Somewhere in memory sits a bit sequence — {mono('0001 001 010 011')}. Nobody knows what it is. Just a pattern of voltage.</>)}
-            {p(<>But the PC holds that bit sequence's address. The clock ticks. <strong>Fetch</strong> begins. The CPU goes to that address, pulls the bits up, and seats them in the IR. At this very moment the PC increments on its own — now pointing at the next address.</>)}
-            {p(<>The clock ticks again. <strong>Decode</strong> begins. The Control Unit looks at the first 4 bits in the IR and says — "ADD." Instantly, control signals spread across the CPU. The ALU switches to add mode. The Mux selects Register A and Register B. The Decoder primes Register C.</>)}
-            {p(<>Another tick — <strong>Execute</strong>. 2 and 3 head into the ALU, 5 comes out, and it settles into Register C.</>)}
-            {p("Three stages, one instruction complete. To the CPU it's just one heartbeat. And in this very moment — no pause — the PC is already pointing at the next instruction. It too will be fetched. Decoded. Executed.")}
-            {p('Your React app. A YouTube video. Photoshop. An AI chatbot. Everything — literally everything — is the relentless repetition of these three stages. Whatever all the software layers above accomplish together, it all lands on these three stages in the end.')}
+            {p(<>Somewhere in memory sits a bit pattern — <code>0001 001 010 011</code>. Nothing on it says "instruction."</>)}
+            {p('But the PC holds that address. The CPU fetches from it, and the bits land in the IR. The PC advances toward the next one.')}
+            {p('Control logic reads those fields and generates control signals: which registers are selected, which operation the ALU performs, which register receives the result.')}
+            {p('On the configured datapath, 2 and 3 reach the ALU, the combinational logic settles at 5, and on a clock edge Register C captures it. At that moment the result becomes part of the CPU\'s state.')}
+            {p('Then the next instruction. The loop keeps going.')}
+            {p('Your React app, YouTube, Photoshop, an AI chatbot — all of it eventually becomes machine instructions, and those instructions are processed through stages corresponding to fetch, decode and execution. Real CPUs make those stages far more complex and overlapping, but the conceptual flow begins here.')}
           </div>
         )}
       </Section>
 
-      {/* Section 07 — reality corner: pipelining */}
+      {/* ── 07 — Reality corner: pipelining ──────────────────────────── */}
       <Section num="07" bnH2="সবকিছু এত সরল নয়: Pipelining" enH2="Reality corner: pipelining">
         {bn ? (
           <div lang="bn" style={bodyStyle}>
-            {p(<>বোঝার সুবিধার জন্য আমরা এখানে data ফ্লো-কে এমনভাবে দেখিয়েছি যেন একটি instruction-এর তিন ধাপ পুরোপুরি শেষ হওয়ার পর পরবর্তী instruction-এর কাজ শুরু হয়। একে বলে <strong>Single-Cycle Architecture</strong>।</>)}
-            {p(<>কিন্তু বাস্তব আধুনিক প্রসেসরগুলো এভাবে অলস বসে থাকে না। সেখানে ব্যবহৃত হয় <strong>Pipelining</strong> মেকানিজম। একটি কারখানার অ্যাসেম্বলি লাইনের কথা ভাবুন — যেখানে একই সময়ে একটি গাড়িতে পেইন্ট করা হচ্ছে, তার পেছনের গাড়িতে চাকা লাগানো হচ্ছে, আর তারও পেছনের গাড়িটির বডি জোড়া দেওয়া হচ্ছে।</>)}
-            {p('CPU-ও ঠিক এই কাজটিই করে। যখন একটি instruction Execute ধাপে থাকে, তখন তার ঠিক পরের instruction-টি প্রসেসরের Decode ধাপে প্রসেস হতে থাকে, এবং একই সময়ে মেমোরি থেকে তারও পরের instruction-টি Fetch হতে থাকে। নিচের যন্ত্রে দুই mode-এর তফাতটা tick করে দেখুন:')}
+            {p('বোঝার সুবিধার জন্য আমরা instruction-এর flow দেখিয়েছি একটা সরল ধারাবাহিক প্রক্রিয়া হিসেবে — একটা instruction-এর তিন phase conceptually শেষ হওয়ার পর পরেরটা। এটা শুধু একটা teaching model।')}
+            {p('বাস্তব processor-এ pipelining ব্যবহার করে একই সময়ে একাধিক instruction-এর কাজ ভিন্ন stage-এ চলতে পারে:')}
           </div>
         ) : (
           <div style={bodyStyle}>
-            {p(<>To keep the concepts accessible, we mapped the data flow as a rigid sequential process where one instruction must complete its entire cycle before the next begins. This paradigm represents a classical <strong>Single-Cycle Architecture</strong>.</>)}
-            {p(<>Modern production processors are far more dynamic, utilizing a technique called <strong>Pipelining</strong>. Think of an assembly line in a manufacturing plant: workers do not wait for a single car to be built, painted, and boxed before starting the next. Instead, multiple cars occupy different stages of the line simultaneously.</>)}
-            {p('A pipelined CPU mirrors this efficiency. While Instruction 1 is inside the Execute block, Instruction 2 is simultaneously passing through the Decode block, and Instruction 3 is already being pulled from system memory during the Fetch stage. Tick through both modes on the instrument below:')}
+            {p('To keep things simple we showed instruction flow as a straightforward sequential process — one instruction passing through the three conceptual phases before the next. That is only a teaching model.')}
+            {p('Real processors use pipelining, so work from several instructions can occupy different stages at the same time:')}
           </div>
         )}
-
+        <Diagram art={ART_PIPE} bnLabel="flow · pipelining" enLabel="flow · pipelining" />
+        {bn ? (
+          <div lang="bn" style={bodyStyle}>
+            {p('I1 যখন execute হচ্ছে, তখনই I2 decode আর I3 fetch হতে পারে। এভাবে প্রতিটা clock cycle-এ আরও বেশি কাজ এগোয়। নিচের যন্ত্রে দুই mode-এর তফাত দেখুন:')}
+          </div>
+        ) : (
+          <div style={bodyStyle}>
+            {p('While I1 is being executed, I2 can be decoded and I3 fetched. That way more work progresses during each clock cycle. Compare the two modes on the instrument below:')}
+          </div>
+        )}
         <PipelineVisualizer />
-
         <Deeper
           bnLabel="আরেকটু গভীরে — superscalar, out-of-order, branch prediction"
           enLabel="go deeper — superscalar, out-of-order, branch prediction"
         >
           {bn ? (
-            <div lang="bn" style={bodyStyle}>
-              <p style={{ margin: '14px 0 12px' }}>Pipelining ছাড়াও মডার্ন প্রসেসরে আরও কিছু হাই-লেভেল আর্কিটেকচারাল মেকানিজম থাকে:</p>
-              <ul style={{ margin: 0, paddingLeft: 20, lineHeight: 1.85 }}>
-                <li style={{ marginBottom: 10 }}><strong>Superscalar:</strong> একই ক্লক সাইকেলে একাধিক সমান্তরাল পাইপলাইন ব্যবহার করে একসাথে কয়েকটা instruction এক্সিকিউট করা।</li>
-                <li style={{ marginBottom: 10 }}><strong>Out-of-Order Execution:</strong> যদি দেখা যায় কোনো instruction-এর জন্য প্রয়োজনীয় data মেমোরি থেকে আসতে দেরি হচ্ছে, তবে CPU বসে না থেকে কোডের লাইনের ক্রম পরিবর্তন করে পরের ইন্ডিপেনডেন্ট instruction-টি আগে রান করে ফেলে।</li>
-                <li><strong>Branch Prediction:</strong> কোডের ভেতরে কোনো if-else কন্ডিশন বা লুপ থাকলে, কন্ডিশনটি সত্যি নাকি মিথ্যা হবে তা প্রসেসর আগে থেকেই অনুমান (predict) করে স্পেকুলেটিভলি PC-র address লোড করে কাজ এগিয়ে রাখে। অনুমান ভুল হলে সেই কাজ বাতিল করে আবার সঠিক ট্র্যাকে ফিরে আসে।</li>
+            <div lang="bn" style={{ ...bodyStyle, marginTop: 14 }}>
+              <p style={{ margin: '0 0 12px' }}>Pipelining ছাড়াও modern CPU-তে আরও কিছু mechanism থাকে:</p>
+              <ul style={{ margin: '0 0 12px', paddingLeft: 20, lineHeight: 1.85 }}>
+                <li style={{ marginBottom: 10 }}><strong>Superscalar:</strong> একটা core-এ একাধিক execution unit থাকায় একই clock cycle-এ একাধিক instruction-এর কাজ শুরু বা শেষ হতে পারে।</li>
+                <li style={{ marginBottom: 10 }}><strong>Out-of-order execution:</strong> কোনো instruction-এর operand এখনো তৈরি না থাকলে, তার পরের স্বাধীন instruction-গুলোর কাজ আগে এগোতে পারে।</li>
+                <li><strong>Branch prediction:</strong> conditional branch-এর সম্ভাব্য path অনুমান করে CPU সেই path-এর instruction আগেভাগে fetch/decode করতে পারে। অনুমান ভুল হলে সেই speculative কাজ বাতিল করে সঠিক path-এ ফেরে।</li>
               </ul>
+              <p style={{ margin: 0 }}>এগুলো basic fetch-decode-execute model-কে বাতিল করে না; বরং সেই flow-কে আরও parallel আর sophisticated করে তোলে।</p>
             </div>
           ) : (
-            <div style={bodyStyle}>
-              <p style={{ margin: '14px 0 12px' }}>Beyond pipelining, modern desktop and server chips deploy highly sophisticated execution strategies:</p>
-              <ul style={{ margin: 0, paddingLeft: 20, lineHeight: 1.85 }}>
-                <li style={{ marginBottom: 10 }}><strong>Superscalar architecture:</strong> Multiple parallel hardware execution pipelines within a single core, executing multiple distinct instructions during the same clock cycle.</li>
-                <li style={{ marginBottom: 10 }}><strong>Out-of-Order Execution (OoO):</strong> If an instruction is blocked waiting for data to arrive from slow system memory, the control logic bypasses it to execute subsequent, independent commands that already have their operands ready.</li>
-                <li><strong>Branch Prediction:</strong> When encountering conditional logic (like if-else blocks or loops), the CPU speculatively guesses the execution outcome and pre-loads the PC with the predicted address path. If the guess is correct, execution speed scales dramatically; if it fails, the speculative work is flushed and the PC resets to the correct path.</li>
+            <div style={{ ...bodyStyle, marginTop: 14 }}>
+              <p style={{ margin: '0 0 12px' }}>Beyond pipelining, modern CPUs use several more mechanisms:</p>
+              <ul style={{ margin: '0 0 12px', paddingLeft: 20, lineHeight: 1.85 }}>
+                <li style={{ marginBottom: 10 }}><strong>Superscalar:</strong> a core can have several execution units, so work from multiple instructions can start or finish in the same clock cycle.</li>
+                <li style={{ marginBottom: 10 }}><strong>Out-of-order execution:</strong> if one instruction is still waiting on an operand, independent later instructions may be allowed to make progress first.</li>
+                <li><strong>Branch prediction:</strong> the CPU predicts the likely path of a conditional branch and may fetch and decode from that path early. If the prediction is wrong, that speculative work is discarded and it returns to the correct path.</li>
               </ul>
+              <p style={{ margin: 0 }}>None of these replace the basic fetch-decode-execute idea. They make that flow more parallel and more sophisticated.</p>
             </div>
           )}
         </Deeper>
-
         <Recap>
           {bn ? (
             <>
-              <li>কোড ও data-র অভিন্নতা: মেমোরির কাছে কোড আর data-র গঠনে কোনো পার্থক্য নেই, দুটোই স্রেফ ভোল্টেজ বা bit সিকোয়েন্স।</li>
-              <li>পার্থক্য গড়ে দেয় Program Counter: PC মেমোরির যে address-কে নির্দেশ করে, CPU সেই bit-গুলোকেই instruction হিসেবে treat করে।</li>
-              <li>Control Unit হলো ডিরেক্টর: CU কোনো ম্যাথ করে না, সে instruction-এর opcode পড়ে ডিকোডারের মাধ্যমে সঠিক কন্ট্রোল সিগন্যাল জেনারেট করে বাকি পার্টসগুলোকে পরিচালনা করে।</li>
-              <li>কম্পিউটিং-এর রিদম: প্রতিটি প্রসেসরের মূল প্রাণশক্তি লুকিয়ে আছে Fetch-Decode-Execute সাইকেলের অবিরাম লুপের মাঝে।</li>
+              <li>Instruction-ও শেষ পর্যন্ত bits — memory-র স্তরে instruction আর data দুটোই bit pattern হিসেবে থাকে।</li>
+              <li>Instruction format বলে দেয় কী করতে হবে — opcode operation শনাক্ত করে, বাকি field operand আর destination জানায়।</li>
+              <li>Program Counter ঠিক করে পরের instruction কোথা থেকে fetch হবে — branch বা অন্য control-flow হলে সেই address বদলাতে পারে।</li>
+              <li>Control Unit instruction-এর field থেকে control signal তৈরি করে — কোন register select হবে, ALU কোন operation করবে, কোন register result capture করবে।</li>
+              <li>Fetch-Decode-Execute একটা conceptual flow — modern CPU-তে এগুলো একাধিক clock cycle জুড়ে থাকতে পারে, আর একাধিক instruction-এর stage overlap করতে পারে।</li>
+              <li>Clock আর Fetch-Decode-Execute এক জিনিস নয় — clock দেয় timing boundary, FDE বলে কাজের ধরন।</li>
             </>
           ) : (
             <>
-              <li>Uniform data storage: Instructions and variables share the same hardware format in memory — both are simply physical voltage patterns without inherent contextual labels.</li>
-              <li>The Program Counter draws the line: The hardware treats a bit sequence as a command solely because the PC pointed to it during a command phase.</li>
-              <li>The Control Unit is the orchestrator: The CU interprets the Opcode bit fields and uses internal hardware decoders to toggle the control signals that guide the ALU, multiplexers, and buses.</li>
-              <li>The computational engine: The Fetch-Decode-Execute cycle acts as the fundamental heartbeat of modern computing architecture.</li>
+              <li>Instructions are ultimately bits — at the memory level, instructions and data are both just bit patterns.</li>
+              <li>The instruction format says what to do — the opcode identifies the operation, the other fields name operands and destination.</li>
+              <li>The Program Counter decides where the next instruction is fetched from — branches and other control flow can change that address.</li>
+              <li>The Control Unit turns instruction fields into control signals — which registers are selected, which ALU operation runs, which register captures the result.</li>
+              <li>Fetch-Decode-Execute is a conceptual flow — in modern CPUs these stages can span multiple clock cycles and overlap across instructions.</li>
+              <li>The clock is not the same thing as Fetch-Decode-Execute — the clock gives timing boundaries; FDE describes the kinds of work.</li>
             </>
           )}
         </Recap>
@@ -338,8 +503,8 @@ export function HeartbeatFDE() {
         hub={SERIES_HUB_CARD}
         next={{ label: { bn: 'baton পরের পর্বে', en: 'baton to the next leg' }, title: bn ? '০৫ — মেমোরি হায়ারার্কি' : '05 — The Memory Hierarchy', href: '/writing/memory-hierarchy', variant: 'next' }}
         bridge={{
-          bn: 'এই যে কোটি কোটি instruction আর data নিয়ে প্রসেসর প্রতি ন্যানোসেকেন্ডে খেলা করছে, এগুলো আসলে থাকে কোথায়? CPU-র ভেতরের register-গুলো অত্যন্ত ফাস্ট হলেও সেখানে জায়গা খুবই সীমিত — মাত্র কয়েক হাজার bit। এত ছোট জায়গায় তো আমাদের গেম, ব্রাউজার কিংবা অপারেটিং সিস্টেম ধরবে না। তাহলে কি সব data র‍্যামে (RAM) থাকে? কিন্তু র‍্যাম তো প্রসেসরের তুলনায় অনেক দূরে এবং ধীরগতির। এই স্পিড আর সাইজের ব্যালেন্স বজায় রাখার জন্য মডার্ন কম্পিউটারে একটি চতুর ব্যবস্থা করা হয়েছে — প্রসেসরের এই মেমোরি ম্যানেজমেন্টের গল্পটাই হবে আমাদের পরের আর্টিকেলের বিষয়।',
-          en: "We have established that the processor manipulates instructions and data at nanosecond intervals — but where does all this state live? While internal registers operate at maximum speed, they offer incredibly scarce storage space — typically just a few thousand bits. That's nowhere near enough capacity to house modern operating systems, browsers, or applications. Is everything stored in RAM, then? System RAM is spacious, but it sits physically distant from the CPU core, making it far too slow to keep up with the ALU. To solve this speed and capacity bottleneck, modern computer engineering implements a layered approach — and that memory management story is the focus of our next breakdown.",
+          bn: 'এখন আমরা জানি CPU কীভাবে instruction fetch করে, decode করে, আর control signal দিয়ে datapath-কে কাজে লাগায়। কিন্তু একটা প্রশ্ন বাকি — যে instruction আর data CPU বারবার ব্যবহার করে, সেগুলো থাকে কোথায়? CPU-র সবচেয়ে কাছের storage খুব দ্রুত, কিন্তু ছোট; বড় storage অনেক বেশি ধরে, কিন্তু সেখান থেকে data আনতে সময় বেশি লাগে। এই speed, size আর cost-এর trade-off থেকেই তৈরি হয় memory hierarchy — পরের article-এর বিষয়।',
+          en: "We now know how a CPU fetches an instruction, decodes it, and uses control signals to drive the datapath. But one question remains — where do all the instructions and data the CPU keeps using actually live? The storage closest to the CPU is very fast but small; larger storage holds far more but takes longer to reach. That trade-off between speed, size and cost is what produces the memory hierarchy — the subject of the next article.",
         }}
       />
       <Colophon />

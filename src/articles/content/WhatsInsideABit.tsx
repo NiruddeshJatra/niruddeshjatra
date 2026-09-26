@@ -1,7 +1,9 @@
+import type { ReactNode } from 'react';
 import { useLang } from '../context/LanguageContext';
 import { Section } from '../primitives/Section';
 import { Term } from '../primitives/Term';
 import { Deeper } from '../primitives/Deeper';
+import { Diagram } from '../primitives/Diagram';
 import { Recap } from '../primitives/Recap';
 import { RelayNav, SERIES_HUB_CARD } from '../primitives/RelayNav';
 import { Colophon } from '../primitives/Colophon';
@@ -9,7 +11,13 @@ import { NoiseVsBands } from '../widgets/NoiseVsBands';
 import { TransistorSwitch } from '../widgets/TransistorSwitch';
 import { GatePlayground } from '../widgets/GatePlayground';
 import { FeedbackLatch } from '../widgets/FeedbackLatch';
+import { MasterSlaveFlipFlop } from '../widgets/MasterSlaveFlipFlop';
 import { ThreeBits } from '../widgets/ThreeBits';
+
+const ART_GATED = `Data ─────────► Storage
+                  ▲
+                  │
+            Write Enable`;
 
 export function WhatsInsideABit() {
   const { bn } = useLang();
@@ -18,272 +26,398 @@ export function WhatsInsideABit() {
     ? { fontFamily: "'Anek Bangla','Anek Latin',sans-serif" }
     : { fontFamily: "'Anek Latin',sans-serif" };
 
-  const p = (s: string | React.ReactNode) => <p style={{ margin: '0 0 16px', ...bodyStyle }}>{s}</p>;
+  const p = (s: string | ReactNode) => <p style={{ margin: '0 0 16px', ...bodyStyle }}>{s}</p>;
   const pre = (s: string) => (
     <pre style={{ fontFamily: "'Departure Mono',monospace", fontSize: '14.5px', background: '#232b23', color: '#00d26a', padding: '15px 20px', margin: '0 0 20px', overflowX: 'auto', border: '1px solid #4a493a' }}>{s}</pre>
   );
+  const blockquote = (s: ReactNode) => (
+    <blockquote style={{ margin: '0 0 20px', padding: '12px 18px', borderLeft: '3px solid #c9bda0', background: 'rgba(255,252,243,0.5)', color: '#3c382b', ...bodyStyle }}>
+      {s}
+    </blockquote>
+  );
+  const ul = (items: ReactNode[]) => (
+    <ul style={{ margin: '0 0 20px', paddingLeft: 24, ...bodyStyle }}>
+      {items.map((it, i) => <li key={i} style={{ marginBottom: 8 }}>{it}</li>)}
+    </ul>
+  );
+  const deeperBody = (children: ReactNode) => (
+    <div {...(bn ? { lang: 'bn' } : {})} style={{ ...bodyStyle, marginTop: 14 }}>{children}</div>
+  );
+  const dp = (s: ReactNode, last = false) => <p style={{ margin: last ? 0 : '0 0 12px' }}>{s}</p>;
 
   return (
     <article style={{ marginTop: 40, fontSize: '16.5px', lineHeight: 1.9 }}>
-      {/* Hook */}
+      {/* ── Hook ─────────────────────────────────────────────────────── */}
       <div>
         {bn ? (
           <div lang="bn" style={bodyStyle}>
             {p('ধরুন, কোডে লিখলাম:')}
             {pre('x = 5')}
-            {p('কোডটা রান হলো। ভালো কথা।')}
-            {p('কিন্তু একটা প্রশ্ন — এই ৫ সংখ্যাটা আসলে কম্পিউটারের কোথায় গেল? এর কি কোনো ফিজিক্যাল রূপ আছে?')}
-            <p style={{ margin: '0 0 16px', ...bodyStyle }}>আক্ষরিক অর্থে — কম্পিউটারের ভেতরে কোথাও না কোথাও এই ৫ সংখ্যাটা এখন জমা হয়ে আছে। এই series-এ আমি সেই physical state থেকে screen পর্যন্ত পুরো যাত্রাটা দেখানোর চেষ্টা করবো। আপাতত লক্ষ্য একটা — একটা <Term id="bit">bit</Term> কীভাবে physically মেমোরিতে অবস্থান করে?</p>
-            {p('একটা কথা আগে বলে রাখি — এখানে কোনো নির্দিষ্ট প্রোগ্রামিং ল্যাংগুয়েজ নিয়ে কথা বলবো না। সব software layer বাদ দিয়ে আলোচনা করবো একেবারে হার্ডওয়্যার লেভেলে — শুধু কিছু তার, কিছু transistor, আর voltage।')}
+            {p('কোডটা রান হলো। এবার একটা অদ্ভুত প্রশ্ন — এই ৫ সংখ্যাটা আসলে কম্পিউটারের ভেতরে কোথায় আছে? কাগজে লেখা ৫-এর মতো তো নয়, screen-এর pixel-এও নয়। তাহলে hardware-এর চোখে এর কি কোনো physical অস্তিত্ব আছে?')}
+            {p(<>আছে — তবে মাঝখানে একটা ধাপ আছে। ৫ নিজে একটা <strong>abstract সংখ্যা</strong>। Computer সেটাকে লেখে একটা bit pattern হিসেবে — যেমন সাধারণ binary-তে <code>101</code>। সেই pattern-এর প্রতিটা bit একটা logical মান, ০ অথবা ১। আর hardware প্রতিটা bit-কে ধরে রাখে কোনো একটা <strong>physical বৈদ্যুতিক অবস্থা</strong> দিয়ে।</>)}
           </div>
         ) : (
           <div style={bodyStyle}>
             {p('Suppose you write:')}
             {pre('x = 5')}
-            {p('The code runs. Fine.')}
-            {p("But there's a question — where did that 5 actually go? Does it have a physical form?")}
-            <p style={{ margin: '0 0 16px', ...bodyStyle }}>Literally — somewhere inside your computer, right now, there's a 5 stored. Today's goal is one specific question: how does a <Term id="bit">bit</Term> physically live in memory?</p>
-            {p("One thing first — I'm not going to talk about any specific language today. All the software layers are stripped off. What exists down here is wires, transistors, and voltage.")}
+            {p("The code runs. Now a strange question — where is that 5 actually stored inside the computer? Not like a 5 written on paper, and not in a pixel on the screen. So does it have any physical existence in the hardware?")}
+            {p(<>It does — but there's a step in between. The 5 itself is <strong>an abstract number</strong>. The computer writes it as a bit pattern — in plain binary, <code>101</code>. Each bit in that pattern is a logical value, 0 or 1. And the hardware holds each bit using some <strong>physical electrical state</strong>.</>)}
+          </div>
+        )}
+
+        <Diagram
+          art={bn
+            ? '5            ← abstract সংখ্যা\n↓\n101          ← bit pattern\n↓\n1 · 0 · 1    ← তিনটা logical bit\n↓\nphysical বৈদ্যুতিক অবস্থা'
+            : '5            ← an abstract number\n↓\n101          ← a bit pattern\n↓\n1 · 0 · 1    ← three logical bits\n↓\nphysical electrical states'}
+          bnLabel="diagram · সংখ্যা থেকে hardware"
+          enLabel="diagram · from number to hardware"
+        />
+
+        {bn ? (
+          <div lang="bn" style={bodyStyle}>
+            {p(<>এই series-এ সেই physical অবস্থা থেকে screen পর্যন্ত পুরো যাত্রাটা দেখানোর চেষ্টা করবো। আজকের প্রশ্ন একটাই — একটা <Term id="bit">bit</Term>-এর ০ বা ১-কে hardware physically ধরে রাখে কীভাবে?</>)}
+            {p('একটা কথা আগে বলে রাখি — এখানে কোনো নির্দিষ্ট programming language নিয়ে কথা বলবো না। Software-এর স্তরগুলো সরিয়ে একেবারে hardware-এর কাছে নামবো, যেখানে "variable" বা "object" বলে কিছু নেই — আছে transistor, তার, electrical signal আর জমা রাখা charge। বোঝার সুবিধার জন্য বেশিরভাগ সময় voltage-এর ভাষায় কথা বলবো।')}
+            {blockquote(<>তবে মনে রাখবেন: <strong>bit নিজে voltage নয়</strong>। Voltage হলো bit-এর logical মানটাকে বাস্তবে প্রকাশ করার একটা physical উপায়।</>)}
+          </div>
+        ) : (
+          <div style={bodyStyle}>
+            {p(<>Over this series I'll try to walk that whole journey — from physical state up to what appears on screen. Today's question is just one: how does hardware physically hold the 0 or 1 of a <Term id="bit">bit</Term>?</>)}
+            {p("One thing first — I won't talk about any specific programming language. We're stripping away the software layers and going right down to the hardware, where there's no \"variable\" or \"object\" — just transistors, wires, electrical signals, and stored charge. To keep things simple, we'll mostly talk in terms of voltage.")}
+            {blockquote(<>But keep this in mind: <strong>a bit is not itself a voltage</strong>. A voltage is one physical way of representing a bit's logical value.</>)}
           </div>
         )}
       </div>
 
+      {/* ── 01 — Why binary ──────────────────────────────────────────── */}
       <Section num="01" bnH2="Binary কেন?" enH2="Why binary?">
         {bn ? (
           <div lang="bn" style={bodyStyle}>
-            <p style={{ margin: '0 0 16px', ...bodyStyle }}>কম্পিউটারের ভেতরে data মানে কী? <Term id="voltage">voltage</Term>। Electrical signal-এর মাত্রা। ০ মানে "কম voltage" (প্রায় ০ ভোল্ট), ১ মানে "বেশি voltage" (প্রায় ৫ ভোল্ট বা ১.৮ ভোল্ট — chip-এর design-এর উপর নির্ভর করে)। অর্থাৎ, যেহেতু কম্পিউটার মূলত ইলেক্ট্রনিক ডিভাইস, এখানে আমরা যেমন কাগজে লিখে রাখি বা অন্য কোনো বস্তু গণনার কাজে ব্যবহার করি, সেরকমটা সম্ভব না। এখানে কোনো তথ্য সংরক্ষণ করতে চাইলে সেটাকে বিদ্যুতে রুপান্তর করে তারপরই সংরক্ষণ করা যাবে। এজন্যই যেকোনো ডিজিট্যাল ইলেকট্রনিকস এ data মানেই voltage।</p>
-            {p('স্বাভাবিক প্রশ্ন — কম্পিউটার base-10 use করলে কী হতো? মানুষের ১০টা আঙুল আছে বলে আমরা ০ থেকে ৯ পর্যন্ত ব্যবহার করি। কম্পিউটারেও তো ১০টা আলাদা voltage level রাখা যেত।')}
-            <p style={{ margin: '0 0 16px', ...bodyStyle }}>ঝামেলাটা math-এ না। ঝামেলাটা physics-এ। আর ঝামেলাটার নাম — <strong>noise</strong>।</p>
-            {p('বাস্তব circuit-এ voltage কখনো একদম একইরকম থাকে না। তাপমাত্রার ওঠানামা, পাশের তারের electromagnetic interference — সবকিছু voltage-কে একটু এদিক-ওদিক করে দেয়। নিচের যন্ত্রে noise বাড়িয়ে নিজেই দেখুন:')}
+            {p(<>কম্পিউটারের ভেতরে তথ্য শেষ পর্যন্ত রাখতে হয় electrical signal দিয়ে। কিন্তু একটা signal-এর <Term id="voltage">voltage</Term> ক্রমাগত যেকোনো মান নিতে পারে — ০.৩ ভোল্ট, ১.৭ ভোল্ট, মাঝামাঝি যেকোনো কিছু।</>)}
+            {p('তাহলে স্বাভাবিক প্রশ্ন — কম্পিউটার base-10 ব্যবহার করলে কী হতো? মানুষের ১০টা আঙুল বলে আমরা ০ থেকে ৯ গুনি। কম্পিউটারেও তো ১০টা আলাদা voltage level রাখা যেত।')}
+            {p(<>তাত্ত্বিকভাবে যেত। ঝামেলাটা math-এ না, physics-এ। আর ঝামেলাটার নাম — <strong>noise</strong>।</>)}
+            {p('বাস্তব circuit-এ signal কখনো একদম স্থির থাকে না। তাপমাত্রার ওঠানামা, power supply-র ছোট fluctuation, পাশের তারের electromagnetic interference — সবকিছু voltage-কে একটু এদিক-ওদিক করে দেয়। নিচের যন্ত্রে noise বাড়িয়ে নিজেই দেখুন:')}
           </div>
         ) : (
           <div style={bodyStyle}>
-            <p style={{ margin: '0 0 16px', ...bodyStyle }}>What is data, inside a computer? <Term id="voltage">voltage</Term>. The level of an electrical signal. 0 means "low voltage" (near 0V), 1 means "high voltage" (near 5V or 1.8V — depends on chip design). That is to say, because a computer is fundamentally an electronic device, we cannot rely on physical mediums like paper or mechanical tokens for calculation and storage. To store any information, it must first be encoded into electrical states. This is precisely why in digital electronics, data equates to voltage.</p>
-            {p("Natural question — what if the computer used base-10? We have ten fingers, so we count 0 to 9. Couldn't the computer just keep 10 different voltage levels?")}
-            <p style={{ margin: '0 0 16px', ...bodyStyle }}>The problem isn't math. It's physics. And the problem has a name — <strong>noise</strong>.</p>
-            {p("In a real circuit, voltage is never perfectly stable. Temperature swings, electromagnetic interference — everything nudges voltage around. Raise the noise on the instrument below and see for yourself:")}
+            {p(<>Inside a computer, information ultimately has to be held as electrical signals. But a signal's <Term id="voltage">voltage</Term> can take any value along a continuous range — 0.3 volts, 1.7 volts, anything in between.</>)}
+            {p("So a natural question — what if the computer used base-10? We have ten fingers, so we count 0 to 9. Couldn't the computer just keep 10 different voltage levels?")}
+            {p(<>In principle, it could. The problem isn't math. It's physics. And the problem has a name — <strong>noise</strong>.</>)}
+            {p("In a real circuit, a signal is never perfectly steady. Temperature swings, small power-supply fluctuations, electromagnetic interference from neighbouring wires — all of it nudges voltage around. Raise the noise on the instrument below and see for yourself:")}
           </div>
         )}
         <NoiseVsBands />
         {bn ? (
           <div lang="bn" style={bodyStyle}>
-            {p('Base-10-এ ১.১ ভোল্ট মানে "২", আর ০.৯ ভোল্ট মানে "১"। মাত্র ০.২ ভোল্টের এই পার্থক্য noise সহজে ভেঙে ফেলে।')}
-            <p style={{ margin: '0 0 16px', ...bodyStyle }}>Binary-তে? ০ মানে "কম voltage-এর যেকোনো ভ্যালু" (ধরুন ০ থেকে ০.৮ ভোল্ট), ১ মানে "বেশি voltage-এর যেকোনো ভ্যালু" (ধরুন ২ থেকে ৫ ভোল্ট)। মাঝখানে একটা <Term id="noisemargin">noise margin</Term> — একটা "নিষিদ্ধ অঞ্চল"।</p>
-            <p style={{ margin: '0 0 16px', ...bodyStyle }}>এটাই বাইনারির আসল কারণ। ০ আর ১ দিয়ে data represent করা সহজ, তা না — ০ আর ১ <strong>নির্ভরযোগ্য</strong>। বাকিসব সেখান থেকে বানানো।</p>
-            {p('এর মানে এই না যে কম্পিউটার ৫, ২৫ বা ১০০০ বোঝে না। বরং প্রতিটা সংখ্যাকে সে অসংখ্য ০ আর ১-এর combination-এ ভেঙে ফেলে। সেই গল্পটা পরের article-এ।')}
-            {p('পরের প্রশ্ন: এই voltage-গুলো কে তৈরি করে? কে switch করে?')}
+            {p('দশটা level রাখতে গেলে প্রতিটার জন্য জায়গা খুব সরু। সামান্য noise-ই একটা level-কে পাশেরটায় ঠেলে দেয় — আর "২" নিঃশব্দে "৩" হয়ে যায়।')}
+            {p(<>Binary-তে level মাত্র দুটো, তাই LOW আর HIGH-কে অনেক দূরে রাখা যায়। মাঝখানে থাকে একটা চওড়া gap — <Term id="noisemargin">noise margin</Term>। Noise যতক্ষণ এই gap পার না করে, circuit একই মান পড়ে। </>)}
+            {p(<>এটাই binary-র আসল কারণ। ০ আর ১ দিয়ে data রাখা সহজ, তা না — <strong>০ আর ১ নির্ভরযোগ্য</strong>। Digital circuit ইচ্ছা করেই এমনভাবে বানানো হয়, যাতে এই দুটো অবস্থা পরিষ্কার আলাদা থাকে।</>)}
+            {p('এর মানে এই না যে কম্পিউটার শুধু ০ আর ১ নিয়েই কাজ করতে পারে। বড় সংখ্যা, লেখা, ছবি, শব্দ — সবই অনেকগুলো bit-এর pattern দিয়ে প্রকাশ করা যায়। সেই গল্প পরের article-এ।')}
+            {p('পরের প্রশ্ন: এই signal-গুলো নিয়ন্ত্রণ করে কে?')}
           </div>
         ) : (
           <div style={bodyStyle}>
-            {p('In base-10, 1.1V means "2" and 0.9V means "1." That 0.2V difference is nothing to noise.')}
-            <p style={{ margin: '0 0 16px', ...bodyStyle }}>In binary? 0 means "any low-ish voltage" (0 to 0.8V), 1 means "any high-ish voltage" (2 to 5V). In between sits a <Term id="noisemargin">noise margin</Term> — a "forbidden zone."</p>
-            <p style={{ margin: '0 0 16px', ...bodyStyle }}>That's the real reason for binary. Not that 0 and 1 make data representation easy — that 0 and 1 are <strong>reliable</strong>. Everything else is built from there.</p>
-            {p("This doesn't mean the computer can't handle 5, 25, or 1000. Rather, it breaks every number into combinations of countless 0s and 1s. That story is the next article's.")}
-            {p('Next question: who creates these voltages? Who does the switching?')}
+            {p('With ten levels, each one gets a very narrow slice of voltage. A little noise pushes a level into its neighbour — and a "2" silently becomes a "3".')}
+            {p(<>Binary has only two levels, so LOW and HIGH can be kept far apart. Between them sits a wide gap — the <Term id="noisemargin">noise margin</Term>. As long as noise doesn't push the signal across that gap, the circuit reads the same value. (The 0.8 V and 2 V on the instrument are just an example; real thresholds depend on the chip's technology.)</>)}
+            {p(<>That's the real reason for binary. Not that 0 and 1 make data easy to store — that <strong>0 and 1 are reliable</strong>. Digital circuits are deliberately designed so that those two states stay clearly apart.</>)}
+            {p("That doesn't mean a computer can only work with 0 and 1. Large numbers, text, images, sound — all of it can be expressed as patterns of many bits. That story is the next article.")}
+            {p('Next question: what controls these signals?')}
           </div>
         )}
       </Section>
 
+      {/* ── 02 — Transistor ──────────────────────────────────────────── */}
       <Section num="02" bnH2="Transistor — সবচেয়ে ছোট সুইচ" enH2="The transistor — the smallest switch">
         {bn ? (
           <div lang="bn" style={bodyStyle}>
-            {p('এখন পর্যন্ত একটা জিনিস পরিষ্কার — কম্পিউটার শেষ পর্যন্ত ভোল্টেজ নিয়েই কাজ করে। কিন্তু প্রশ্ন হলো, এই ভোল্টেজ কে নিয়ন্ত্রণ করে? কারণ কম্পিউটারকে তো মাঝে মাঝে কারেন্ট যেতে দিতে হবে, আবার মাঝে মাঝে আটকে দিতেও হবে। মানে, কম্পিউটারের এমন একটা জিনিস দরকার যেটা ইচ্ছে হলে বিদ্যুতের রাস্তা খুলে দেবে, আর ইচ্ছে হলে বন্ধ করে দেবে।')}
-            {p('অর্থাৎ একটা switch।')}
-            {p('কিন্তু এখানে একটা সমস্যা আছে। বাড়ির লাইটের সুইচ তো আপনি হাত দিয়ে চাপেন। কম্পিউটারের ভেতরে যদি ১০০ বিলিয়ন সুইচ থাকে, তাহলে সেগুলো কে চাপবে?')}
+            {p('কম্পিউটারকে কখনো একটা বৈদ্যুতিক পথ খুলে দিতে হয়, কখনো বন্ধ করতে হয়। মানে তার দরকার একটা switch।')}
+            {p('কিন্তু বাড়ির লাইটের switch তো আপনি হাত দিয়ে চাপেন। একটা chip-এ যদি কয়েকশো কোটি switch থাকে, সেগুলো চাপবে কে?')}
             {p('সেখানেই আসে transistor।')}
-            {p('Transistor-কে সবচেয়ে সহজভাবে ভাবা যায় একটা অতি ক্ষুদ্র ইলেকট্রনিক কল হিসেবে। বাসার পানির কল যেমন খুললে পানি যায়, বন্ধ করলে পানি থেমে যায় — transistor-ও ঠিক তেমন। এই কলটা মানুষ ঘোরায় না। আরেকটা ছোট্ট electrical signal-ই কলটা খুলে বা বন্ধ করে দেয়।')}
+            {p('Transistor-কে এই পর্যায়ে ভাবা যায় একটা অতি ক্ষুদ্র, বিদ্যুৎ-নিয়ন্ত্রিত কল হিসেবে। বাসার পানির কল খুললে পানি যায়, বন্ধ করলে থামে। শুধু এই কলটার হাতল কোনো মানুষ ঘোরায় না — ঘোরায় আরেকটা ছোট্ট electrical signal।')}
           </div>
         ) : (
           <div style={bodyStyle}>
-            {p("One thing is clear by now — the computer ultimately works with voltage. But the question is: who controls it? Because sometimes current has to flow through, and sometimes it has to be blocked. Which means we need something that can open the electrical path when it wants to, and close it when it wants to.")}
-            {p("In other words — a switch.")}
-            {p("But there's a problem. You press your light switch with your hand. If there are 100 billion switches inside a computer — who presses them?")}
+            {p('A computer sometimes needs to open an electrical path and sometimes needs to close it. In other words, it needs a switch.')}
+            {p("But you press your light switch with your hand. If a chip holds billions of switches — who presses them?")}
             {p("That's where the transistor comes in.")}
-            {p("The simplest way to picture a transistor is as a microscopic electronic tap. Open your kitchen tap, water flows; close it, water stops — a transistor is exactly that, except what flows is electricity. And no human turns this tap. Another tiny electrical signal opens or closes it.")}
+            {p("At this stage, the easiest way to picture a transistor is as a microscopic, electrically controlled tap. Open your kitchen tap and water flows; close it and it stops. The only difference: no human turns this tap's handle — another tiny electrical signal does.")}
           </div>
         )}
         <TransistorSwitch />
         {bn ? (
           <div lang="bn" style={bodyStyle}>
-            <p style={{ margin: '0 0 16px', ...bodyStyle }}>এখানে গুরুত্বপূর্ণ ব্যাপার হলো — <strong>একটা ছোট electrical signal আরেকটা electrical signal-কে নিয়ন্ত্রণ করতে পারে।</strong></p>
-            {p('ব্যস, এইটুকুই। এই ছোট্ট আইডিয়াটার ওপরই দাঁড়িয়ে আছে পুরো আধুনিক কম্পিউটার।')}
-            {p('আপনি এই লেখাটা যতক্ষণ পড়ছেন, আপনার ফোন বা ল্যাপটপের ভেতরে কয়েক বিলিয়ন transistor প্রতি সেকেন্ডে অসংখ্যবার on-off হচ্ছে। কিন্তু এত কিছুর পরও প্রতিটা transistor একই কাজ করে — বিদ্যুৎ যেতে দেবে, অথবা দেবে না। এই দুইটাই।')}
+            {p(<>এখানে গুরুত্বপূর্ণ ব্যাপার একটাই — <strong>একটা electrical signal আরেকটা electrical পথকে নিয়ন্ত্রণ করতে পারে</strong>।</>)}
+            {p('এই ছোট্ট আইডিয়াটার ওপরই দাঁড়িয়ে আছে পুরো আধুনিক কম্পিউটার। আপনি এই লেখাটা পড়তে পড়তে আপনার ফোন বা ল্যাপটপের ভেতরে কয়েকশো কোটি transistor প্রতি সেকেন্ডে অসংখ্যবার এক অবস্থা থেকে আরেক অবস্থায় যাচ্ছে।')}
           </div>
         ) : (
           <div style={bodyStyle}>
-            <p style={{ margin: '0 0 16px', ...bodyStyle }}>What matters here is this — <strong>a small electrical signal can control another electrical signal.</strong></p>
-            {p("That's it. That's all. The entire modern computer stands on this one small idea.")}
-            {p("For as long as you've been reading this, a few billion transistors inside your phone or laptop have been switching on and off countless times per second. And yet every one of them does the same job — let electricity pass, or don't. Just those two.")}
+            {p(<>The one thing that matters here — <strong>one electrical signal can control another electrical path</strong>.</>)}
+            {p("The entire modern computer stands on that small idea. While you read this, billions of transistors inside your phone or laptop are switching from one state to another countless times per second.")}
           </div>
         )}
+        <Deeper
+          bnLabel="আরেকটু গভীরে — transistor কি শুধু on আর off-ই বোঝে?"
+          enLabel="go deeper — does a transistor only know on and off?"
+        >
+          {deeperBody(bn ? (
+            <>
+              {dp(<>না। Transistor একটা <strong>physical device</strong> — "০" বা "১" বলে কিছু সে বোঝে না। Gate-এর voltage একটু একটু করে বাড়ালে তার ভেতর দিয়ে current-ও ধীরে ধীরে বাড়ে; পুরো বন্ধ আর পুরো চালুর মাঝখানে অনেক অবস্থা আছে।</>)}
+              {dp('Digital circuit এই মাঝামাঝি অঞ্চলটা এড়িয়ে চলে। Transistor-কে প্রায় সবসময় জোরালোভাবে "প্রায় পুরো চালু" বা "প্রায় পুরো বন্ধ"-এর দিকে ঠেলে রাখা হয়, আর তার ফলে output-এ যে voltage তৈরি হয়, সেটাকে আমরা LOW বা HIGH — ০ বা ১ — হিসেবে পড়ি।',)}
+              {dp('অর্থাৎ ০ আর ১ transistor-এর নিজের গুণ নয়; অনেকগুলো transistor মিলে গড়া circuit-এর আচরণকে আমরা এভাবে ব্যাখ্যা করি।', true)}
+            </>
+          ) : (
+            <>
+              {dp(<>No. A transistor is <strong>a physical device</strong> — it has no notion of "0" or "1". Raise the gate voltage little by little and the current through it rises little by little too; between fully off and fully on there are many in-between states.</>)}
+              {dp('Digital circuits avoid that middle region. Transistors are driven firmly toward "almost fully on" or "almost fully off," and the voltage that produces at the output is what we read as LOW or HIGH — 0 or 1.')}
+              {dp("So 0 and 1 aren't a property of the transistor itself; they're how we interpret the behaviour of a circuit built from many transistors.", true)}
+            </>
+          ))}
+        </Deeper>
       </Section>
 
+      {/* ── 03 — Joining switches ────────────────────────────────────── */}
       <Section num="03" bnH2="Switch জোড়া দিলে কী হয়?" enH2="What happens when you join switches?">
         {bn ? (
           <div lang="bn" style={bodyStyle}>
-            {p('একটা transistor দিয়ে বেশি কিছু হয় না। ঠিক যেমন একটা LEGO block দিয়ে ঘর বানানো যায় না।')}
-            {p('কিন্তু হাজার হাজার transistor একসাথে জোড়া লাগালে ধীরে ধীরে এমন circuit তৈরি হয়, যেগুলো decision নিতে পারে, হিসাব করতে পারে, এমনকি memory-ও বানাতে পারে।')}
-            <p style={{ margin: '0 0 16px', ...bodyStyle }}>দুইটা transistor যদি এক লাইনে (<Term id="serpar">series</Term>) জোড়া দেন, তাহলে current যেতে হলে দুইটাকেই একসাথে on হতে হবে। এভাবেই তৈরি হয় AND gate। আবার পাশাপাশি (parallel) জোড়া দিলে, যেকোনো একটা on থাকলেই current যেতে পারে। এভাবেই তৈরি হয় OR gate। আরেকটা transistor-এর wiring-এ ছোট্ট একটা পরিবর্তন করে বানানো যায় NOT gate — input ১ হলে output ০, input ০ হলে output ১।</p>
+            {p('একটা transistor দিয়ে বেশি কিছু হয় না — ঠিক যেমন একটা LEGO block দিয়ে ঘর হয় না। কিন্তু অনেকগুলো transistor নির্দিষ্টভাবে জোড়া দিলে এমন circuit তৈরি হয়, যা হিসাব করতে পারে, এমনকি মনেও রাখতে পারে।')}
+            {p(<>একটা সরল switch-মডেল দিয়ে ভাবা যাক। দুটো switch যদি এক লাইনে (<Term id="serpar">series</Term>) থাকে, পথ সম্পূর্ণ হতে দুটোকেই চালু থাকতে হবে — আচরণটা AND-এর মতো। পাশাপাশি (parallel) থাকলে যেকোনো একটা চালু হলেই পথ সম্পূর্ণ — আচরণটা OR-এর মতো। আর wiring একটু বদলে পাওয়া যায় NOT — input ১ হলে output ০, input ০ হলে output ১।</>)}
           </div>
         ) : (
           <div style={bodyStyle}>
-            {p("One transistor doesn't do much. The way one LEGO block doesn't build a house.")}
-            {p("But join thousands of transistors together and, step by step, circuits emerge that can make decisions, do arithmetic — even build memory.")}
-            <p style={{ margin: '0 0 16px', ...bodyStyle }}>Join two transistors in a line (<Term id="serpar">series</Term>) and current can only pass if both are on at once. That's an AND gate. Join them side by side (parallel) and either one being on lets current through. That's an OR gate. A small tweak to a single transistor's wiring gives you a NOT gate — input 1 flips to output 0, input 0 flips to output 1.</p>
+            {p("One transistor doesn't do much — the way one LEGO block doesn't build a house. But connect many transistors in the right arrangement and you get circuits that can calculate, and even remember.")}
+            {p(<>A simple switch model helps here. Put two switches in a line (<Term id="serpar">series</Term>) and both must be on for the path to complete — that behaves like AND. Put them side by side (parallel) and either one completes the path — that behaves like OR. Change the wiring a little and you get NOT — input 1 gives output 0, input 0 gives output 1.</>)}
           </div>
         )}
         <GatePlayground />
+        <Deeper
+          bnLabel="আরেকটু গভীরে — আসল AND gate কি সত্যিই দুটো transistor series-এ?"
+          enLabel="go deeper — is a real AND gate really two transistors in series?"
+        >
+          {deeperBody(bn ? (
+            <>
+              {dp(<>পুরোপুরি না — উপরের switch-ছবিটা বোঝার জন্য, chip-এর আসল নকশা নয়। আসল chip-এ AND gate সরাসরি বানানো হয় না; বানানো হয় একটা <strong>NAND</strong> gate, তার পরে একটা NOT বসিয়ে। NAND আর NOR — chip-এ এই দুটো gate বানানো সবচেয়ে সস্তা, তাই বাকি gate-গুলো সাধারণত এদের দিয়েই গড়া হয়।</>)}
+              {dp('"Series মানে দুটোই লাগবে, parallel মানে যেকোনো একটা" — এই intuition-টা এতে নষ্ট হয় না। শুধু মাথায় রাখুন, আসল chip-এ AND gate মানে হুবহু দুটো transistor এক লাইনে বসানো নয়।', true)}
+            </>
+          ) : (
+            <>
+              {dp(<>Not exactly — the switch picture above is for intuition, not the real chip layout. On a real chip an AND gate usually isn't built directly: it's a <strong>NAND</strong> gate followed by a NOT. NAND and NOR are the cheapest gates to build in silicon, so most other gates are made out of them.</>)}
+              {dp('None of that breaks the intuition — "series means both are needed, parallel means either one will do" still holds. Just don\'t picture a real AND gate as literally two transistors sitting in a line.', true)}
+            </>
+          ))}
+        </Deeper>
         {bn ? (
           <div lang="bn" style={bodyStyle}>
-            <p style={{ margin: '0 0 16px', ...bodyStyle }}>এই তিনটা gate — AND, OR, NOT — দিয়ে যেকোনো logical operation বানানো যায়। যেকোনো decision, যেকোনো comparison, যেকোনো গাণিতিক হিসাব। XOR, NAND, NOR gate — সব এই তিনটা মৌলিক gate-এর combination।</p>
-            <p style={{ margin: '0 0 16px', ...bodyStyle }}>Arithmetic-ও এভাবেই। দুইটা bit যোগ করার circuit ("full adder") বানানো যায় শুধু AND, OR, XOR দিয়ে। ৬৪টা full adder পাশাপাশি রেখে ৬৪-bit integer যোগ করার circuit তৈরি করা যায় — যা CPU-র ভেতরের <Term id="alu">ALU</Term>-র একটি গুরুত্বপূর্ণ অংশ।</p>
-            {p('কিন্তু arithmetic-এর গল্প পরের article-এ। এখানে এখনো একটা সমস্যা আছে।')}
+            {p(<>AND, OR, NOT — এই তিনটা gate দিয়ে <strong>যেকোনো logical operation</strong> বানানো যায়: যেকোনো তুলনা, যেকোনো গাণিতিক হিসাব। XOR, NAND, NOR — সবই এদের combination।</>)}
+            {p(<>Arithmetic-ও এভাবেই। দুইটা bit যোগ করার circuit (full adder) বানানো যায় কয়েকটা gate দিয়ে, আর অনেকগুলো full adder পাশাপাশি রাখলে বড় সংখ্যা যোগ করার circuit হয় — যা CPU-র ভেতরের <Term id="alu">ALU</Term>-র একটা গুরুত্বপূর্ণ অংশ।</>)}
+            {p('কিন্তু arithmetic-এর গল্প পরে। এখানে এখনো একটা সমস্যা আছে।')}
           </div>
         ) : (
           <div style={bodyStyle}>
-            <p style={{ margin: '0 0 16px', ...bodyStyle }}>With these three gates — AND, OR, NOT — you can build any logical operation. Any decision, any comparison, any arithmetic. XOR, NAND, NOR — all combinations of these three fundamental gates.</p>
-            <p style={{ margin: '0 0 16px', ...bodyStyle }}>Arithmetic works the same way. A circuit that adds two bits (a "full adder") can be built from just AND, OR, XOR. Put 64 full adders side by side and you have a circuit that adds 64-bit integers — an important part of the <Term id="alu">ALU</Term> inside the CPU.</p>
-            {p("But arithmetic's story belongs to the next article. Here, one problem still remains.")}
+            {p(<>AND, OR, NOT — with these three gates you can build <strong>any logical operation</strong>: any comparison, any arithmetic. XOR, NAND, NOR are all combinations of them.</>)}
+            {p(<>Arithmetic works the same way. A circuit that adds two bits (a full adder) takes only a few gates, and chaining many full adders gives you a circuit that adds large numbers — an important part of the <Term id="alu">ALU</Term> inside a CPU.</>)}
+            {p("But arithmetic's story comes later. Here, one problem still remains.")}
           </div>
         )}
       </Section>
 
+      {/* ── 04 — Memory ──────────────────────────────────────────────── */}
       <Section num="04" bnH2='Switch কীভাবে "মনে রাখে"?' enH2='How does a switch "remember"?'>
         {bn ? (
           <div lang="bn" style={bodyStyle}>
-            {p('এতক্ষণের সব gate-এর একটা বড় সমস্যা আছে। Input সরিয়ে নিলে output-ও চলে যায়।')}
-            {p('মানে ধরুন, AND gate-কে দিলাম (১, ১)। Output ১ হলো। এখন input সরিয়ে নিন। Output কী? ০। Gate কিছু মনে রাখে না।')}
-            <p style={{ margin: '0 0 16px', ...bodyStyle }}>এটা memory না। কিন্তু কম্পিউটারের memory দরকার। আপনার <span style={{ fontFamily: "'Departure Mono',monospace", fontSize: '0.9em' }}>x = 5</span> মানে ৫-কে কোথাও রাখতে হবে, যেন পরে read করা যায়। কীভাবে?</p>
-            <p style={{ margin: '0 0 16px', ...bodyStyle }}>আমার সবচেয়ে বড় বিভ্রান্তিটা এখানেই ছিল। বিশ্ববিদ্যালয়ে ডিজিটাল লজিক ডিজাইন কোর্সে SR Latch, JK Flip-Flop, truth table, register — সবই ছিলো। প্রত্যেকটা কম্পোনেন্ট কেন লাগে, কিভাবেই আসলেই “ধরে রাখে” — বুঝতাম না। কোডিং করার সময় যখন <span style={{ fontFamily: "'Departure Mono',monospace", fontSize: '0.9em' }}>x = 5</span> লিখতাম, এই দুই পৃথিবীর মধ্যে কোনো সম্পর্ক খুঁজে পেতাম না। Memory কি এক ফালি magnetic ধাতু? নাকি charge-এর কোনো চৌবাচ্চা? দুঃখজনকভাবে, আমাদেরকে কোর্সের পর কোর্স করানো হয়, যেখানে কোনোকিছু গোড়া থেকে না বুঝেই কেবল স্লাইড মুখস্থ করে আর বিগত প্রশ্নপত্রগুলো একটু স্টাডি করেই পার পাওয়া যায়।</p>
-            {p('যাই হোক, bit ধরে রাখার সমাধানটা চমৎকার এবং সহজ। Feedback loop।')}
-            {p('দুইটা NOT gate নিন। প্রথমটার output-কে দ্বিতীয়টার input-এ connect করুন। দ্বিতীয়টার output-কে প্রথমটার input-এ connect করুন।')}
+            {p(<>এতক্ষণের সব gate-এর একটা বড় সীমাবদ্ধতা আছে: output নির্ভর করে শুধু এই মুহূর্তের input-এর ওপর। Input বদলালেই output বদলে যায় — <strong>আগের মান ধরে রাখার কোনো ব্যবস্থা নেই</strong>।</>)}
+            {p('যেমন, AND gate-কে দিলাম (১, ১) — output ১। Input বদলে (০, ১) করলাম — output সঙ্গে সঙ্গে ০। আগে যে ১ ছিল, gate সেটা মনে রাখে না।')}
+            {p(<>এটা memory না। কিন্তু কম্পিউটারের memory দরকার। আপনার <code>x = 5</code> মানে ৫-কে কোথাও রাখতে হবে, যেন পরে পড়া যায়। কীভাবে?</>)}
+            {p(<>আমার সবচেয়ে বড় বিভ্রান্তিটা এখানেই ছিল। বিশ্ববিদ্যালয়ে ডিজিটাল লজিক ডিজাইন কোর্সে SR Latch, JK Flip-Flop, truth table, register — সবই ছিলো। প্রত্যেকটা কম্পোনেন্ট কেন লাগে, কিভাবেই আসলেই “ধরে রাখে” — বুঝতাম না। কোডিং করার সময় যখন <code>x = 5</code> লিখতাম, এই দুই পৃথিবীর মধ্যে কোনো সম্পর্ক খুঁজে পেতাম না। Memory কি এক ফালি magnetic ধাতু? নাকি charge-এর কোনো চৌবাচ্চা? দুঃখজনকভাবে, আমাদেরকে কোর্সের পর কোর্স করানো হয়, যেখানে কোনোকিছু গোড়া থেকে না বুঝেই কেবল স্লাইড মুখস্থ করে আর বিগত প্রশ্নপত্রগুলো একটু স্টাডি করেই পার পাওয়া যায়।</>)}
+            {p(<>যাই হোক, সমাধানটা চমৎকার এবং সহজ — <strong>feedback</strong>। এমন একটা circuit দরকার, যার এখনকার অবস্থা নিজেই তার পরের অবস্থাকে প্রভাবিত করে।</>)}
+            {p('দুইটা NOT gate নিন। প্রথমটার output দ্বিতীয়টার input-এ দিন। দ্বিতীয়টার output আবার প্রথমটার input-এ দিন।')}
           </div>
         ) : (
           <div style={bodyStyle}>
-            {p("Every gate so far has one big problem. Remove the input, and the output goes away too.")}
-            {p("Say you give an AND gate (1, 1). The output becomes 1. Now take the inputs away. The output? 0. The gate remembers nothing.")}
-            <p style={{ margin: '0 0 16px', ...bodyStyle }}>That's not memory. But a computer needs memory. Your <span style={{ fontFamily: "'Departure Mono',monospace", fontSize: '0.9em' }}>x = 5</span> means the 5 must be kept somewhere.</p>
-            <p style={{ margin: '0 0 16px', ...bodyStyle }}>My biggest confusion was right here. In my university's Digital Logic Design course, we covered everything: SR Latches, JK Flip-Flops, truth tables, and registers. Yet, I never truly understood why each component was necessary, or how it actually retained data. When coding, whenever I wrote <span style={{ fontFamily: "'Departure Mono',monospace", fontSize: '0.9em' }}>x = 5</span>, I couldn't bridge the gap between these two worlds. Was memory just a sliver of magnetic metal? Or a pool of trapped electrical charge? Regrettably, we are pushed through course after course where you can get by simply memorizing slides and cramming past exam papers, without ever understanding anything from first principles.</p>
-            {p("However, the answer to this problem is beautiful and simple. A feedback loop.")}
-            {p("Take two NOT gates. Connect the first one's output to the second one's input. Connect the second one's output back to the first one's input.")}
+            {p(<>Every gate so far has one big limitation: its output depends only on its inputs right now. Change the input and the output changes — <strong>there's no way to hold on to a previous value</strong>.</>)}
+            {p("Say you give an AND gate (1, 1) — output 1. Change the input to (0, 1) — the output is 0 immediately. The gate doesn't remember that it was 1 a moment ago.")}
+            {p(<>That's not memory. But a computer needs memory. Your <code>x = 5</code> means the 5 has to be kept somewhere so it can be read later. How?</>)}
+            {p(<>My biggest confusion was right here. In my university's Digital Logic Design course, we covered everything: SR Latches, JK Flip-Flops, truth tables, and registers. Yet, I never truly understood why each component was necessary, or how it actually retained data. When coding, whenever I wrote <code>x = 5</code>, I couldn't bridge the gap between these two worlds. Was memory just a sliver of magnetic metal? Or a pool of trapped electrical charge? Regrettably, we are pushed through course after course where you can get by simply memorizing slides and cramming past exam papers, without ever understanding anything from first principles.</>)}
+            {p(<>However, the answer is beautiful and simple — <strong>feedback</strong>. We need a circuit whose present state influences its own next state.</>)}
+            {p("Take two NOT gates. Feed the first one's output into the second one's input. Feed the second one's output back into the first one's input.")}
           </div>
         )}
         <FeedbackLatch />
         {bn ? (
           <div lang="bn" style={bodyStyle}>
-            {p('এখন কী হবে? ধরুন, প্রথম gate-এর output ১। সেটা দ্বিতীয় gate-এর input-এ যাচ্ছে। NOT gate, তাই দ্বিতীয় gate-এর output হবে ০। সেটা প্রথম gate-এর input, তাই প্রথম gate-এর output হবে ১। Loop। Stable। প্রথম gate সবসময় ১, দ্বিতীয় সবসময় ০।')}
-            {p('এখন input সরিয়ে নিলে কী হবে? কিছুই না। State loop-এ আটকে আছে।')}
-            <p style={{ margin: '0 0 16px', ...bodyStyle }}>আরেকভাবে ভাবুন — একটা marble দুইটা পাহাড়ের মাঝে দুইটা গর্তের একটায় বসে আছে। ওটা নিজে নিজে আর নড়বে না। কিন্তু আপনি যদি যথেষ্ট জোরে ধাক্কা দেন, তাহলে অন্য গর্তে চলে যাবে। সেখানেও আবার স্থির হয়ে থাকবে। একটা <Term id="latch">latch</Term>-ও তেমনই। দুইটা stable state — ০ আর ১।</p>
+            {p('এখন কী হয়? ধরুন প্রথম gate-এর output ১। সেটা দ্বিতীয় gate-এ যায়; NOT gate, তাই তার output ০। সেই ০ ফিরে যায় প্রথম gate-এ; NOT gate, তাই output ১ — যা ছিল, তাই। Loop নিজেকে ধরে রাখছে।')}
+            {p(<>উল্টোটাও একইভাবে stable: প্রথম gate ০, দ্বিতীয় ১। মানে circuit-টার <strong>দুটো stable অবস্থা</strong> আছে — একটাকে আমরা ০ বলি, অন্যটাকে ১। এখানে বাইরে থেকে কোনো input নেই যেটা সরিয়ে নেওয়া যায়; state বদলাতে হলে বাইরে থেকে জোর করে লিখতে হয় — যন্ত্রের write বোতামের মতো।</>)}
+            {p('আরেকভাবে ভাবুন — একটা marble দুইটা গর্তের একটায় বসে আছে। নিজে নিজে নড়বে না। কিন্তু যথেষ্ট জোরে ধাক্কা দিলে অন্য গর্তে চলে যাবে, আর সেখানেও স্থির থাকবে।')}
+            {p(<>এখানে "মনে রাখা" মানে circuit অতীতের কিছু জানে, তা না। শুধু এটুকু — <strong>power থাকা পর্যন্ত</strong> circuit-এর বর্তমান বৈদ্যুতিক অবস্থা নিজেই নিজেকে টিকিয়ে রাখে। এই feedback-ই একটা <Term id="latch">latch</Term>-এর মূল ভিত্তি।</>)}
           </div>
         ) : (
           <div style={bodyStyle}>
-            {p("Now what happens? Say the first gate's output is 1. It flows into the second gate's input. It's a NOT gate, so the second gate's output is 0. That's the first gate's input, so the first gate's output is 1. Loop. Stable. The first gate stays 1 forever, the second stays 0.")}
-            {p("And if you remove the input now? Nothing. The state is trapped in the loop.")}
-            <p style={{ margin: '0 0 16px', ...bodyStyle }}>Another way to think about it — imagine a marble sitting in one of two valleys, separated by a small hill. It won't move on its own. But if you push it hard enough, it rolls over into the other valley. And it settles there. A <Term id="latch">latch</Term> is the same. Two stable states — 0 and 1.</p>
+            {p("Now what happens? Say the first gate's output is 1. That goes into the second gate; it's a NOT gate, so its output is 0. That 0 goes back into the first gate; NOT again, so its output is 1 — exactly what it already was. The loop holds itself in place.")}
+            {p(<>The opposite arrangement is just as stable: first gate 0, second gate 1. So the circuit has <strong>two stable states</strong> — one we call 0, the other 1. There's no outside input here to take away; to change the state, something has to force it from outside — like the write buttons on the instrument.</>)}
+            {p("Another way to picture it — a marble resting in one of two valleys, separated by a small hill. It won't move on its own. Push it hard enough and it rolls into the other valley, and settles there instead.")}
+            {p(<>"Remembering" doesn't mean the circuit knows anything about the past. It only means this: <strong>as long as it's powered</strong>, the circuit's present electrical state keeps itself in place. That feedback is the heart of a <Term id="latch">latch</Term>.</>)}
           </div>
         )}
         <Deeper
-          bnLabel="আরেকটু গভীরে — Gated Latch আর Flip-Flop"
-          enLabel="go deeper — Gated Latch and Flip-Flop"
+          bnLabel="আরেকটু গভীরে — Gated latch আর flip-flop"
+          enLabel="go deeper — gated latch and flip-flop"
         >
-          {bn ? (
-            <div lang="bn" style={{ fontFamily: "'Anek Bangla','Anek Latin',sans-serif", marginTop: 14 }}>
-              <p style={{ margin: '0 0 12px' }}>আমরা একটা সমস্যা সমাধান করেছি — দুটি NOT gate feedback দিয়ে নিজেদের অবস্থা মনে রাখতে পারে। কিন্তু এবার নতুন সমস্যা। ধরুন, আমি এই মুহূর্তে latch-এর ভেতরে ১ লিখতে চাই। তারপর ৫ সেকেন্ড পরে ০ লিখতে চাই। Latch বুঝবে কীভাবে কখন নতুন ডেটা নিতে হবে? সবসময় যদি ইনপুট শুনতেই থাকে, তাহলে তো নতুন সিগন্যাল এলেই আগের ডেটা বদলে যাবে।</p>
-              <p style={{ margin: '0 0 12px' }}>সেজন্য দরকার একটা "দারোয়ান"। যে বলবে— "এখন ভেতরে ঢোকো।" অথবা "এখন কেউ ঢুকতে পারবে না।" এই দারোয়ানের কাজটাই করে <span style={{ fontFamily: "'Departure Mono',monospace", fontSize: '0.9em' }}>Write Enable</span> wire। তখন একে বলে gated latch।</p>
-              <p style={{ margin: 0 }}>Latch-এর সাথে clock যুক্ত করলে তৈরি হয় <Term id="flipflop">flip-flop</Term> — clock-এর নির্দিষ্ট tick এলেই কেবল নতুন ডেটা ঢুকতে পারে।</p>
-            </div>
+          {deeperBody(bn ? (
+            <>
+              {dp('এবার নতুন প্রশ্ন: circuit নতুন মান নেবে কখন? আমি এখন ১ লিখতে চাই, ৫ সেকেন্ড পরে ০। সবসময় input শুনতে থাকলে প্রতিটা নতুন signal আগের মান মুছে দেবে।')}
+              {dp(<>তাই দরকার একটা "দারোয়ান" — যে বলবে "এখন নাও", অথবা "এখন উপেক্ষা করো, পুরনোটাই ধরে রাখো।" এই কাজটাই করে <code>Write Enable</code> signal। এমন circuit-কে বলে gated latch।</>)}
+            </>
           ) : (
-            <div style={{ fontFamily: "'Anek Latin',sans-serif", marginTop: 14 }}>
-              <p style={{ margin: '0 0 12px' }}>We solved one problem — two NOT gates can remember their own state. But now: how does the latch know when to accept new data and when to hold old?</p>
-              <p style={{ margin: '0 0 12px' }}>So it needs a "doorman." That's exactly the job of the <span style={{ fontFamily: "'Departure Mono',monospace", fontSize: '0.9em' }}>Write Enable</span> wire. The circuit is then called a gated latch.</p>
-              <p style={{ margin: 0 }}>A clock attached to the latch makes a <Term id="flipflop">flip-flop</Term> — new data can enter only on the clock's tick.</p>
-            </div>
-          )}
+            <>
+              {dp('Now a new question: when should the circuit take a new value? I want to write 1 now, and 0 five seconds later. If it listened to its input all the time, every new signal would wipe out the old value.')}
+              {dp(<>So it needs a "doorman" — something that says "take the input now," or "ignore it and keep the old value." That's the job of a <code>Write Enable</code> signal. A circuit like this is called a gated latch.</>)}
+            </>
+          ))}
+          <Diagram
+            art={ART_GATED}
+            bnLabel="diagram · gated storage"
+            enLabel="diagram · gated storage"
+          />
+          {deeperBody(bn ? (
+            dp(<>তবে latch আর <Term id="flipflop">flip-flop</Term> <strong>এক জিনিস নয়</strong>। Latch-এর enable যতক্ষণ চালু থাকে, সেই পুরো সময়টা input বদলালে stored মানও বদলায়। Flip-flop input নেয় শুধু clock-এর একটা নির্দিষ্ট মুহূর্তে — clock edge-এ। CPU-র register সাধারণত flip-flop দিয়েই বানানো।</>, true)
+          ) : (
+            dp(<>But a latch and a <Term id="flipflop">flip-flop</Term> <strong>are not the same thing</strong>. While a latch's enable is on, any change on its input changes the stored value for that whole window. A flip-flop takes its input only at one specific moment — a clock edge. CPU registers are usually built from flip-flops.</>, true)
+          ))}
+          <Diagram
+            art={bn
+              ? 'Latch:      enable চালু থাকার পুরো সময়  → input ঢুকতে পারে\nFlip-flop:  clock edge-এর মুহূর্তে      → একবার capture'
+              : 'Latch:      whole time enable is on  → input can get in\nFlip-flop:  at the clock edge        → captured once'}
+            bnLabel="diagram · কখন নতুন মান ঢোকে"
+            enLabel="diagram · when a new value gets in"
+          />
           <Deeper
             bnLabel="আরেকটু গভীরে যাই — শুধু Clock জুড়ে দিলেই কি Flip-flop হয়ে যায়?"
             enLabel="go deeper — does attaching a clock alone make it a flip-flop?"
           >
             {bn ? (
               <div lang="bn" style={{ fontFamily: "'Anek Bangla','Anek Latin',sans-serif", marginTop: 14 }}>
-                <p style={{ margin: '0 0 12px' }}>এখানে একটা স্বাভাবিক খটকা লাগতে পারে — Latch-এর সাথে শুধু একটা Clock জুড়ে দিলেই কি সেটা নিজে থেকেই প্রতিবার ঠিক একবার করে মান বদলাবে?</p>
-                <p style={{ margin: '0 0 12px' }}>আসলে ব্যাপারটা এত সহজ না। যতক্ষণ Clock (বা Write Enable) চালু থাকবে, Latch কিন্তু পুরোটা সময়জুড়ে "transparent" থাকে — অর্থাৎ এই পুরো সময়টাতে Input বদলালেই সাথে সাথে Output-ও বদলে যাবে। এখন Counter-এর মতো কোনো circuit-এ যদি এই Output ঘুরে এসে নিজের Input-কেই আবার বদলে দেয়, তবেই সমস্যা বাঁধবে। Clock যতক্ষণ High (1) থাকে, Latch ততক্ষণ transparent থাকে। ফলে Output বদলানোর সাথে সাথে সেই নতুন মান ব্যাক-ফিড হয়ে Input-কে আবার পাল্টে দেয়। Gate-এর অভ্যন্তরীণ delay (Δt<sub>prop</sub>) মাত্র কয়েক নানোসেকেন্ড, যা Clock Pulse-এর স্থায়িত্বের চেয়ে অনেক কম। ফলে Clock High থাকা অবস্থাতেই Output অতি দ্রুত একাধিকবার 0 ও 1-এর মধ্যে চেঞ্জ হতে থাকে (oscillate করে)। Clock বন্ধ হওয়ার মুহূর্তে Output-এর মান 0 নাকি 1 হবে — তা সম্পূর্ণ অনিশ্চিত হয়ে পড়ে। এটিই race-around সমস্যা।</p>
-                <p style={{ margin: '0 0 12px' }}>এই কারণেই আসল Flip-flop একটা Latch দিয়ে বানানো হয় না; বানানো হয় দুটো Latch জোড়া দিয়ে — যার একটিকে বলে Master আর অন্যটিকে Slave। Clock 0 থাকলে Master চালু হয়, আর 1 থাকলে Slave চালু হয় — অর্থাৎ দুটো কখনোই একসাথে খোলা থাকে না। ফলে Input একবার Master-এ ধরা পড়ে, আর সেখান থেকে ঠিক একবারই Slave-এ গিয়ে পৌঁছায়। পুরো প্রক্রিয়াটি Clock-এর প্রতি Tick-এ ঠিক একবারই ঘটে।</p>
-                <p style={{ margin: 0 }}>এর বিস্তারিত আলোচনা এই Article-এর বিষয় না — সেটা আসবে যখন Clock নিয়ে আলাদা করে লিখব। আপাতত এটুকু মনে রাখলেই চলবে: শুধু Clock জুড়ে দেওয়াটাই কিন্তু গল্পের শেষ নয়।</p>
+                <p style={{ margin: '0 0 12px' }}>কিছু circuit-এ শুধু clock জুড়ে দিলেই নতুন একটা সমস্যা তৈরি হয়। উদাহরণ হিসেবে একটা counter ধরুন — যে circuit প্রতি tick-এ নিজের মান উল্টে দেয়: ০ → ১ → ০ → ১। মানে তার input আসলে নিজের output-এরই উল্টো (D = NOT Q)।</p>
+                <p style={{ margin: '0 0 12px' }}>এখন storage হিসেবে যদি একটা সাধারণ latch বসাই — clock high থাকা মানে latch transparent, এই পুরো সময়টা input বদলালে output-ও বদলায়। Q বদলাতেই D উল্টে যায়, সেই নতুন D আবার Q বদলায়। Gate-এর ভেতরের delay কয়েক ন্যানোসেকেন্ড, আর clock high থাকে তার চেয়ে অনেক বেশি সময় — তাই এক pulse-এর ভেতরেই Q বহুবার দুলতে থাকে। Clock নামার সময় কোনটায় গিয়ে থামবে, বলা যায় না। এটাই <strong>race-around</strong> সমস্যা।</p>
+                <p style={{ margin: '0 0 12px' }}>সমাধানের একটা classic উপায়: একটা latch-এর বদলে দুটো — <strong>Master আর Slave</strong>। Clock ০ হলে খোলে শুধু Master, ১ হলে শুধু Slave। দুটো কখনো একসঙ্গে খোলা থাকে না, তাই নতুন মান একবার Master-এ আটকা পড়ে, পরের ধাপে একবারই Slave-এ পৌঁছায় — প্রতি tick-এ Q বদলায় ঠিক একবার।</p>
+                <p style={{ margin: 0 }}>নিচের যন্ত্রে একই counter দুই ভাবে চালিয়ে দেখুন:</p>
               </div>
             ) : (
               <div style={{ fontFamily: "'Anek Latin',sans-serif", marginTop: 14 }}>
-                <p style={{ margin: '0 0 12px' }}>A natural doubt here: if we just attach a clock to the latch, does it automatically change exactly once, cleanly?</p>
-                <p style={{ margin: '0 0 12px' }}>Not quite. For as long as the clock (or Write Enable) is on, the latch stays "transparent" the whole time — the output changes the instant the input does, for the entire window. In a circuit like a counter, a problem arises if the output loops back to drive its own input. As long as the Clock is High (1), the latch remains transparent. Consequently, any output change immediately feeds back to flip the input again. Because gate propagation delays (Δt<sub>prop</sub>) are in nanoseconds — much shorter than the clock pulse — the output rapidly oscillates between 0 and 1 multiple times during a single clock cycle. When the clock drops low, the final state of <em>Q</em> becomes completely unpredictable. This is the race-around condition.</p>
-                <p style={{ margin: '0 0 12px' }}>So a real flip-flop isn't one latch — it's two, chained: a master and a slave. The master is open while the clock is 0; the slave is open while the clock is 1 — opposite windows, never both open. The input gets caught once by the master, then handed off once to the slave — the whole thing happens exactly once per tick.</p>
-                <p style={{ margin: 0 }}>The full detail isn't this article's job — that's for when we cover clocks directly. For now: just attaching a clock isn't the whole story.</p>
+                <p style={{ margin: '0 0 12px' }}>In some circuits, just attaching a clock creates a new problem. Take a counter — a circuit that flips its own value on every tick: 0 → 1 → 0 → 1. Which means its input is simply the opposite of its own output (D = NOT Q).</p>
+                <p style={{ margin: '0 0 12px' }}>Now suppose the storage is a plain latch. While the clock is high the latch is transparent, so for that whole window any change on the input changes the output. The moment Q flips, D flips too — and that new D flips Q again. A gate's internal delay is a few nanoseconds while the clock stays high far longer, so Q swings back and forth many times within a single pulse. Where it lands when the clock drops is anyone's guess. That's the <strong>race-around</strong> problem.</p>
+                <p style={{ margin: '0 0 12px' }}>One classic fix: use two latches instead of one — a <strong>master and a slave</strong>. The master opens only while the clock is 0, the slave only while it is 1. They are never open together, so a new value is caught once by the master and handed on once to the slave — Q changes exactly once per tick.</p>
+                <p style={{ margin: 0 }}>Run the same counter both ways on the instrument below:</p>
+              </div>
+            )}
+            <MasterSlaveFlipFlop />
+            {bn ? (
+              <div lang="bn" style={{ fontFamily: "'Anek Bangla','Anek Latin',sans-serif" }}>
+                <p style={{ margin: 0 }}>বাস্তবে flip-flop আরও অন্য নকশাতেও বানানো হয় — সেই বিস্তারিত এই series-এর বাইরে। তবে clock নিজে কী করে আর কেন লাগে, তার পুরো আলোচনা আছে <a href="/writing/cpu-blueprint" style={{ color: '#00753F' }}>০৩ নম্বর article</a>-এ। আপাতত এটুকুই যথেষ্ট: শুধু clock জুড়ে দেওয়াটাই গল্পের শেষ নয়।</p>
+              </div>
+            ) : (
+              <div style={{ fontFamily: "'Anek Latin',sans-serif" }}>
+                <p style={{ margin: 0 }}>Real flip-flops are built with other designs too — that detail sits outside this series. What the clock itself does, and why it's needed, is covered in full in <a href="/writing/cpu-blueprint" style={{ color: '#00753F' }}>article 03</a>. For now this is enough: just attaching a clock isn't the whole story.</p>
               </div>
             )}
           </Deeper>
         </Deeper>
         {bn ? (
           <div lang="bn" style={bodyStyle}>
-            {p('আর এই state যতক্ষণ থাকবে? যতক্ষণ current থাকবে। Power চলে গেলে loop ভেঙে যায়, state হারিয়ে যায়। এজন্যই RAM volatile — একবার unplug করলে সব ভুলে যায়। এটা নিয়ে আমরা পরবর্তীতে আরও জানবো।')}
+            {p('আর এই state টেকে কতক্ষণ? যতক্ষণ power আছে। Power চলে গেলে state আর নিশ্চিত থাকে না। RAM-ও তাই volatile — unplug করলে সব হারায়।')}
           </div>
         ) : (
           <div style={bodyStyle}>
-            {p("One disclaimer again — real RAM isn't built from exactly this simple latch. Modern DRAM is more complex, using different tricks to pack more data into less space. But the fundamental idea of \"remembering one bit\" comes from this feedback.")}
-            {p("And how long does the state last? As long as the current does. When power goes, the loop breaks and the state is lost. That's why RAM is volatile — unplug it once and it forgets everything. We'll come back to this in a later article.")}
+            {p("And how long does the state last? As long as there's power. Once power is gone, the state is no longer guaranteed. That's also why RAM is volatile — unplug it and everything is lost.")}
           </div>
         )}
+        <Deeper
+          bnLabel="আরেকটু গভীরে — RAM-ও কি এই circuit দিয়েই বানানো?"
+          enLabel="go deeper — is RAM built from this same circuit?"
+        >
+          {deeperBody(bn ? (
+            <>
+              {dp(<><strong>ঠিক এই circuit দিয়ে না।</strong> Feedback এখানে storage বোঝার মূল ধারণা, সব memory-র হুবহু নকশা নয়।</>)}
+              {dp(<>CPU-র register সাধারণত flip-flop দিয়ে বানানো। <Term id="sram">SRAM</Term>-এর প্রতিটা cell আসলে এই article-এর latch-এরই আত্মীয় — সেই একই cross-coupled feedback loop, সঙ্গে read-write-এর জন্য বাড়তি দুটো transistor। অর্থাৎ এটি একটি latch, clock edge-এ capture করা flip-flop নয়। আর computer-এর main RAM সাধারণত <Term id="dram">DRAM</Term> — সেখানে bit থাকে একটা ছোট্ট capacitor-এ জমা charge হিসেবে, যা ধীরে ধীরে leak করে বলে বারবার refresh করতে হয়।</>)}
+              {dp(<>কোথায় কোনটা কেন ব্যবহার হয়, সেই গল্প <a href="/writing/memory-hierarchy" style={{ color: '#00753F' }}>memory hierarchy-র article</a>-এ।</>, true)}
+            </>
+          ) : (
+            <>
+              {dp(<><strong>Not this exact circuit.</strong> Here, feedback is the core idea for understanding storage — not the exact blueprint of every kind of memory.</>)}
+              {dp(<>CPU registers are usually built from flip-flops. Each <Term id="sram">SRAM</Term> cell is a close relative of this article's latch — the same cross-coupled feedback loop, plus two extra transistors for reading and writing. So: a latch, not a flip-flop that captures on a clock edge. And a computer's main RAM is usually <Term id="dram">DRAM</Term> — there, a bit is stored as charge in a tiny capacitor, which slowly leaks away and so has to be refreshed again and again.</>)}
+              {dp(<>Which one is used where, and why, is the story of the <a href="/writing/memory-hierarchy" style={{ color: '#00753F' }}>memory hierarchy article</a>.</>, true)}
+            </>
+          ))}
+        </Deeper>
       </Section>
 
+      {/* ── 05 — Whole story ─────────────────────────────────────────── */}
       <Section num="05" bnH2="পুরো গল্পটা একবার" enH2="The whole story, once through">
         {bn ? (
           <div lang="bn" style={bodyStyle}>
-            <p style={{ margin: '0 0 16px', ...bodyStyle }}>এবার পুরো গল্পটা একবার চোখের সামনে চালাই। আপনি লিখলেন: <span style={{ fontFamily: "'Departure Mono',monospace", fontSize: '0.9em' }}>x = 5</span></p>
-            {p('Python অবশ্যই সরাসরি transistor on-off করছে না। মাঝখানে compiler/interpreter, operating system, CPU — আরও অনেক ধাপ আছে। সেগুলো আমরা পরে দেখব। কিন্তু একেবারে hardware-এ পৌঁছানোর পর ঘটনাটা মোটামুটি এমন:')}
-            <ul style={{ margin: '0 0 16px', paddingLeft: 22, lineHeight: 1.9 }}>
-              <li>৫ সংখ্যাটা binary-তে রূপ নেয় — <span style={{ fontFamily: "'Departure Mono',monospace" }}>101</span></li>
-              <li>তিনটা bit-এর জন্য তিনটা memory cell বরাদ্দ হয়</li>
-              <li>প্রতিটা cell আসলে কয়েকটা transistor দিয়ে বানানো একটা flip-flop</li>
-              <li>সেই flip-flop-এ voltage set হয় (high, low, high — ১, ০, ১)</li>
-              <li>Feedback loop সেই voltage ধরে রাখে</li>
-              <li>পরে CPU x read করতে চাইলে তিনটা bit পেয়ে ৫ বের করে</li>
-            </ul>
+            {p(<>এবার পুরো বিষয়টা প্রথম থেকে একবার দেখি। আপনি লিখলেন <code>x = 5</code>।</>)}
+            {p('Python অবশ্যই সরাসরি transistor নাড়াচ্ছে না — মাঝখানে interpreter, operating system, CPU আছে, আর Python memory-তে একটা সংখ্যাকে নিজের মতো করে একটা object হিসেবে সাজায়। সেসব পরে। শুধু hardware-এর ধারণাটা বোঝার জন্য ধরে নিই:')}
+            {ul([
+              <>৫ binary-তে <code>101</code></>,
+              'এই তিনটা logical bit hardware-এ তিনটা physical অবস্থা হিসেবে থাকে',
+              'অবস্থাগুলো কী দিয়ে তৈরি, সেটা নির্ভর করে কোথায় রাখা হচ্ছে — CPU register-এ flip-flop, RAM-এ memory cell',
+              'পরে CPU সেই অবস্থাগুলো sense করে আবার তিনটা bit ফিরে পায়',
+              <>আর software সেই <code>101</code>-কে ৫ হিসেবে ব্যবহার করে</>,
+            ])}
           </div>
         ) : (
           <div style={bodyStyle}>
-            <p style={{ margin: '0 0 16px', ...bodyStyle }}>Let's run the whole story once. You wrote: <span style={{ fontFamily: "'Departure Mono',monospace", fontSize: '0.9em' }}>x = 5</span></p>
-            {p("Python is certainly not switching transistors directly. In between sit the compiler/interpreter, the operating system, the CPU — many more steps we'll see later. But once it reaches the hardware, the event goes roughly like this:")}
-            <ul style={{ margin: '0 0 16px', paddingLeft: 22, lineHeight: 1.9 }}>
-              <li>The number 5 takes binary form — <span style={{ fontFamily: "'Departure Mono',monospace" }}>101</span></li>
-              <li>Three memory cells are allocated for the three bits</li>
-              <li>Each cell is really a flip-flop built from a few transistors</li>
-              <li>Voltages get set in those flip-flops (high, low, high — 1, 0, 1)</li>
-              <li>The feedback loops hold those voltages</li>
-              <li>Later, when the CPU wants to read x, it reads three bits and reassembles 5</li>
-            </ul>
+            {p(<>Let's run the whole story once. You wrote <code>x = 5</code>.</>)}
+            {p("Python is certainly not switching transistors directly — there's an interpreter, an operating system, and a CPU in between, and Python lays a number out in memory as its own kind of object. That's for later. Just to see the hardware idea, assume:")}
+            {ul([
+              <>5 in binary is <code>101</code></>,
+              'those three logical bits live in the hardware as three physical states',
+              'what those states are made of depends on where they are stored — flip-flops in a CPU register, memory cells in RAM',
+              'later, the CPU senses those states and recovers the three bits',
+              <>and software uses that <code>101</code> as the number 5</>,
+            ])}
           </div>
         )}
         <ThreeBits />
         {bn ? (
           <div lang="bn" style={bodyStyle}>
-            {p('মজার ব্যাপার — এই pattern (transistor → gate → latch) প্রতিটা computer-এর সবচেয়ে ছোট building block। RAM-এ কয়েক বিলিয়ন flip-flop। CPU-তে কয়েক বিলিয়ন gate। প্রতিটা gate-এ কয়েকটা করে transistor। সব শুরু voltage থেকে।')}
+            {p('পুরো ব্যাপারটাকে কয়েকটা স্তরে ভাবা যায়:')}
           </div>
         ) : (
           <div style={bodyStyle}>
-            {p("The fun part — this pattern (transistor → gate → latch) is every computer's smallest building block. These three layers are everything. Whatever sits above them — RAM, CPU, cache, GPU, the OS, your browser, your React app — is repeated composition of these three layers.")}
-            {p("A few billion flip-flops in RAM. A few billion gates in a CPU. A few transistors in every gate. All of it starting from voltage.")}
+            {p('We can think of the whole thing as a stack of layers:')}
+          </div>
+        )}
+        <Diagram
+          art={bn
+            ? 'Transistor\n↓\nLogic gate আর storage circuit\n↓\nবড় digital circuit (adder, register …)\n↓\nMemory, CPU, controller, I/O\n↓\nSoftware'
+            : 'Transistor\n↓\nLogic gates and storage circuits\n↓\nLarger digital circuits (adders, registers …)\n↓\nMemory, CPU, controllers, I/O\n↓\nSoftware'}
+          bnLabel="diagram · স্তরগুলো"
+          enLabel="diagram · the layers"
+        />
+        {bn ? (
+          <div lang="bn" style={bodyStyle}>
+            {p('প্রতিটা স্তর নিজের নতুন abstraction যোগ করে, তাই software-এর কোনো ধারণা সরাসরি একটা নির্দিষ্ট circuit-এর সাথে মিলবে — এমন ভাবা ঠিক নয়। কিন্তু সবকিছুর নিচে আছে এই তিনটা ধারণা: transistor দিয়ে switch, switch দিয়ে gate, আর feedback দিয়ে মনে রাখা।')}
+          </div>
+        ) : (
+          <div style={bodyStyle}>
+            {p("Each layer adds abstractions of its own, so we shouldn't assume a software idea maps straight onto one particular circuit. But underneath everything sit these three ideas: transistors as switches, switches as gates, and feedback as memory.")}
           </div>
         )}
         <Recap>
           {bn ? (
-            <ul lang="bn" style={{ fontFamily: "'Anek Bangla','Anek Latin',sans-serif", fontSize: 16, lineHeight: 1.9, margin: 0, paddingLeft: 20, color: '#33301F' }}>
-              <li>Bit কোনো বিমূর্ত ধারণা নয় — এটা voltage-এর একটা physical state।</li>
-              <li>Binary এসেছে math-এর জন্য নয়, reliability-র জন্য। Noise দুইটা state সহজে ভাঙতে পারে না।</li>
-              <li>Memory ম্যাজিক না — জাস্ট দুইটা gate loop করে বসিয়ে দেওয়া। Feedback থেকেই memory-র জন্ম।</li>
-            </ul>
+            <>
+              <li>Bit কোনো voltage নয় — bit একটা logical মান, hardware সেটাকে physical বৈদ্যুতিক অবস্থা দিয়ে প্রকাশ করে।</li>
+              <li>Binary এসেছে reliability-র জন্য — দুটো অবস্থাকে দূরে রাখলে noise সহজে একটাকে অন্যটা বানাতে পারে না।</li>
+              <li>Transistor হলো বিদ্যুৎ-নিয়ন্ত্রিত switch — অনেকগুলো মিলে gate আর storage circuit বানায়।</li>
+              <li>Feedback থেকেই মনে রাখা — দুটো stable অবস্থার circuit power থাকা পর্যন্ত নিজের state ধরে রাখে।</li>
+              <li>Latch, flip-flop, SRAM, DRAM এক জিনিস নয় — একই মূল ধারণার ভিন্ন ভিন্ন বাস্তব রূপ।</li>
+            </>
           ) : (
-            <ul style={{ fontFamily: "'Anek Latin',sans-serif", fontSize: 16, lineHeight: 1.9, margin: 0, paddingLeft: 20, color: '#33301F' }}>
-              <li>A bit is not an abstract concept — it's a physical state of voltage.</li>
-              <li>Binary came for reliability, not math. Noise can't easily break two states.</li>
-              <li>Memory isn't magic — just two gates looped together. Memory is born from feedback.</li>
-            </ul>
+            <>
+              <li>A bit is not a voltage — a bit is a logical value, and hardware represents it with a physical electrical state.</li>
+              <li>Binary came for reliability — keep two states far apart and noise can't easily turn one into the other.</li>
+              <li>A transistor is an electrically controlled switch — many of them together make gates and storage circuits.</li>
+              <li>Memory comes from feedback — a circuit with two stable states holds its state for as long as it's powered.</li>
+              <li>Latch, flip-flop, SRAM, and DRAM are not the same thing — they're different real-world forms of related storage ideas.</li>
+            </>
           )}
         </Recap>
       </Section>
@@ -291,7 +425,7 @@ export function WhatsInsideABit() {
       <RelayNav
         hub={SERIES_HUB_CARD}
         next={{ label: { bn: 'baton পরের পর্বে', en: 'baton to the next leg' }, title: bn ? '০২ — যেকোনো তথ্য কীভাবে ০ আর ১ হয়?' : '02 — How does anything become 0s and 1s?', href: '/writing/how-does-anything-become-bits', variant: 'next' }}
-        bridge={{ bn: 'এখন আমরা জানি একটা bit কীভাবে ধরে রাখা যায়। কিন্তু একটা bit দিয়ে তো কিছুই হয় না। তাহলে লক্ষ-কোটি bit একসাথে মিলে কীভাবে একটা বাংলা বাক্য তৈরি করে?', en: 'Now we know how a bit can be held. But one bit alone does nothing. How do trillions of bits together become a Bengali sentence, a JPEG photo, an MP3 song?' }}
+        bridge={{ bn: 'এখন আমরা জানি একটা bit কীভাবে ধরে রাখা যায়। কিন্তু একটা bit দিয়ে তো কিছুই হয় না। তাহলে লক্ষ-কোটি bit একসাথে মিলে কীভাবে একটা বাংলা বাক্য, একটা JPEG ছবি, একটা MP3 গান তৈরি করে?', en: 'Now we know how a bit can be held. But one bit alone does nothing. How do millions of bits together become a Bangla sentence, a JPEG photo, an MP3 song?' }}
       />
       <Colophon />
     </article>

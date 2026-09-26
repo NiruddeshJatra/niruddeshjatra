@@ -73,14 +73,14 @@ export function CacheLineLocality() {
             >
               {status.kind === 'hit'
                 ? (bn ? `address ${num(status.addr)} — HIT (আগেই cache-এ ছিল)` : `address ${num(status.addr)} — HIT (already in cache)`)
-                : (bn ? `address ${num(status.addr)} — MISS (পুরো ৪-cell line RAM থেকে টেনে আনা হলো)` : `address ${num(status.addr)} — MISS (pulled the whole 4-cell line from RAM)`)}
+                : (bn ? `address ${num(status.addr)} — MISS (পুরো ৪-cell line নিচের layer থেকে আনা হলো)` : `address ${num(status.addr)} — MISS (the whole 4-cell line came in from a lower layer)`)}
             </div>
           )}
         </div>
       </Instrument>
       <Caption
-        bn="একটা address চাইলে পুরো line-টাই cache-এ চলে আসে (spatial locality)। সেই line-এর ভেতরের বাকি address পরে চাইলে সেটা HIT — RAM-এ যেতে হয় না।"
-        en="Request one address and the whole line rides along (spatial locality). Ask for a neighbor in that same line later and it's a HIT — no trip to RAM needed."
+        bn="একটা address চাইলে তাকে ধারণ করা পুরো line-টাই cache-এ আসতে পারে (spatial locality)। সেই line-এর ভেতরের বাকি address পরে চাইলে সেটা HIT — নিচের layer পর্যন্ত যেতে হয় না। এখানে line-এর মাপ ৪ cell ধরা হয়েছে যাতে screen-এ ধরে; বাস্তব cache line-এর মাপ architecture অনুযায়ী বদলায়।"
+        en="Request one address and the line containing it can ride along (spatial locality). Ask for a neighbour in that same line later and it's a HIT — no trip further down. The line here is 4 cells so it fits on screen; real cache-line sizes depend on the architecture."
       />
     </>
   );

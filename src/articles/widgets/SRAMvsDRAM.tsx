@@ -45,8 +45,8 @@ export function SRAMvsDRAM() {
         <div className="flex flex-col items-center gap-[14px] py-[22px] px-4">
           <div className="font-mono text-[11.5px]" style={{ color: '#6c8873' }}>
             {mode === 'sram'
-              ? (bn ? '6-transistor flip-flop — যতক্ষণ current আছে, ততক্ষণ state স্থির' : '6-transistor flip-flop — state stays put as long as current flows')
-              : (bn ? '1-transistor + capacitor — চার্জ ফুটো হয়, তাই বারবার refresh লাগে' : '1-transistor + capacitor — charge leaks, so it needs constant refreshing')}
+              ? (bn ? 'transistor দিয়ে বানানো bistable cell — power থাকলে refresh ছাড়াই state ধরে রাখে' : 'a transistor-based bistable cell — holds its state without refreshing while powered')
+              : (bn ? 'transistor + capacitor cell — জমা charge leak করে, তাই নিয়মিত refresh লাগে' : 'a transistor-and-capacitor cell — the stored charge leaks, so it must be refreshed periodically')}
           </div>
           <div style={{ width: 220, height: 28, border: '1px solid #3a5847', background: '#1b231b', position: 'relative' }}>
             <div
@@ -63,14 +63,14 @@ export function SRAMvsDRAM() {
               : (bn ? `charge: ${Math.round(charge)}% · refresh হয়েছে ${refreshes} বার` : `charge: ${Math.round(charge)}% · refreshed ${refreshes}×`)}
           </div>
           <div className="flex gap-6 font-mono text-[11.5px]" style={{ color: '#6c8873' }}>
-            <span>{bn ? 'transistor/bit' : 'transistors/bit'}: <span style={{ color: '#00d26a' }}>{mode === 'sram' ? '6' : '1 + capacitor'}</span></span>
+            <span>{bn ? 'প্রতি bit-এ' : 'per bit'}: <span style={{ color: '#00d26a' }}>{mode === 'sram' ? (bn ? 'জায়গা বেশি' : 'larger footprint') : (bn ? 'জায়গা কম' : 'smaller footprint')}</span></span>
             <span>{bn ? 'ব্যবহার' : 'used for'}: <span style={{ color: '#00d26a' }}>{mode === 'sram' ? (bn ? 'CPU cache' : 'CPU cache') : (bn ? 'Main RAM' : 'Main RAM')}</span></span>
           </div>
         </div>
       </Instrument>
       <Caption
-        bn="SRAM-এর flip-flop নিজে থেকেই state ধরে রাখে — দ্রুত কিন্তু ব্যয়বহুল। DRAM-এর capacitor ফুটো করে, তাই বারবার refresh লাগে — সস্তা কিন্তু ধীর।"
-        en="SRAM's flip-flop holds its own state — fast but expensive. DRAM's capacitor leaks, so it needs constant refreshing — cheap but slower."
+        bn="SRAM-এর cell নিজে থেকেই state ধরে রাখে — দ্রুত, কিন্তু প্রতি bit-এ জায়গা বেশি লাগে। DRAM-এর capacitor leak করে, তাই refresh লাগে — dense আর সস্তা, কিন্তু latency বেশি।"
+        en="An SRAM cell holds its own state — fast, but each bit takes more area. A DRAM capacitor leaks, so it has to be refreshed — dense and cheap per bit, but higher latency."
       />
     </>
   );

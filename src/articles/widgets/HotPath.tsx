@@ -76,7 +76,7 @@ export function HotPath() {
                 <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: `${speedPct}%`, background: hot ? '#00d26a' : '#8a7a3a', transition: 'width 0.4s' }} />
               </div>
               <div style={{ fontFamily: "'Departure Mono',monospace", fontSize: 10, color: '#8aa893', marginTop: 4 }}>
-                {hot ? (bn ? '~৪০× দ্রুত (native)' : '~40× faster (native)') : (bn ? '~১× (interpreted)' : '~1× (interpreted)')}
+                {hot ? (bn ? 'compiled native' : 'compiled native') : (bn ? 'interpreted' : 'interpreted')}
               </div>
             </div>
           </div>
@@ -104,8 +104,8 @@ export function HotPath() {
         </div>
       </Instrument>
       <Caption
-        bn={'JIT শুরুতে square()-কে interpret করে (হলুদ, ধীর)। যথেষ্ট বার call হওয়ার পর সেটা "hot" ধরা পড়ে, JIT native code-এ compile করে — বাকি call phosphor-দ্রুত।'}
-        en={'The JIT interprets square() at first (yellow, slow). After enough calls it\'s detected as "hot", the JIT compiles it to native — the rest of the calls run phosphor-fast.'}
+        bn={'শুরুতে square() interpreter-এর মধ্য দিয়ে চলে (হলুদ)। যথেষ্ট বার চলার পর সেটা "hot" ধরা পড়ে, JIT তার জন্য machine code তৈরি করে — পরের call-গুলো সেই compiled রূপ ব্যবহার করতে পারে। এখানে threshold ৮ ধরা হয়েছে শুধু দেখানোর জন্য; আসল engine-এ সিদ্ধান্তটা অনেক বেশি কিছুর ওপর নির্ভর করে।'}
+        en={'square() runs through the interpreter at first (yellow). After enough calls it is detected as "hot" and the JIT produces machine code for it — later calls can use that compiled version. The threshold of 8 here is purely illustrative; a real engine decides on far more than a call count.'}
       />
     </>
   );

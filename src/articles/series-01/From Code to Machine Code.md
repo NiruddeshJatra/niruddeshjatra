@@ -2,6 +2,8 @@
 
 ## আপনার JavaScript CPU-র কাছে কীভাবে পৌঁছায়?
 
+> *`[DIAGRAM · …]` blocks render through the `<Diagram>` primitive. `[WIDGET · …]` marks an interactive instrument, `[DEEPER · …]` a collapsible toggle. Hover definitions live only in `src/articles/glossary.ts`.*
+
 আপনি লিখলেন:
 
 ```jsx
@@ -11,213 +13,288 @@ console.log(x);
 
 Node চালালেন। Screen-এ `8` দেখলেন।
 
-কিন্তু আগের আর্টিকেলগুলোতে দেখেছি — CPU JavaScript বোঝে না। CPU শুধু machine code বোঝে, সেই hex numbers যা Article 4-এ দেখেছিলাম:
+কিন্তু আগের আর্টিকেলগুলোতে দেখেছি — CPU JavaScript বোঝে না। CPU শেষ পর্যন্ত যে instruction চালায়, সেগুলো তার **machine code**-এর অংশ — memory-তে থাকা bit pattern, byte-এর ধারা। মানুষকে দেখানোর সুবিধার জন্য আমরা সেই byte-গুলো প্রায়ই hexadecimal-এ লিখি। যেমন x86-এর কিছু machine-code byte দেখতে এমন হতে পারে:
 
-```
+```text
 89 E5 83 EC 10 C7 45 FC ...
 ```
 
-তাহলে মাঝখানে কী ঘটল? আপনার লেখা text কীভাবে CPU-র জন্য executable instruction হয়ে গেল?
+এখানে `89`, `E5` — এগুলো hexadecimal-এ লেখা byte। **Hexadecimal নিজে CPU-র ভাষা নয়**, শুধু আমাদের লেখার notation।
+
+তাহলে মাঝখানে কী ঘটল? আপনার লেখা text কীভাবে এমন একটা রূপে পৌঁছাল, যেখান থেকে CPU শেষ পর্যন্ত machine instruction চালাতে পারে?
 
 এটাই আজকের গল্প।
 
----
-
-// একটা কথা আগে বলে রাখি
-
-এই সিরিজে এতদিন hardware আর OS দেখা হয়েছে। এই আর্টিকেল-এ software-এর একটা special layer দেখব — যেটা "translator" হিসেবে কাজ করে।
-
-মূল প্রশ্ন সহজ: মানুষ যা লেখে (JavaScript, Python, C) আর CPU যা বোঝে (machine code) — এই দুইটার মাঝে অনুবাদ কে করে?
-
-আজকে সেই অনুবাদকদের গল্প।
+> **// একটা কথা আগে বলে রাখি**
+>
+> এই সিরিজে এতদিন hardware আর OS দেখা হয়েছে। এই আর্টিকেল-এ software-এর একটা special layer দেখব — যেটা "translator" হিসেবে কাজ করে।
+>
+> মূল প্রশ্ন সহজ: মানুষ যা লেখে (JavaScript, Python, C) আর CPU যা চালায় (machine code) — এই দুইটার মাঝে অনুবাদ কে করে, আর কখন করে?
+>
+> আজকে সেই অনুবাদকদের গল্প।
 
 ---
 
-// প্রথম কথা: একজন অনুবাদক লাগবেই
+## ০১ — প্রথম কথা: মাঝখানে একটা machinery লাগবেই
 
-একটা foreign language বই পড়তে চাইলে একজন অনুবাদক লাগে। Computer-এর ক্ষেত্রেও তেমনই। যেকোনো high-level language (JavaScript, Python, Go) থেকে CPU-র machine code পর্যন্ত পৌঁছাতে একটা translator software লাগবে। এই translator নিজেও একটা program, যেটা CPU-তে চলে।
+একটা foreign language বই পড়তে চাইলে কোনো না কোনোভাবে ভাষাটা বুঝতে হবে। Computer-এর ক্ষেত্রেও তেমনই। আপনি JavaScript, Python বা C-তে source code লিখেছেন; CPU সেই text সরাসরি চালাতে পারে না। মাঝখানে এমন software machinery দরকার, যা সেই code-কে CPU-র চালানোর মতো রূপে নিয়ে যাবে। এই machinery নিজেও program — CPU-তেই চলে।
 
-কিন্তু translator-দের কাজের ধরন আলাদা। কেউ পুরো বইটা আগে থেকে অনুবাদ করে ছাপিয়ে দেয়। কেউ বাক্য পড়ে পড়ে on-the-spot বলে দেয়। কেউ আবার প্রথমে একটা middle language-এ নামায়, তারপর সেটা কেউ পড়ে।
+কিন্তু কাজটা সব ভাষায়, সব implementation-এ একইভাবে হয় না। কেউ পুরো বইটা আগেই অনুবাদ করে ছাপিয়ে রাখে। কেউ meeting চলার সময় অনুবাদ করে। কেউ আগে একটা common intermediate ভাষায় নামিয়ে দেয়, তারপর সেই ভাষা-জানা একজন reader সেটা চালায়। আর কেউ চলতে চলতে খেয়াল করে কোন অংশ বারবার আসছে, আর সেটুকুর জন্য দ্রুততর অনুবাদ বানিয়ে ফেলে।
 
-এই ভিন্ন approach-গুলোর মধ্যে মূল কয়েকটা:
+এই approach-গুলোই আমরা দেখব:
 
-- **Compiler:** পুরো code আগে থেকে একবারে অনুবাদ করে (C, Go, Rust)।
-- **Interpreter:** লাইন ধরে ধরে on-the-fly অনুবাদ করে (আদি Python, Bash)।
-- **Bytecode + VM:** প্রথমে একটা intermediate language-এ নামানো হয়, তারপর সেটা interpret হয় (Java, Python, C#)।
-- **JIT (Just-In-Time):** hybrid + smart — runtime-এ কোন কোন অংশ ঘন ঘন চালানো হচ্ছে সেটা লক্ষ্য করে, সেগুলোকে সরাসরি machine code-এ compile করে ফেলে (JavaScript's V8, JVM's HotSpot)।
+- **[HOVER: Compiler]:** চালানোর আগেই source code process করে executable/native রূপ তৈরি করতে পারে (C, Go, Rust)।
+- **[HOVER: Interpreter]:** runtime-এ source বা তার কোনো intermediate representation execute করে (Python, Bash)।
+- **[HOVER: Bytecode] + [HOVER: VM]:** প্রথমে একটা intermediate form-এ নামানো হয়, তারপর সেটা VM-এর মাধ্যমে চলে (Java, Python, C#)।
+- **[HOVER: JIT] (Just-In-Time):** program চলার সময়কার information দেখে কিছু অংশ machine code-এ compile করে (V8, HotSpot)।
+
+এখানেই একটা কথা গোড়াতেই বলে রাখা ভালো: **"compiled" আর "interpreted" কোনো ভাষার স্থায়ী পরিচয় নয় — এগুলো বলে দেয় একটা নির্দিষ্ট implementation কীভাবে code চালায়।** এই কথাটা শেষ section-এ কাজে লাগবে।
 
 একটা একটা করে দেখা যাক।
 
 ---
 
-// Compiler: আগে থেকে অনুবাদক
+## ০২ — Compiler: আগে থেকে অনুবাদক
 
-Compiler এমন একটা program যেটা আপনার লেখা source code পুরোটা একবারে পড়ে, বুঝে, এবং machine code-এ রূপান্তরিত করে। এই process-এর নাম **compilation**।
+Compiler এমন একটা program যেটা চালানোর আগেই source code process করে এমন একটা executable রূপ তৈরি করে, যা পরে target machine-এ চালানো যায়। এই process-এর নাম **compilation**।
 
-কল্পনা করুন একজন professional book translator। সে পুরো বাংলা বই পড়ে, পুরোটা ইংরেজিতে অনুবাদ করে, ছাপিয়ে বাজারে দিয়ে দেয়। এরপর যে-ই পড়তে চায়, সে ইংরেজি version পড়বে — বাংলা original আর অনুবাদক দুইজনের কারো আর দরকার নেই।
+কল্পনা করুন একজন professional book translator। সে পুরো বাংলা বই আগে থেকেই অনুবাদ করে ইংরেজি version ছাপিয়ে দেয়। এরপর যে পড়বে, তাকে পাশে একজন অনুবাদক নিয়ে বসতে হবে না।
 
-Compiler-এর কাজও একই। আপনি C-তে লিখলেন `hello.c`। Compiler run করলেন:
+Compiler-এর basic idea-টাও এমন। আপনি C-তে লিখলেন `hello.c`, তারপর চালালেন:
 
+```text
+$ gcc hello.c -o hello
 ```
-gcc hello.c -o hello
-```
 
-Compiler `hello.c` পড়ল, বুঝল, machine code তৈরি করল, `hello` নামে একটা executable file তৈরি করে দিল। এখন `./hello` চালান — compiler-এর আর দরকার নেই। CPU সরাসরি machine code চালাচ্ছে।
+এখানে একটা ছোট clarification দরকার। `gcc` command-টা এক ধাপের কোনো জাদু নয় — ভেতরে সাধারণত কয়েকটা ধাপ আছে: preprocessing, compilation, assembly, তারপর linking। শেষে গিয়ে `hello` নামের native executable তৈরি হয়।
+
+এরপর `./hello` চালালে source code আবার নতুন করে compile করতে হয় না — CPU সরাসরি সেই তৈরি হয়ে থাকা machine instruction চালায়।
 
 **সুবিধা:**
 
-- একবার compile হয়ে গেলে, প্রতিবার চালানোর সময় আর অনুবাদ করতে হয় না। **তাই খুব দ্রুত।**
-- Compile করার সময় compiler পুরো code দেখে, তাই optimize করার অনেক সুযোগ পায়।
-- Compiled binary distribute করা যায় source code ছাড়াই।
+- Source থেকে native-এ যাওয়ার মূল কাজটা প্রতিবার চালানোর সময় আবার করতে হয় না।
+- Compile করার সময় compiler পুরো code বিশ্লেষণ করতে পারে, তাই optimization-এর অনেক সুযোগ পায়।
+- Native executable distribute করা যায় source code ছাড়াই।
 
 **অসুবিধা:**
 
-- Small change করলেও পুরো code আবার compile করতে হয়।
-- এক platform-এ compile করা code অন্য platform-এ চলে না (Windows binary Linux-এ চলবে না)।
-- Compile করার আগে code-এ syntax error থাকলে ধরা পড়ে, কিন্তু runtime error তখনও ধরা যাবে না।
+- Source বদলালে updated executable পেতে আবার কিছু compilation লাগে — তবে build system চাইলে শুধু বদলে যাওয়া অংশটুকুই rebuild করতে পারে।
+- Native executable একটা নির্দিষ্ট পরিবেশের জন্য তৈরি — CPU architecture, operating system আর binary convention, সবই compatibility-তে জড়িত।
+- Compile time-এ অনেক ভুল ধরা পড়ে, কিন্তু সব runtime behavior আগেই জানা সম্ভব নয়।
 
-C, Go, Rust — এদের কেউ interpreter-এর সাথে চলে না। আপনি compile করে binary বানাবেন, তারপরই চালাতে পারবেন।
+C, Go, Rust — এদের সাধারণ ব্যবহারে native executable-এর জন্য compile করা হয়। এই article-এ আমরা সেই common model-টাই ধরছি।
 
 ---
 
-// Interpreter: On-the-fly অনুবাদক
+## ০৩ — Interpreter: চলতে চলতে অনুবাদ
 
-Interpreter সম্পূর্ণ ভিন্ন approach নেয়। এটা compile-এর মতো "আগে থেকে সব অনুবাদ" করে না। বরং, code চালানোর সময়, লাইন ধরে ধরে অনুবাদ করে execute করে।
+Interpreter আগে থেকে পুরো program-এর native executable বানিয়ে রাখে না। বরং program চালানোর সময়েই source code বা তার কোনো internal রূপ process করে execution এগিয়ে নেয়।
 
-কল্পনা করুন UN meeting-এর live translator। একজন যা বলছেন, translator সাথে সাথে অনুবাদ করে বলছেন। বই আকারে কিছু ছাপা হচ্ছে না — real-time-এই কাজ চলছে।
+কল্পনা করুন UN meeting-এর live translator। সে আগে থেকে কোনো বই ছাপায়নি; meeting চলাকালীনই কথাগুলো অন্য ভাষায় পৌঁছে দিচ্ছে।
 
-Interpreter-এর কাজ ঠিক একই। আপনি Python-এ `hello.py` লিখলেন। চালালেন:
+তবে analogy-টা এক জায়গায় থামানো দরকার। **Interpreter মানেই "একটা করে source line পড়ে, সেটা অনুবাদ করে, চালায়, তারপর পরের line" — এমন নয়।** অনেক interpreter আগে পুরো source parse করে একটা internal representation বানিয়ে নেয়, তারপর সেই representation চালায়। সেই representation নিজেই bytecode হতে পারে।
 
-```
-python hello.py
-```
-
-Python interpreter `hello.py` file open করল, প্রথম line পড়ল, execute করল, দ্বিতীয় line পড়ল, execute করল — এভাবে line by line চলতে থাকল। কোনো binary file তৈরি হলো না। Interpreter ছাড়া code চলবে না।
+Python-এ `python hello.py` চালালে ঠিক এটাই হয় — CPython source থেকে bytecode তৈরি করে, তারপর সেই bytecode চালায়। (`.pyc` file-এ সেই bytecode cache-ও থাকতে পারে — পরের section-এ সে গল্প।)
 
 **সুবিধা:**
 
-- Immediate feedback। Code লেখা মাত্রই চালানো যায়, compile step নেই।
-- Platform-independent। যেকোনো OS-এ Python installed থাকলেই code চলবে।
-- Dynamic behavior সহজ — runtime-এ code generate করে চালানো, reflection, ইত্যাদি।
+- আলাদা native executable আগে থেকে না বানিয়েই code চালানো যায় — লিখলেন, চালালেন।
+- একই source বিভিন্ন platform-এ চলে, যদি সেখানে উপযুক্ত runtime থাকে।
+- Runtime-এর তথ্য হাতে থাকায় dynamic behavior সামলানো সহজ।
 
 **অসুবিধা:**
 
-- Compile-এর মতো optimization পাওয়া যায় না। **তাই ধীর।**
-- Interpreter সবসময় user-এর কাছে থাকতে হবে। শুধু code পাঠালে চলবে না, target machine-এ Python installed থাকতে হবে।
-- Loop যদি ১০০০ বার চলে, একই লাইন interpreter ১০০০ বার পড়ে অনুবাদ করে — অনেক redundant work।
+- Execution-এর কিছু কাজ runtime-এ করতে হয়, তাই আগে থেকেই তৈরি native code চালানোর তুলনায় overhead থাকতে পারে।
+- Target machine-এ উপযুক্ত runtime থাকা লাগে — শুধু code পাঠালেই হয় না।
+- একই কাজ বারবার হলে interpreter-এর dispatch আর runtime check-এর খরচ জমতে থাকে।
+
+**আর "interpreter মানেই ধীর" — এটাও কোনো নিয়ম নয়।** Modern interpreter অনেক optimized হতে পারে, আর তার ওপর JIT যোগ হলে ঘন ঘন চলা code আরও দ্রুত হয়ে যেতে পারে। সেই গল্প একটু পরেই।
+
+**[WIDGET · TwoStrategies]** — একই ছোট program দুই কৌশলে: একদিকে অনুবাদ আগেই একবার, অন্যদিকে প্রতি run-এ runtime-এ।
 
 ---
 
-// দুটোর মাঝামাঝি: Bytecode + Virtual Machine
+## ০৪ — দুটোর মাঝামাঝি: Bytecode + Virtual Machine
 
-Compile-এর speed আছে কিন্তু flexibility নেই। Interpret-এর flexibility আছে কিন্তু speed নেই। যদি দুইটার সুবিধা একসাথে পেতে চান, কী করবেন?
+Source code সরাসরি native machine code-এ না গিয়ে আগে একটা **intermediate representation**-এ নামতে পারে — যাকে বলে **[HOVER: bytecode]**। Bytecode মানুষের source code-এর চেয়ে নিচের স্তরের, কিন্তু সাধারণত কোনো নির্দিষ্ট CPU-র native machine code নয়।
 
-এই সমস্যার সমাধান হিসেবে এসেছে একটা hybrid approach। Source code সরাসরি machine code-এ না গিয়ে, একটা **intermediate representation**-এ নেমে আসে — যাকে বলে **bytecode**। এই bytecode CPU-র জন্য নয়, একটা virtual machine (VM)-এর জন্য designed। VM নিজে একটা program, যেটা এই bytecode interpret করে।
+এই bytecode চালানোর জন্য থাকে একটা **[HOVER: virtual machine (VM)]** — software-এ তৈরি একটা execution environment, যে জানে এই নির্দিষ্ট bytecode কীভাবে চালাতে হয়। (VirtualBox-এর মতো পুরো virtual computer-এর কথা এখানে বলা হচ্ছে না; সেটা আলাদা জিনিস।)
 
-কল্পনা করুন — বাংলা বই ইংরেজিতে অনুবাদ করার বদলে Esperanto-তে নামানো হলো (একটা কল্পিত universal language)। পৃথিবীর যেকোনো ভাষার লোক Esperanto-জানা একটা reader নিয়ে এলেই সে সেটা পড়তে পারবে।
+কল্পনা করুন — বাংলা বইটাকে সরাসরি ইংরেজিতে অনুবাদ না করে Esperanto-র মতো একটা common intermediate ভাষায় নামানো হলো। এখন যেকোনো জায়গার পাঠক সেটা পড়তে পারবেন, যদি তাঁর কাছে Esperanto-জানা একজন reader থাকে।
 
-Java-র বিখ্যাত slogan মনে আছে? "Write once, run anywhere।" এটা exactly এই idea। Java code → bytecode (`.class` file) → JVM (Java Virtual Machine) সেই bytecode interpret করে। JVM যেকোনো platform-এ install করা যায়, তাই একই bytecode Windows, Linux, Mac-এ চলে।
+Java-র বিখ্যাত slogan মনে আছে? "Write once, run anywhere।" পথটা এমন:
 
-Python-ও একই approach নেয়। আমি অনেক দিন Python-কে pure interpreted ভাষা মনে করতাম। যতদিন না একদিন project folder-এ `__pycache__` folder দেখলাম — ভেতরে অনেকগুলো `.pyc` file। ভাবলাম, "এগুলো কী?" খুঁজে বার করলাম — Python actually source code-কে প্রথমে bytecode-এ compile করে, তারপর সেই bytecode-কে VM-এর মতো interpret করে। মানে Python কড়া অর্থে interpreted না, hybrid।
+**[DIAGRAM · java path]**
 
-তাহলে Python কি compiled না interpreted? উত্তর — দুইটাই। Modern language-এ এই পার্থক্যটা আর তেমন meaningful না।
+```text
+Java source
+     ↓
+  Java bytecode  (.class)
+     ↓
+    JVM
+     ↓
+  execution
+```
+
+উপযুক্ত JVM থাকলে একই bytecode Windows, Linux, Mac — সবখানেই চলে।
+
+তবে VM চিরকাল শুধু bytecode interpret করবে, এমন কোনো বাধ্যবাধকতা নেই। Runtime চাইলে সেই bytecode-এর কিছু অংশ পরে machine code-এ compile-ও করতে পারে। এখানেই এই model-এর সঙ্গে JIT-এর যোগসূত্র।
+
+Python-ও এই পথেই হাঁটে। আমি অনেক দিন Python-কে pure interpreted ভাষা মনে করতাম। যতদিন না একদিন project folder-এ `__pycache__` folder দেখলাম — ভেতরে অনেকগুলো `.pyc` file। ভাবলাম, "এগুলো কী?" খুঁজে বার করলাম — CPython source code থেকে bytecode তৈরি করে, সেই bytecode cache করে রাখে, আর সেটাই চালায়।
+
+এখানে পার্থক্যটা সূক্ষ্ম কিন্তু গুরুত্বপূর্ণ: **"compile হয়েছে" মানেই "native machine code-এ compile হয়েছে" নয়।** Python-এর ক্ষেত্রে compile হয়েছে bytecode পর্যন্ত, তারপর সেটা VM চালায়।
+
+তাহলে "Python compiled না interpreted?" — উত্তরটা implementation-এর ওপর নির্ভর করে। CPython bytecode বানিয়ে সেটা চালায়; PyPy-র মতো অন্য implementation আবার JIT compilation-ও ব্যবহার করে।
+
+**[WIDGET · MiddleLayer]** — source থেকে bytecode থেকে VM, এক ধাপ এক ধাপ করে।
 
 ---
 
-// JIT: যে Interpreter শিখে যায়
+## ০৫ — JIT: চলতে চলতে compile
 
-Bytecode + VM approach ভালো, কিন্তু execution তবু interpreter-এর মতো ধীর। কারণ VM প্রতিটা bytecode instruction পড়ে বুঝে execute করে। C-র মতো native speed পাওয়া যায় না।
+Bytecode + VM model-এ execution শুরু হতে পারে interpreter দিয়ে। কিন্তু program-এর কোনো অংশ যদি বারবার চলে, প্রতিবার একই interpretation overhead দেওয়াটা অপচয়।
 
-এখানেই আসে সবচেয়ে চতুর approach — **JIT (Just-In-Time compilation)**।
+এখানেই আসে **[HOVER: JIT] (Just-In-Time compilation)**। একে "smart interpreter" ভাবার চেয়ে ভাবুন **program চলার মাঝখানেই চলতে থাকা একটা compiler** হিসেবে — যে interpreter-কে সরিয়ে দেয় না, বরং তার পাশে বসে কাজ করে।
 
-JIT একটা smart interpreter। প্রথমে সে interpreter-এর মতোই চলে — bytecode পড়ে execute করে। কিন্তু একই সাথে monitor করে — কোন কোন function বা loop বেশি বেশি চালানো হচ্ছে। যেগুলো "hot" (ঘন ঘন execute হচ্ছে), সেগুলোকে সে runtime-এ compile করে ফেলে native machine code-এ। পরের বার সেই function/loop চলার সময় interpret করে না — সরাসরি সেই compiled version চালায়।
+Program চলার সময় সে তথ্য জমায় — কোন function বা loop কতবার চলছে, কী ধরনের value নিয়ে চলছে, behavior কেমন। কোনো অংশ যথেষ্ট "hot" হলে (ঘন ঘন execute হচ্ছে) সে সেই অংশের জন্য machine code তৈরি করতে পারে, আর পরের বার সেই compiled রূপটাই চলে।
 
-কল্পনা করুন — একজন live translator শুরুতে সব বাক্য অনুবাদ করছে। কিন্তু কয়েকটা phrase বারবার আসছে ("Ladies and gentlemen", "As I was saying")। ১০ বার শোনার পর সে সেই phrase-এর অনুবাদ মুখস্থ করে ফেলল। এখন সেই phrase শুনলেই সে reflex-এ instant অনুবাদ বলে দেয় — চিন্তা করে না। JIT-এর কাজ ঠিক এভাবেই।
+কল্পনা করুন — একজন live translator শুরুতে সব বাক্য অনুবাদ করছে। কিন্তু কয়েকটা phrase বারবার আসছে ("Ladies and gentlemen", "As I was saying")। কয়েকবার শোনার পর সে সেই phrase-এর জন্য একটা তৈরি অনুবাদ হাতে রেখে দিল। এখন সেটা শুনলেই সঙ্গে সঙ্গে বলে দেয়। JIT-এর "hot code" ধরার intuition-টা ঠিক এমন।
 
-আধুনিক JavaScript-এর incredible speed-এর কারণ এই JIT। V8 (Chrome আর Node-এর engine) shockingly optimized — hot code paths native machine code-এ compile করে C-র কাছাকাছি speed দেয়। JVM-এর HotSpot compiler-এর নাম-ই বলে দিচ্ছে কী কাজ করে।
+তবে JIT-এর বানানো machine code চিরস্থায়ী নয়। Optimizer runtime-এর কিছু অনুমানের ওপর ভিত্তি করে optimize করে; পরে সেই অনুমান ভুল প্রমাণিত হলে engine সেই optimized code ছেড়ে অন্য execution path-এ ফিরে যেতে পারে। এই কারণেই JIT-কে **adaptive optimization** হিসেবে ভাবা যায়।
 
-Trade-off আছে — JIT compilation নিজেই সময় খায়। তাই startup সাধারণত ধীর (interpreter mode-এ শুরু হয়)। কিন্তু long-running code দ্রুততর হতে থাকে।
+
+
+এখানে Trade-off আছে — compilation নিজেই CPU time খায়, optimized code memory-ও নেয়। কিন্তু দীর্ঘক্ষণ চলা, বারবার execute হওয়া code-এ সেই বিনিয়োগ পরে পুষিয়ে যায়।
+
+**[WIDGET · HotPath]** — loop চালিয়ে দেখুন কখন `square()` "hot" ধরা পড়ে।
 
 ---
 
-// যখন আপনি `node hello.js` চালান
+## ০৬ — যখন আপনি `node hello.js` চালান
 
-এবার সব একসাথে করে দেখা যাক। আপনি লিখলেন:
+এবার সব একসাথে করে দেখা যাক। একটা CPU-heavy example নিলাম, যাতে JIT-এর ভূমিকাটা পরিষ্কার হয়:
 
 ```jsx
 function square(x) {
-    return x * x;
+  return x * x;
 }
 
-for (let i = 0; i < 1000; i++) {
-    console.log(square(i));
+let total = 0;
+for (let i = 0; i < 1000000; i++) {
+  total += square(i);
 }
+console.log(total);
 ```
 
-`node hello.js` চালালেন। কী কী ঘটে?
+`node hello.js` চালালেন। V8-এর আসল execution pipeline এর চেয়ে জটিল, আর version ভেদে বদলায়ও — তাই নিচেরটা **একটা simplified mental model**, কোনো instruction-by-instruction trace নয়:
 
-1. Node startup — V8 engine load হয়।
-2. V8 আপনার code পড়ে, syntax parse করে, একটা internal representation (AST) তৈরি করে।
-3. AST থেকে V8 bytecode তৈরি করে।
-4. V8 bytecode interpret করে execute শুরু করে (interpreter mode)।
-5. `square()` function কয়েকবার call হওয়ার পর V8 বুঝে যায় "এটা hot"। JIT compiler activate।
-6. JIT `square()` function-কে optimized machine code-এ compile করে।
-7. পরের call-গুলোতে interpret না — সরাসরি compiled machine code চলে।
-8. Loop-এর body-ও একই ভাবে JIT-compile হয়।
-9. Result — C-র কাছাকাছি speed।
+1. Node চালু হয় আর V8 engine load করে।
+2. V8 source parse করে তার গঠন বোঝে — সেই গঠনের রূপটাই **[HOVER: AST]**।
+3. সেই representation থেকে V8 bytecode তৈরি করতে পারে।
+4. Execution শুরু হয় interpreter-এর মাধ্যমে।
+5. চলার সময় V8 code-এর behavior নিয়ে তথ্য জমায়।
+6. কোনো function বা loop যথেষ্ট hot আর optimization-উপযোগী হলে V8 তার জন্য compiled machine code তৈরি করতে পারে (`square()` আর loop body — দুটোই এই পথে যেতে পারে)।
+7. পরের execution সেই compiled রূপ ব্যবহার করতে পারে; আর optimization-এর অনুমান ভেঙে গেলে আবার অন্য path-এ ফিরে যেতে পারে।
 
-এই পুরো process আপনার কাছে invisible। আপনি শুধু দেখছেন output। কিন্তু ভেতরে source code → AST → bytecode → interpreted execution → JIT-compiled native code — একটা elegant pipeline।
+**[WIDGET · CompilePipeline]**
 
----
+**[DIAGRAM · runtime path]**
 
-// আধুনিক জটিলতা: সীমানা মুছে যাচ্ছে
+```text
+Source code
+     ↓
+  parsing / internal representation
+     ↓
+  bytecode                      ← in many systems
+     ↓
+  interpretation
+     ↓
+  runtime information
+     ↓
+  JIT compilation               ← where it pays off
+     ↓
+  native machine code
+     ↓
+   CPU
+```
 
-আধুনিক language landscape-এ "compiled vs interpreted" পার্থক্যটা প্রায় artificial হয়ে গেছে। প্রায় প্রতিটা modern language-ই hybrid:
+একটা কথা মনে রাখা জরুরি — **JIT মানে "JavaScript C হয়ে যাওয়া" নয়।** এর মানে হলো, runtime যেখানে লাভ দেখে, সেখানে JavaScript-এর execution-এর কিছু অংশ native machine instruction-এ পরিণত হয়। ঠিক কখন, কোন অংশে, কতটা — সেটা input, runtime behavior আর engine version-এর ওপর নির্ভর করে। "ঠিক ১০০০ বার call হলেই compile হবে" জাতীয় কোনো fixed নিয়ম নেই।
 
-- **Python:** Source → bytecode → CPython VM interprets। PyPy আবার JIT-compilation যোগ করে।
-- **JavaScript:** V8 এবং SpiderMonkey JIT-compilation-এর poster child।
-- **Java:** JVM bytecode interprets, HotSpot JIT hot code compile করে।
-- **C#:** Similar — CLR bytecode, JIT compilation।
-- **Go, Rust:** সরাসরি native compilation, তবে কিছু runtime feature আছে।
-- **C++:** Ahead-of-Time compilation, তবে template-heavy code JIT-এর মতো specialization করে।
-
-এই world-এ "কি compiled নাকি interpreted?" প্রশ্নটা অনেক সময় sensible না। বেশি sensible প্রশ্ন — "startup fast, নাকি long-run fast?" "Portable binary চাই, নাকি একবার compile করে সব platform-এ চলবে এমন কিছু?"
-
----
-
-// এই আর্টিকেলে কী শিখলাম
-
-- **CPU শুধু machine code বোঝে।** যেকোনো high-level language থেকে সেখানে পৌঁছাতে একজন translator লাগবেই।
-- **Compiler আগে থেকে translate করে, interpreter runtime-এ।** সরাসরি speed vs flexibility-এর trade-off।
-- **Bytecode + VM দুটোর মাঝামাঝি।** Compile হয় একটা intermediate form-এ, তারপর interpret হয়।
-- **JIT এই approach-এই smart layer যোগ করে।** Hot code runtime-এ native machine code-এ compile হয়ে যায়।
-- **Modern language সবই hybrid।** "Compiled vs interpreted" পার্থক্য অনেকাংশে artificial হয়ে গেছে।
+এই পুরো process আপনার কাছে invisible। আপনি শুধু output দেখছেন।
 
 ---
 
-// পরের article-এ
+## ০৭ — আধুনিক জটিলতা: সীমানা মুছে যাচ্ছে
 
-Article 1 থেকে এখান পর্যন্ত — voltage থেকে JIT compilation পর্যন্ত — সব দেখা হলো।
+এবার একটা গুরুত্বপূর্ণ conclusion-এ আসা যাক। আমরা প্রায়ই বলি — "C compiled language", "Python interpreted language", "JavaScript interpreted language"। Beginner-এর জন্য এই label-গুলো কাজে দেয়, কিন্তু এগুলো ভাষার স্থায়ী পরিচয় নয়। একই ভাষার ভিন্ন implementation ভিন্ন execution strategy ব্যবহার করতে পারে।
 
-কিন্তু এই সিরিজের একটা মূল প্রশ্ন এখনো ঝুলে আছে। প্রথম আর্টিকেলে জিজ্ঞেস করেছিলাম — `x = 5` লিখলে কী হয়? এখন জানি।
+| ভাষা | কীভাবে চলে |
+| --- | --- |
+| Python | CPython source → bytecode, তারপর সেই bytecode execute করে। PyPy আবার JIT compilation যোগ করে। |
+| JavaScript | V8-এর মতো engine bytecode/interpreter-এর সঙ্গে একাধিক compilation tier ব্যবহার করে। |
+| Java | Source → JVM bytecode; JVM সেটা execute করে আর runtime-এ JIT-compile করতে পারে। |
+| C# | Source সাধারণত intermediate representation-এ compile হয়, .NET runtime সেটা execute/JIT করে। |
+| C, Go, Rust | সাধারণ ব্যবহারে ahead-of-time compilation — native machine code তৈরি হয়। |
+
+তাই "এটা compiled না interpreted?" প্রশ্নের চেয়ে বেশি কাজে দেয় এই প্রশ্নটা — **এই implementation code-টা আসলে কীভাবে চালায়?** সেখান থেকে যা জানতে চাই:
+
+- Native code কি আগে থেকেই তৈরি হচ্ছে?
+- মাঝখানে কোনো intermediate representation আছে?
+- Interpreter আছে?
+- JIT compilation আছে?
+- Runtime-এর তথ্য কি optimization-এ কাজে লাগানো হচ্ছে?
+
+দুই প্রান্তের দুটো সাধারণ পথ পাশাপাশি রাখলে ছবিটা পরিষ্কার হয় — একদিকে runtime-নির্ভর পথ, অন্যদিকে C-র চেনা AOT পথ:
+
+**[DIAGRAM · ahead-of-time path]**
+
+```text
+Source code
+     ↓
+  compiler
+     ↓
+  assembly / object code
+     ↓
+  linking
+     ↓
+  native executable
+     ↓
+   CPU
+```
+
+আর practical প্রশ্নগুলো তো থেকেই যায় — startup দ্রুত দরকার, নাকি দীর্ঘক্ষণ চলা কাজে গতি? একটা portable binary চাই, নাকি এমন কিছু যা runtime থাকলেই সব platform-এ চলবে?
+
+---
+
+## এই আর্টিকেলে কী শিখলাম
+
+- **Machine code আর hexadecimal এক জিনিস নয়।** Machine code হলো CPU-র executable instruction-এর encoding; hexadecimal সেই byte-গুলো মানুষের লেখার notation।
+- **Compiler চালানোর আগেই code process করে executable/native রূপ তৈরি করতে পারে।**
+- **Interpreter runtime-এ source বা intermediate representation চালায়** — "line ধরে ধরে source অনুবাদ" এর একমাত্র অর্থ নয়।
+- **Bytecode হলো source আর native machine code-এর মাঝের একটা intermediate representation,** আর VM হলো সেই bytecode চালানোর software environment।
+- **JIT হলো program চলার মাঝখানে চলা compiler** — runtime-এর তথ্য দেখে যেখানে লাভ, সেখানে machine code তৈরি করে; সেই optimization চিরস্থায়ীও নয়।
+- **Compiled বনাম interpreted একটা implementation strategy**, কোনো ভাষার স্থায়ী পরিচয় নয়।
+
+---
+
+## পরের article-এ: কীপ্রেস থেকে স্ক্রিন
+
+Article 1 থেকে এখান পর্যন্ত — voltage থেকে JIT compilation পর্যন্ত — সব দেখা হলো। কিন্তু এই সিরিজের একটা মূল প্রশ্ন এখনো ঝুলে আছে। প্রথম আর্টিকেলে জিজ্ঞেস করেছিলাম — `x = 5` লিখলে কী হয়? এখন জানি।
 
 আজ শেষ প্রশ্ন — আপনি keyboard-এ 'A' চাপলেন, screen-এ 'A' এল। মাঝখানে কী কী ঘটল? এই সিরিজের প্রতিটা আর্টিকেলের সব concept ব্যবহার করে সেই journey-টা দেখব।
 
-এই সিরিজের payoff, final article।
+**[পরের article: ০৮ — কীপ্রেস থেকে স্ক্রিন]**
 
-**[পরের article: ৮. Keyboard-এর 'A' থেকে Screen-এর 'A']**
+**Hover terms used** (definitions live in `glossary.ts`): `compiler`, `interpreter`, `bytecode`, `vm`, `jit`, `ast`
 
 ---
-
-### Hover Definitions
-
-**[HOVER: Bytecode]***Bytecode হলো একটা intermediate language — মানুষের source code-এর চেয়ে নিচে, কিন্তু CPU-র machine code-এর চেয়ে উপরে। VM (Virtual Machine) এই bytecode পড়ে execute করে। Java-র `.class` file, Python-এর `.pyc` file — সবই bytecode।*
-
-**[HOVER: Virtual Machine (VM)]***Software-এ implemented একটা "কল্পিত computer" যা bytecode চালায়। VM নিজে একটা program, যেটা real CPU-তে চলে। JVM (Java Virtual Machine), CPython VM — এই sense-এ VM। এটাকে virtualization-এর VM (VirtualBox, VMware)-এর সাথে গুলিয়ে ফেলবেন না — সেটা আলাদা concept।*
+---
 
 # From Code to Machine Code
 
 ## How does your JavaScript reach the CPU?
+
+> *Blocks marked `[DIAGRAM · …]` render through the `<Diagram>` primitive. `[WIDGET · …]` marks an interactive instrument, `[DEEPER · …]` a collapsible toggle. Hover definitions live only in `src/articles/glossary.ts`.*
 
 You wrote:
 
@@ -228,212 +305,276 @@ console.log(x);
 
 Ran Node. Saw `8` on screen.
 
-But we've seen in earlier articles — the CPU doesn't understand JavaScript. The CPU only understands machine code, those hex numbers from Article 4:
+But we've seen in earlier articles — the CPU doesn't understand JavaScript. What it ultimately executes belongs to its **machine code** — bit patterns in memory, sequences of bytes. For our own convenience we usually write those bytes in hexadecimal. Some x86 machine-code bytes might look like this:
 
-```
+```text
 89 E5 83 EC 10 C7 45 FC ...
 ```
 
-So what happened in between? How did the text you wrote become executable CPU instructions?
+Those `89` and `E5` are bytes written in hexadecimal. **Hexadecimal isn't the CPU's language** — it's our notation for writing those bytes down.
+
+So what happened in between? How did the text you wrote reach a form the CPU can eventually execute as machine instructions?
 
 That's today's story.
 
----
-
-## One thing to clear up first
-
-This series has covered hardware and the OS so far. In this article we look at a special layer of software — one that works as a translator.
-
-The core question is simple: what people write (JavaScript, Python, C) and what the CPU understands (machine code) — who does the translation between them?
-
-Today, the story of those translators.
+> **// one thing to clear up first**
+>
+> This series has covered hardware and the OS so far. In this article we look at a special layer of software — one that works as a translator.
+>
+> The core question is simple: what people write (JavaScript, Python, C) and what the CPU executes (machine code) — who translates between them, and when?
+>
+> Today, the story of those translators.
 
 ---
 
-## First thing: you always need a translator
+## 01 — First thing: something has to carry code toward the CPU
 
-To read a book in a foreign language, you need a translator. Same for computers. Getting from any high-level language (JavaScript, Python, Go) down to the CPU's machine code requires translator software. That translator is itself a program, running on the CPU.
+If you want to read a book in a foreign language, the language has to be understood somehow. Computers are the same. You write source code in JavaScript, Python or C; the CPU cannot execute that text directly. Some software machinery has to carry it to a form the CPU can run — and that machinery is itself a program, running on the CPU.
 
-But translators work in different ways. Some translate the entire book ahead of time and print it. Some read sentence by sentence and speak it out on the spot. Some first bring it down to a middle language, and then someone else reads that.
+But the work is not done the same way in every language or every implementation. Someone translates the whole book ahead of time and prints it. Someone translates while the meeting is happening. Someone first brings everything down to a common intermediate language, and a reader who knows that language runs it. And someone notices, mid-meeting, which phrases keep coming back, and prepares a faster translation for those.
 
-The main approaches:
+The approaches we'll look at:
 
-- **Compiler:** Translates the entire code ahead of time, all at once (C, Go, Rust).
-- **Interpreter:** Translates line by line on the fly (early Python, Bash).
-- **Bytecode + VM:** First comes down to an intermediate language, then that gets interpreted (Java, Python, C#).
-- **JIT (Just-In-Time):** Hybrid and smart — watches which parts run frequently at runtime, then compiles those directly to machine code (JavaScript's V8, JVM's HotSpot).
+- **[HOVER: Compiler]:** processes source code before execution and can produce an executable/native form (C, Go, Rust).
+- **[HOVER: Interpreter]:** executes source code, or an intermediate representation of it, at runtime (Python, Bash).
+- **[HOVER: Bytecode] + [HOVER: VM]:** code drops to an intermediate form first, then runs through a virtual machine (Java, Python, C#).
+- **[HOVER: JIT] (Just-In-Time):** compiles selected code into machine code during execution, using what the running program reveals (V8, HotSpot).
+
+One thing is worth saying up front: **"compiled" and "interpreted" are not permanent properties of a language — they describe how a particular implementation executes it.** That will matter in the last section.
 
 Let's take them one at a time.
 
 ---
 
-## Compiler: the ahead-of-time translator
+## 02 — Compiler: the ahead-of-time translator
 
-A compiler is a program that reads your entire source code, understands it, and converts it into machine code. That process is called **compilation**.
+A compiler is a program that processes source code before execution and produces an executable form that can later run on the target machine. The process is called **compilation**.
 
-Picture a professional book translator. They read the whole Bangla book, translate the whole thing into English, print it, and send it to bookstores. From then on, anyone who wants to read it reads the English version — neither the original nor the translator is needed anymore.
+Picture a professional book translator. They translate the whole book ahead of time and print an English version. From then on, readers do not need a translator sitting beside them.
 
-A compiler works the same way. You write `hello.c` in C. You run the compiler:
+That's the basic idea. You write `hello.c` in C, then run:
 
+```text
+$ gcc hello.c -o hello
 ```
-gcc hello.c -o hello
-```
 
-The compiler reads `hello.c`, understands it, produces machine code, and creates an executable file named `hello`. Now run `./hello` — the compiler isn't needed anymore. The CPU is running machine code directly.
+One clarification matters here. The `gcc` command isn't a single magical step — under it sit several stages: preprocessing, compilation, assembly, then linking. What comes out at the end is a native executable named `hello`.
+
+Run `./hello` afterwards and the source doesn't have to be compiled again — the CPU executes machine instructions that already exist.
 
 **Advantages:**
 
-- Once compiled, no translation happens at run time. **So it's very fast.**
-- The compiler sees the whole program during compilation, giving it many opportunities to optimize.
-- Compiled binaries can be distributed without shipping the source code.
+- The main source-to-native translation does not have to be repeated every time the program starts.
+- The compiler can analyse the code during compilation, which opens up many optimizations.
+- Native executables can be distributed without shipping the source.
 
 **Disadvantages:**
 
-- Any small change means recompiling the whole thing.
-- Code compiled for one platform won't run on another (a Windows binary won't run on Linux).
-- Syntax errors get caught at compile time, but runtime errors still won't be found until it runs.
+- After changing the source, some compilation work is needed for an updated executable — though build systems can rebuild only the parts that changed.
+- A native executable targets a particular environment. CPU architecture, operating system and binary conventions all affect compatibility.
+- Many errors are caught before execution, but not every runtime behaviour can be known in advance.
 
-C, Go, Rust — none of these run through an interpreter. You compile to a binary first, then you can run it.
+C, Go and Rust are commonly used through native compilation. That is the model we are assuming here.
 
 ---
 
-## Interpreter: the on-the-fly translator
+## 03 — Interpreter: translating as it runs
 
-An interpreter takes a completely different approach. It doesn't translate everything ahead of time. Instead, while running the code, it translates and executes line by line.
+An interpreter doesn't build a complete native executable ahead of time. Instead, while the program runs, it processes the source code — or some internal form of it — and carries execution forward.
 
-Picture a live translator at a UN meeting. As someone speaks, the translator immediately renders it in another language. Nothing gets printed as a book — it all happens in real time.
+Picture a live translator at a UN meeting. Nothing was printed as a book beforehand; the translation happens while the meeting is going on.
 
-An interpreter works the same way. You write `hello.py` in Python. You run it:
+But the analogy needs one stop sign. **Interpreter does not necessarily mean "read one source line, translate it, execute it, move to the next."** Many interpreters parse the whole source into an internal representation first, then execute that representation. And that representation may itself be bytecode.
 
-```
-python hello.py
-```
-
-The Python interpreter opens `hello.py`, reads the first line, executes it, reads the second line, executes it — and keeps going line by line. No binary file gets created. Without the interpreter, the code can't run.
+Running `python hello.py` does exactly this — CPython turns the source into bytecode and executes that. (It can cache the bytecode in `.pyc` files too, which is the next section's story.)
 
 **Advantages:**
 
-- Immediate feedback. Write code, run it right away, no compile step.
-- Platform independent. Code runs on any OS that has Python installed.
-- Dynamic behavior is easy — generating and running code at runtime, reflection, and so on.
+- Code runs without first producing a separate native executable — write it, run it.
+- The same source runs on different platforms, wherever a compatible runtime exists.
+- Having runtime information at hand makes dynamic behaviour easier to support.
 
 **Disadvantages:**
 
-- Doesn't get the optimizations a compiler can do. **So it's slower.**
-- The interpreter has to be present on the user's machine. Shipping just the code isn't enough; the target machine needs Python installed.
-- If a loop runs 1000 times, the interpreter reads and translates the same lines 1000 times — a lot of redundant work.
+- Some execution work happens at runtime, which can cost more than running native code that already exists.
+- A compatible runtime has to be present on the target machine — shipping the code alone is not enough.
+- Repeated interpreter dispatch and runtime checks add up in code that runs over and over.
+
+**And "interpreter means slow" is not a rule either.** Modern interpreters can be heavily optimized, and with a JIT on top, frequently executed code can get much faster. That story is coming shortly.
+
+**[WIDGET · TwoStrategies]** — the same little program under both strategies: translated once up front on one side, re-processed at runtime on the other.
 
 ---
 
-## The middle ground: Bytecode + Virtual Machine
+## 04 — The middle ground: Bytecode + Virtual Machine
 
-Compilation gives speed but not flexibility. Interpretation gives flexibility but not speed. What if you want both?
+Instead of going straight from source code to native machine code, code can first drop into an **intermediate representation** called **[HOVER: bytecode]**. Bytecode sits below human-readable source, but it is usually not the native machine code of any particular CPU.
 
-The solution is a hybrid approach. Instead of going directly from source code to machine code, the code comes down to an **intermediate representation** — called **bytecode**. This bytecode isn't for the CPU; it's designed for a virtual machine (VM). The VM is itself a program that interprets this bytecode.
+Running that bytecode is the job of a **[HOVER: virtual machine (VM)]** — a software execution environment that knows how to execute this particular bytecode. (Not a whole virtual computer like VirtualBox; that's a different concept.)
 
-Picture this — instead of translating the Bangla book into English, you translate it into Esperanto (a made-up universal language). Now anyone in the world can read it, as long as they bring a reader who knows Esperanto.
+Picture this — instead of translating the Bangla book into English, you bring it down to a common intermediate language such as Esperanto. Now a reader anywhere can read it, as long as they have a reader that understands Esperanto.
 
-Remember Java's famous slogan? "Write once, run anywhere." That's exactly this idea. Java code → bytecode (`.class` files) → the JVM (Java Virtual Machine) interprets that bytecode. The JVM can be installed on any platform, so the same bytecode runs on Windows, Linux, and Mac.
+Remember Java's famous slogan? "Write once, run anywhere." The path looks like this:
 
-Python takes the same approach. For a long time I thought Python was a purely interpreted language. Then one day I noticed a `__pycache__` folder in a project directory, full of `.pyc` files. "What are these?" I looked it up — Python actually compiles source code to bytecode first, then interprets that bytecode in a VM. Which means Python isn't strictly interpreted; it's a hybrid.
+**[DIAGRAM · java path]**
 
-So is Python compiled or interpreted? The answer — both. In modern languages, that distinction isn't very meaningful anymore.
+```text
+Java source
+     ↓
+  Java bytecode  (.class)
+     ↓
+    JVM
+     ↓
+  execution
+```
+
+With a compatible JVM installed, the same bytecode runs on Windows, Linux and Mac.
+
+But nothing forces a VM to interpret bytecode forever. The runtime may later compile parts of that bytecode into machine code — which is exactly where this model meets JIT compilation.
+
+Python walks the same path. For a long time I thought Python was a purely interpreted language. Then one day I noticed a `__pycache__` folder in a project directory, full of `.pyc` files. "What are these?" I looked it up — CPython compiles source into bytecode, caches that bytecode, and executes it.
+
+The distinction here is subtle but important: **"it was compiled" doesn't have to mean "compiled to native machine code."** In Python's case the compilation stops at bytecode, and a VM takes it from there.
+
+So, "is Python compiled or interpreted?" — the answer depends on the implementation. CPython produces bytecode and executes it; other implementations such as PyPy add JIT compilation.
+
+**[WIDGET · MiddleLayer]** — source to bytecode to VM, one step at a time.
 
 ---
 
-## JIT: the interpreter that learns
+## 05 — JIT: compiling while it runs
 
-The bytecode + VM approach is good, but execution is still interpreter-slow. Because the VM reads, understands, and executes each bytecode instruction one at a time. You don't get native speed like C.
+In the bytecode + VM model, execution can start out through an interpreter. But if part of a program runs over and over, paying the same interpretation overhead every single time is waste.
 
-This is where the cleverest approach comes in — **JIT (Just-In-Time compilation)**.
+This is where **[HOVER: JIT] (Just-In-Time compilation)** comes in. Rather than a "smart interpreter," think of it as **a compiler that runs during program execution** — not a replacement for the interpreter, but something working alongside it.
 
-JIT is a smart interpreter. It starts out running like an interpreter — reading and executing bytecode. But at the same time, it monitors which functions or loops are being run frequently. The ones that are "hot" (executed over and over), it compiles at runtime into native machine code. The next time that function or loop runs, it doesn't get interpreted — the compiled version runs directly.
+While the program runs it gathers information — which functions or loops run often, what kinds of values they see, how the code behaves. When something is hot enough, it can compile that code into machine code, and later calls can use the compiled version.
 
-Picture this — a live translator starts out translating every sentence. But some phrases keep repeating ("Ladies and gentlemen," "As I was saying"). After hearing them ten times, the translator memorizes their translation. Now, hearing that phrase, they say the translation reflexively — no thinking required. That's exactly what JIT does.
+Picture this — a live translator starts out translating every sentence. But some phrases keep repeating ("Ladies and gentlemen," "As I was saying"). After hearing them a few times, the translator keeps a ready-made translation at hand and delivers it instantly. That is the "hot code" intuition behind a JIT.
 
-The incredible speed of modern JavaScript comes from JIT. V8 (the engine behind Chrome and Node) is shockingly optimized — it compiles hot code paths to native machine code and gets close to C-level speed. The JVM's HotSpot compiler is named for exactly this behavior.
+The machine code a JIT produces isn't permanent, though. The optimizer makes assumptions based on what it observed at runtime; if those assumptions stop holding, the engine can leave the optimized version and continue along another execution path. Which is why JIT compilation is better thought of as **adaptive optimization**.
 
-There's a trade-off — JIT compilation itself takes time. So startup is usually slower (it begins in interpreter mode). But long-running code keeps getting faster.
+
+
+There is a trade-off — compilation itself costs CPU time, and optimized code costs memory. But for long-running, frequently executed code, that investment pays back later.
+
+**[WIDGET · HotPath]** — run the loop and watch when `square()` is detected as "hot".
 
 ---
 
-## When you run `node hello.js`
+## 06 — When you run `node hello.js`
 
-Let's put it all together. You wrote:
+Let's put it all together, with a CPU-heavy example so the JIT's role is easier to see:
 
 ```jsx
 function square(x) {
-    return x * x;
+  return x * x;
 }
 
-for (let i = 0; i < 1000; i++) {
-    console.log(square(i));
+let total = 0;
+for (let i = 0; i < 1000000; i++) {
+  total += square(i);
 }
+console.log(total);
 ```
 
-You ran `node hello.js`. What happens?
+You run `node hello.js`. V8's real pipeline is more complex than this and changes between versions, so what follows is **a simplified mental model**, not an instruction-by-instruction trace:
 
-1. Node starts up — the V8 engine loads.
-2. V8 reads your code, parses the syntax, and builds an internal representation (an AST).
-3. From the AST, V8 generates bytecode.
-4. V8 starts interpreting and executing that bytecode (interpreter mode).
-5. After `square()` gets called a number of times, V8 recognizes "this is hot." The JIT compiler activates.
-6. JIT compiles `square()` into optimized machine code.
-7. Subsequent calls don't get interpreted — the compiled machine code runs directly.
-8. The loop body gets JIT-compiled the same way.
-9. Result — close to C-level speed.
+1. Node starts and loads the V8 engine.
+2. V8 parses the source and works out its structure — that structure is the **[HOVER: AST]**.
+3. From that representation, V8 can generate bytecode.
+4. Execution begins through the interpreter.
+5. As it runs, V8 gathers information about how the code behaves.
+6. If a function or loop becomes hot enough and looks optimizable, V8 can produce compiled machine code for it (both `square()` and the loop body can take this route).
+7. Later execution can use that compiled version — and if the assumptions behind it stop holding, execution can fall back to another path.
 
-The whole process is invisible to you. You just see output. But inside: source code → AST → bytecode → interpreted execution → JIT-compiled native code — an elegant pipeline.
+**[WIDGET · CompilePipeline]**
+
+**[DIAGRAM · runtime path]**
+
+```text
+Source code
+     ↓
+  parsing / internal representation
+     ↓
+  bytecode                      ← in many systems
+     ↓
+  interpretation
+     ↓
+  runtime information
+     ↓
+  JIT compilation               ← where it pays off
+     ↓
+  native machine code
+     ↓
+   CPU
+```
+
+One thing is worth holding onto — **JIT is not "JavaScript becoming C."** It means that where the runtime sees a benefit, part of JavaScript's execution gets turned into native machine instructions. Exactly when, for which code, and how far depends on the input, the runtime behaviour and the engine version. There is no fixed rule like "after exactly 1,000 calls it compiles."
+
+The whole process is invisible to you. You just see the output.
 
 ---
 
-## Modern complexity: the boundaries are dissolving
+## 07 — Modern complexity: the boundaries are dissolving
 
-In the modern language landscape, the "compiled vs interpreted" distinction has become almost artificial. Nearly every modern language is hybrid:
+Now for an important conclusion. We often say — "C is a compiled language," "Python is an interpreted language," "JavaScript is an interpreted language." Those labels are useful beginner shorthand, but they are not permanent properties of the languages. Different implementations of the same language can use entirely different execution strategies.
 
-- **Python:** Source → bytecode → CPython VM interprets. PyPy adds JIT compilation on top.
-- **JavaScript:** V8 and SpiderMonkey are the poster children of JIT compilation.
-- **Java:** The JVM interprets bytecode; HotSpot JIT-compiles hot code.
-- **C#:** Similar — CLR bytecode, JIT compilation.
-- **Go, Rust:** Direct native compilation, though some runtime features exist.
-- **C++:** Ahead-of-time compilation, but template-heavy code does JIT-like specialization at compile time.
+| Language | How it runs |
+| --- | --- |
+| Python | CPython turns source into bytecode and executes it. PyPy adds JIT compilation on top. |
+| JavaScript | Engines such as V8 combine bytecode/interpreter execution with several compilation tiers. |
+| Java | Source → JVM bytecode; the JVM executes it and can JIT-compile it at runtime. |
+| C# | Source is commonly compiled to an intermediate representation that the .NET runtime executes and JIT-compiles. |
+| C, Go, Rust | Commonly ahead-of-time compilation, producing native machine code. |
 
-In this world, "is it compiled or interpreted?" is often the wrong question. The more useful question is — "is startup fast, or is long-run fast?" "Do I want a portable binary, or something I compile once that runs everywhere?"
+So a more useful question than "is it compiled or interpreted?" is — **how does this particular implementation execute the code?** From there, the things worth asking:
+
+- Is native code produced ahead of time?
+- Is there an intermediate representation in the middle?
+- Is there an interpreter?
+- Is there JIT compilation?
+- Is runtime information used for optimization?
+
+Putting the two common paths side by side makes it clearer — the runtime-driven path above, and C's familiar ahead-of-time path here:
+
+**[DIAGRAM · ahead-of-time path]**
+
+```text
+Source code
+     ↓
+  compiler
+     ↓
+  assembly / object code
+     ↓
+  linking
+     ↓
+  native executable
+     ↓
+   CPU
+```
+
+And the practical questions remain — do you need fast startup, or speed in long-running work? A portable binary, or something that runs anywhere a runtime exists?
 
 ---
 
 ## What this article covered
 
-- **The CPU only understands machine code.** Getting there from any high-level language requires a translator.
-- **A compiler translates ahead of time; an interpreter translates at runtime.** The trade-off is speed vs flexibility.
-- **Bytecode + VM sits in between.** Code compiles to an intermediate form, then that gets interpreted.
-- **JIT adds a smart layer on top.** Hot code gets compiled to native machine code at runtime.
-- **Modern languages are all hybrids.** The "compiled vs interpreted" distinction has become largely artificial.
+- **Machine code and hexadecimal are not the same thing.** Machine code is the encoding of the CPU's executable instructions; hexadecimal is how we write those bytes down.
+- **A compiler can process code ahead of execution and produce an executable/native form.**
+- **An interpreter executes source or an intermediate representation at runtime** — it does not have to mean translating source line by line.
+- **Bytecode is an intermediate representation between source and native machine code,** and a VM is the software environment that executes it.
+- **A JIT is a compiler that runs during execution** — using runtime information to generate machine code where it pays off, and that optimization isn't permanent either.
+- **Compiled vs interpreted describes an implementation strategy**, not a permanent identity of a language.
 
 ---
 
-## Next article
+## Next article: From keypress to screen
 
-From Article 1 to here — from voltage to JIT compilation — we've covered everything.
-
-But one core question of this series is still hanging. In the first article I asked — what happens when you write `x = 5`? Now we know.
+From Article 1 to here — from voltage to JIT compilation — we've covered everything. But one core question of this series is still hanging. In the first article I asked — what happens when you write `x = 5`? Now we know.
 
 Today, the last question — you press 'A' on your keyboard, 'A' appears on screen. What happened in between? We'll walk through that journey using every concept from this series.
 
-The payoff of this series, the final article.
+**[Next: 08 — From keypress to screen]**
 
-**[Next: 8. From the Keyboard's 'A' to the Screen's 'A']**
-
----
-
-### Hover Definitions
-
-**[HOVER: Compiler]***A compiler is a program that reads an entire source file and converts it, all at once, into machine code (or bytecode). The output is usually an executable file that can run without the compiler. C's gcc, Rust's rustc, Go's go build — all compilers.*
-
-**[HOVER: Interpreter]***An interpreter is a program that reads source code line by line, understands it, and executes it immediately. No binary output is created — the interpreter is needed every time the code runs. Pure interpreters are rare today — most modern "interpreted" languages actually compile to bytecode and run it on a VM.*
-
-**[HOVER: Bytecode]***Bytecode is an intermediate language — lower level than human source code, but higher level than the CPU's machine code. A VM (Virtual Machine) reads and executes this bytecode. Java's `.class` files, Python's `.pyc` files — all bytecode.*
-
-**[HOVER: Virtual Machine (VM)]***A software-implemented "imaginary computer" that runs bytecode. The VM is itself a program running on a real CPU. The JVM (Java Virtual Machine) and the CPython VM are VMs in this sense. Don't confuse this with virtualization VMs (VirtualBox, VMware) — that's a different concept.*
-
-**[HOVER: JIT]***JIT (Just-In-Time compilation) is the technique of compiling code at runtime. A program starts in interpreter mode, but frequently-executed code (hot paths) gets compiled into native machine code during execution. From then on, that code isn't interpreted — it runs natively. V8 (JavaScript), HotSpot (Java), PyPy — all JIT compilers.*
+**Hover terms used** (definitions live in `glossary.ts`): `compiler`, `interpreter`, `bytecode`, `vm`, `jit`, `ast`

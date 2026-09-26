@@ -9,11 +9,11 @@ const STAGES = [
   { bn: 'V8 code পড়ে, syntax parse করে, AST বানায়', en: 'V8 reads your code, parses the syntax, builds an AST', badge: 'PARSE' },
   { bn: 'AST থেকে V8 bytecode তৈরি করে', en: 'From the AST, V8 generates bytecode', badge: 'BC' },
   { bn: 'V8 bytecode interpret করে execute করে (interpreter mode)', en: 'V8 interprets and executes that bytecode (interpreter mode)', badge: 'INT' },
-  { bn: 'square() কয়েকবার call হওয়ার পর V8 বোঝে "hot"। JIT activate', en: 'after square() runs a number of times, V8 recognizes "hot". JIT activates', badge: 'HOT' },
+  { bn: 'square() যথেষ্ট বার চলার পর V8 তাকে "hot" হিসেবে চিহ্নিত করতে পারে', en: 'after square() has run enough times, V8 can mark it "hot"', badge: 'HOT' },
   { bn: 'JIT square()-কে optimized machine code-এ compile করে', en: 'JIT compiles square() into optimized machine code', badge: 'JIT' },
   { bn: 'পরের call-গুলো interpret না — সরাসরি compiled native চলে', en: "subsequent calls aren't interpreted — the compiled native runs directly", badge: 'NAT' },
   { bn: "loop-এর body-ও একইভাবে JIT-compile হয়", en: 'the loop body gets JIT-compiled the same way', badge: 'JIT' },
-  { bn: 'Result — C-র কাছাকাছি speed', en: 'Result — close to C-level speed', badge: 'DONE' },
+  { bn: 'Result — hot অংশগুলো compiled native হিসেবে চলে', en: 'Result — the hot parts run as compiled native code', badge: 'DONE' },
 ];
 
 /** Index of the final stage — derived so adding a STAGES entry needs no other edit. */
@@ -126,8 +126,8 @@ export function CompilePipeline() {
         </div>
       </Instrument>
       <Caption
-        bn="একটা keypress না — একটা program। V8 আপনার code parse করে, AST বানায়, bytecode-এ নামায়, interpret শুরু করে, তারপর hot অংশ JIT-এ native করে। পুরোটা invisible।"
-        en="Not a keypress — a program. V8 parses your code, builds an AST, lowers to bytecode, starts interpreting, then JITs the hot parts to native. All invisible."
+        bn="V8 আপনার code parse করে, AST বানায়, bytecode-এ নামায়, interpret শুরু করে, তারপর hot অংশের জন্য machine code তৈরি করতে পারে। পুরোটা invisible — আর এটা একটা simplified model; আসল V8-এ একাধিক compilation tier আছে।"
+        en="V8 parses your code, builds an AST, lowers it to bytecode, starts interpreting, and can then produce machine code for the hot parts. All invisible — and a simplified model: real V8 has several compilation tiers."
       />
     </>
   );

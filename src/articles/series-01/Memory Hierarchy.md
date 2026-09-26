@@ -1,441 +1,788 @@
-## এত ধরনের memory কেন?
+# মেমোরি হায়ারার্কি
+
+## কেন এক memory দিয়ে হয় না
+
+> *`[DIAGRAM · …]` blocks render through the `<Diagram>` primitive (flow art on paper, not a code well). `[WIDGET · …]` marks an interactive instrument. Hover definitions live only in `src/articles/glossary.ts`.*
 
 আপনার laptop-এ কি একটাই memory আছে?
 
 স্বাভাবিক উত্তর — হ্যাঁ, RAM। ১৬ GB বা ৩২ GB, যা-ই হোক।
 
-কিন্তু আসলে laptop-এ এই মুহূর্তে পাঁচ, ছয় বা কখনো সাত-আট রকমের memory একসাথে কাজ করছে। কিছু এত ছোট যে সবমিলিয়ে কয়েক kilobyte, কিন্তু এত দ্রুত যে CPU-র clock speed এর সাথে তাল মিলিয়ে ডেটা আদান-প্রদান করতে পারে। কিছু এত বড় যে টেরাবাইট পর্যন্ত ধরে, কিন্তু তাদের কাছে পৌঁছাতে CPU-কে অপেক্ষা করতে হয় হাজার হাজার clock cycle।
+কিন্তু আসলে laptop-এ এই মুহূর্তে কয়েক রকমের storage একসাথে কাজ করছে। কিছু এত ছোট যে সবমিলিয়ে সামান্য কয়েকটা value ধরে, কিন্তু CPU-র execution logic-এর একদম গায়ে লাগানো। কিছু এত বড় যে টেরাবাইট পর্যন্ত ধরে, কিন্তু সেখান থেকে data আনতে CPU-কে তুলনায় অনেক বেশি অপেক্ষা করতে হয়।
 
-কেন এই ব্যবস্থা? কেন একটাই memory দিয়ে কাজ চালানো যায় না?
-
-এটাই আজকের গল্প।
+কেন এই ব্যবস্থা? আগের আর্টিকেলে দেখেছি একটা instruction কীভাবে fetch, decode আর execute হয়। কিন্তু সেই instruction আর data-গুলো থাকে কোথায়, আর একটাই memory দিয়ে কেন কাজ চলে না? এটাই আজকের গল্প।
 
 ---
 
-// কেন একটাই memory দিয়ে হয় না?
+## ০১ — কেন একটাই memory দিয়ে হয় না?
 
-সোজা প্রশ্ন। একটাই বড়, দ্রুত memory বানিয়ে সব কাজ চালালে হতো না?
+সোজা প্রশ্ন:
 
-হতো, যদি সেটা সস্তায় পাওয়া যেত।
+**একটাই বিশাল memory বানিয়ে সেটাকে CPU-র সবচেয়ে কাছের storage-এর মতো দ্রুত বানানো যায় না?**
 
-Memory design-এর একটা fundamental trilemma আছে। আমরা তিনটা জিনিস চাই একসাথে — **দ্রুততা** (speed), **ধারণক্ষমতা** (capacity), আর **কম দাম** (low cost)। কিন্তু একই memory-তে এই তিনটার সবগুলো কখনো পাওয়া যায় না। যেকোনো দুইটা পাবেন, তৃতীয়টা ছাড়তে হবে।
+সমস্যাটা engineering trade-off-এর।
 
-- খুব দ্রুত + বড় = ভয়ানক দামি (কেউ afford করতে পারবে না)
-- খুব দ্রুত + সস্তা = ছোট (কম জায়গা, কম ডেটা)
-- বড় + সস্তা = ধীর (RAM, disk)
+Memory design-এ আমরা একসাথে চাই:
 
-এই trilemma-র কারণেই এক memory-তে সব সম্ভব না। তাই engineering-এর একটা চতুর সমাধান — **hierarchy**। একটা মাত্র memory না। বহু layer, একটার পর একটা।
+- **কম latency** — data খুব দ্রুত পাওয়া যাবে
+- **বেশি capacity** — অনেক data রাখা যাবে
+- **কম cost** — একই capacity-র জন্য খরচ নাগালের মধ্যে থাকবে
 
-সবচেয়ে দ্রুত layer সবার ওপরে — কিন্তু এতই ছোট যে শুধু কিছু ডেটা রাখা যায়। তার নিচে একটু বড়, একটু ধীর। তার নিচে আরও বড়, আরও ধীর। এভাবে নামতে নামতে সবার নিচে সবচেয়ে বড়, সবচেয়ে ধীর memory — যেখানে কমবেশি সবকিছু জমা রাখা সম্ভব।
+কোনো একটা storage technology একসাথে এই সব দিকেই সেরা হতে পারে না।
 
-layer-গুলো একটু ভালো করে দেখা যাক।
+**[DIAGRAM · trade-off]**
 
----
+```text
+Very fast + very large
+→ very expensive
 
-// The layers
+Very fast + inexpensive
+→ small capacity
 
-আপনার laptop-এ এই মুহূর্তে যেসব memory কাজ করছে:
+Very large + inexpensive
+→ higher latency
+```
 
-**Register** — CPU-র একদম ভেতরে। আকার সবমিলিয়ে কয়েক হাজার bit (মানে বইয়ের এক পাতারও কম)। Speed এক clock cycle। CPU এই মুহূর্তে যা নিয়ে কাজ করছে — সব এখানে।
+তাই computer engineer-রা একটাই memory technology বেছে নেয়নি। বরং বিভিন্ন trade-off-এর storage-কে স্তরে স্তরে সাজানো হয়েছে — সবচেয়ে ছোট আর দ্রুত storage CPU-র সবচেয়ে কাছে, বড় আর ধীর storage আরও নিচে।
 
-**L1 Cache** — CPU-র ভেতরেই, প্রতিটা core-এর জন্য আলাদা। আকার 32-64 KB। Speed 1-2 clock cycle। আসলে দুই ভাগে বিভক্ত — L1i (instruction-এর জন্য) আর L1d (data-র জন্য)।
+এই layered বিন্যাসটাই **Memory Hierarchy**।
 
-**L2 Cache** — এটাও CPU-র ভেতরে, প্রতি core-এর জন্য আলাদা। আকার 256 KB থেকে 1 MB। Speed 3-10 clock cycle।
+> **এটা কোনো কঠিন rule নয় যে প্রতিটা computer-এ ঠিক একই সংখ্যক layer থাকবে।** Architecture অনুযায়ী স্তরের সংখ্যা, মাপ, কোনটা shared আর কোনটা নয় — সব বদলাতে পারে। আমরা এখানে একটা simplified hierarchy নিয়ে কাজ করছি, যাতে মূল ধারণাটা পরিষ্কার হয়।
 
-**L3 Cache** — সব core-এর মধ্যে shared। আকার 4 থেকে 64 MB। Speed 10-30 clock cycle।
-
-**RAM (Main Memory)** — CPU-র বাইরে, motherboard-এ। আকার 8-32 GB, কখনো আরও বেশি। Speed 100-300 clock cycle।
-
-**SSD/HDD** — Non-volatile Storage। আকার 256 GB থেকে অনেক TB পর্যন্ত। Speed 100,000-এর বেশি clock cycle।
-
-সবমিলিয়ে ছয় বা সাত layer। উপর থেকে নিচে — ছোট থেকে বড়, দ্রুত থেকে ধীর, দামি থেকে সস্তা। L1, L2, L3-কে একসাথে বলে [HOVER: cache]।
-
----
-
-// Clock Cycle এর তুলনা
-
-সংখ্যাগুলো একটু abstract লাগতে পারে। "1 clock cycle" আর "100 clock cycle"-এর পার্থক্য মাথায় ধরানো সহজ না।
-
-একটা comparison দিয়ে ভাবা যাক। ধরুন register access করতে যদি ১ সেকেন্ড লাগে, তাহলে বাকিদের অবস্থাটা এমন:
-
-| **Memory Layer** | **Access Latency (Analogy)** | **Real Hardware Latency** |
-| --- | --- | --- |
-| **Register** | ১ সেকেন্ড | ~0.5 ns |
-| **L1 Cache** | ৩–৪ সেকেন্ড | ~1–2 ns |
-| **L2 Cache** | ১৫ সেকেন্ড | ~4–5 ns |
-| **L3 Cache** | ৪৫ সেকেন্ড | ~15–20 ns |
-| **RAM (DRAM)** | ৫–৭ মিনিট | ~60–100 ns |
-| **NVMe SSD** | ১.৫–২ দিন | ~50–100 µs |
-| **Mechanical HDD** | ২–৪ মাস | ~5–10 ms |
-
-এই স্কেলে দাঁড়িয়ে ভাবুন: CPU যদি প্রতিটা data-র জন্য সরাসরি storage বা RAM-এর ওপর নির্ভর করত, তবে একেকটা গাণিতিক অপারেশনের মাঝখানে তাকে মিনিটের পর মিনিট নিষ্ক্রিয় বসে থাকতে হতো (যাকে বলে **CPU Stall**)। তাই দ্রুততম memory-কে প্রসেসরের যতটা সম্ভব কাছাকাছি রাখা এত গুরুত্বপূর্ণ।
-
-কিন্তু একটা প্রশ্ন থেকে যায়। যদি সব ডেটা L1 বা L2 cache-এ ধরত, তাহলে সমস্যা মিটে যেত। কিন্তু L1 তো মাত্র 64 KB। এত অল্প জায়গায় পুরো program-এর ডেটা রাখা অসম্ভব। তাহলে কোন ডেটা fast cache-এ থাকবে, কোনটা RAM-এ পড়ে থাকবে?
-
-এখানেই আসে locality-র concept। এবং এই একটা idea-ই পুরো hierarchy-কে কাজ করায়।
+> **// memory নিয়ে তিনটা প্রশ্ন**
+>
+> কোনো storage layer নিয়ে ভাবার সময় তিনটা আলাদা প্রশ্ন করুন:
+>
+> **কত দ্রুত data পাওয়া যায়?** → Latency
+>
+> **কত data রাখা যায়?** → Capacity
+>
+> **প্রতি unit capacity-র জন্য খরচ কত?** → Cost
+>
+> Memory hierarchy মূলত এই তিনটার মধ্যে balance করার একটা engineering সমাধান।
 
 ---
 
-// Locality: কেন এই ব্যবস্থা কাজ করে
+## ০২ — Layer-গুলো
 
-প্রোগ্রাম কীভাবে memory access করে, সেটা random না। প্রোগ্রাম যখন একটা variable access করে, একটু পরে সেটাকে আবার access করার সম্ভাবনা অনেক বেশি। যখন array-এর index 5 access করে, পরের access-এ সাধারণত সে index 6 চাইবে — index 500 না।
+একটা simplified laptop বা desktop-এর memory hierarchy-কে এভাবে ভাবা যায়:
 
-এই দুই pattern-এর নাম **locality**।
+- **Register** — CPU-র execution logic-এর সবচেয়ে কাছের storage। চলমান computation-এর জন্য দরকারি কিছু value, address বা state এখানে থাকে। Capacity খুব ছোট, কিন্তু access latency সবচেয়ে কম।
+- **L1 Cache** — প্রতিটা core-এর খুব কাছের ছোট cache। প্রায়ই instruction আর data-র জন্য আলাদা ভাগে থাকে — L1i আর L1d।
+- **L2 Cache** — L1-এর চেয়ে বড়, সাধারণত একটু বেশি latency-র। অনেক architecture-এ এটা core-এর সঙ্গে ঘনিষ্ঠভাবে যুক্ত থাকে, যদিও exact design processor ভেদে আলাদা।
+- **L3 Cache** — আরও বড় cache layer। অনেক modern multi-core processor-এ এটা একাধিক core-এর মধ্যে shared হতে পারে, তবে exact organization architecture অনুযায়ী বদলায়।
+- **RAM** — system-এর main memory। চলমান program আর তাদের data-র বড় অংশ এখানে থাকে। Cache বা register-এর তুলনায় ধারণক্ষমতা অনেক বেশি, latency-ও অনেক বেশি।
+- **SSD / HDD** — persistent storage। ধারণক্ষমতা অনেক বড়, আর power বন্ধ হলেও data থেকে যায়। কিন্তু CPU-র জন্য এদের access RAM-এর তুলনায়ও অনেক ধীর।
 
-**Temporal locality** — সময়ের locality। এই মুহূর্তে যে ডেটা access হচ্ছে, কয়েক মুহূর্ত পর সেটাকে আবার access করার সম্ভাবনা অনেক বেশি। `for` loop-এর counter variable `i`, কোনো recursive function-এর argument, বা বার বার কল হওয়া কোনো method — এগুলো ঘন ঘন access হয়।
+**[DIAGRAM · hierarchy]**
 
-**Spatial locality** — জায়গার locality। এই মুহূর্তে যে address access হচ্ছে, তার আশেপাশের address-এও access-এর সম্ভাবনা বেশি। Array traverse করলে, struct-এর field access করলে, string-এর character পড়লে — সব একটার পাশের অন্যটা।
+```text
+Registers
+   ↓
+L1 Cache
+   ↓
+L2 Cache
+   ↓
+L3 Cache
+   ↓
+RAM
+   ↓
+SSD / HDD
+```
 
-কাজে লাগায়। CPU যখন RAM থেকে ১টি byte দাবি করে, memory controller শুধু সেই ১টি byte পাঠায় না। সে তার সাথে পুরো 64-byte-এর একটা ব্লক একবারে তুলে নিয়ে আসে cache-এ। এই 64-byte ব্লককে বলা হয় **[HOVER: cache line]**।
+উপরের দিকে গেলে সাধারণত:
 
-Spatial locality-র কারণে, আপনি যখন array-এর `index[0]` রিড করেন, পুরো cache line-এ `index[0]` থেকে `index[15]` (যদি 4-byte integer হয়) পর্যন্ত cache-এ চলে আসে। ফলে পরের ১৫টি iteration-এ CPU-কে আর ধীরগতির RAM-এ যেতেই হয় না — data সরাসরি L1 cache থেকে পাওয়া যায়।
+> **ছোট → দ্রুত → প্রতি unit capacity-তে বেশি খরচসাপেক্ষ**
+
+নিচের দিকে গেলে সাধারণত:
+
+> **বড় → ধীর → প্রতি unit capacity-তে সস্তা**
+
+এটা একটা conceptual hierarchy। বাস্তব processor-এ কিছু layer আলাদা হতে পারে, কিছু shared হতে পারে, আবার কোনো architecture-এ নির্দিষ্ট কোনো layer না-ও থাকতে পারে। নিচের যন্ত্রে একেকটা layer-এ চাপ দিয়ে তার ভূমিকা দেখুন:
+
+**[WIDGET · MemoryPyramid]**
+
+### Cache কি শুধু "আরও দ্রুত RAM"?
+
+না।
+
+Cache আর RAM — দুটোই memory, কিন্তু এরা একই technology-র storage নয়, একই ভূমিকারও নয়। CPU cache সাধারণত অনেক ছোট, কম latency-র, আর processor-এর execution logic-এর সঙ্গে ঘনিষ্ঠভাবে যুক্ত। Main memory অনেক বড়, আর system-এর অনেক বড় working set ধরে রাখে।
+
+> Cache-এর উদ্দেশ্য RAM-এর *বিকল্প* হওয়া নয়। উদ্দেশ্য হলো **বারবার কাজে লাগা data-কে CPU-র কাছাকাছি রাখা**, যাতে প্রতিবার ধীর main memory পর্যন্ত যেতে না হয়।
 
 ---
 
-### কোড লেভেলে Memory Hierarchy-র প্রভাব: Row-Major vs Column-Major
+## ০৩ — Latency-র পার্থক্য কেন গুরুত্বপূর্ণ?
 
-Memory hierarchy কেবল হার্ডওয়্যার ইঞ্জিনিয়ারদের মাথা ব্যথার কারণ নয়; হাই-লেভেল সফটওয়্যার পারফরম্যান্সেও এর সরাসরি প্রভাব রয়েছে।
+"Register দ্রুত, RAM ধীর" — বলা সহজ।
 
-C বা C++-এর মতো ভাষায় ২D Array মেমরিতে মূলত **Row-Major Order**-এ পর পর সাজানো থাকে। অর্থাৎ, মেমরির অ্যাড্রেসগুলোতে প্রথম সারি (Row 0)-র সব উপাদান পাশাপাশি বসে, তার ঠিক পরপরই দ্বিতীয় সারি (Row 1)-র উপাদানগুলো বসে।
+আসল কথাটা হলো, এই latency-গুলো একই scale-এর নয়। Hierarchy-র নিচের দিকে নামলে access time অনেক গুণ বেড়ে যেতে পারে।
 
-নিচের দুটি Loop লক্ষ করুন। দুটোই একই Matrix-এর সব উপাদানের যোগফল বের করে, কিন্তু তাদের পারফরম্যান্স সম্পূর্ণ ভিন্ন:
+আর clock cycle-এর সংখ্যাও কোনো memory technology-র স্থায়ী বৈশিষ্ট্য নয়। একটা নির্দিষ্ট access কত cycle নেবে, সেটা processor-এর clock frequency, architecture আর সেই particular access-এর ওপর নির্ভর করে।
+
+তাই নির্দিষ্ট সংখ্যা মুখস্থ করার চেয়ে এই mental model-টা কাজে লাগবে:
+
+**[DIAGRAM · mental model]**
+
+```text
+Closer to the CPU
+→ generally lower latency
+
+Farther down the hierarchy
+→ generally higher latency
+```
+
+**[WIDGET · LatencyScale]** — "সবচেয়ে কাছের access = ১ সেকেন্ড" ধরে দূরত্বের অনুভব। Order of magnitude, hardware-এর মাপ নয়।
+
+CPU-কে যদি প্রতিটা data access-এর জন্য বারবার অনেক ধীর layer পর্যন্ত অপেক্ষা করতে হতো, তাহলে execution প্রায়ই data-র জন্য বসে থাকত। এই অবস্থাকে বলা হয় **[HOVER: stall]**।
+
+তাই hierarchy-র মূল লক্ষ্যটা এক লাইনে:
+
+> **যে data এখন বা খুব শিগগির দরকার হতে পারে, তার অন্তত কিছু অংশ CPU-র কাছের দ্রুত layer-এ রাখা।**
+
+কিন্তু cache তো ছোট। পুরো program-এর data সেখানে ধরবে না। তাহলে hardware বুঝবে কীভাবে কোন data কাছে রাখলে কাজে লাগবে? এখানেই আসে locality।
+
+---
+
+## ০৪ — Locality: কেন hierarchy কাজ করে
+
+এত ছোট cache দিয়ে লাভটা হয়, কারণ অনেক program memory access করার সময় **[HOVER: locality]** দেখায়।
+
+সব program-এর access pattern একরকম নয়, সব access predictable-ও নয়। কিন্তু অনেক common workload-এ দুটো pattern খুব বেশি দেখা যায়।
+
+### Temporal locality
+
+এই মুহূর্তে যে data access হয়েছে, অল্প সময়ের মধ্যে সেটাই আবার access হওয়ার সম্ভাবনা থাকে — কোনো loop-এর counter, বারবার ব্যবহার করা variable, বা বারবার কল হওয়া function-এর data।
+
+> **Recently used data আবার লাগতে পারে।**
+
+### Spatial locality
+
+এখন যে memory address access হয়েছে, তার আশেপাশের address-গুলোও শিগগির লাগতে পারে। যেমন একটা array sequentially traverse করলে:
+
+**[DIAGRAM · sequential access]**
+
+```text
+arr[0]
+arr[1]
+arr[2]
+arr[3]
+...
+```
+
+একটা element-এর পরে সাধারণত তার কাছের element-ই আসে।
+
+> **কাছের data-ও শিগগির দরকার হতে পারে।**
+
+Cache এই দুই ধরনের locality-ই কাজে লাগায়। এই কারণেই CPU যে byte চেয়েছে শুধু সেটা cache-এ আনা সবচেয়ে ভালো কৌশল নাও হতে পারে — আশেপাশের data সহ একটা ছোট block আনা লাভজনক হতে পারে।
+
+### Cache line: cache আসলে কীভাবে data আনে?
+
+Cache সাধারণত একেকটা byte আলাদা করে নয়, বরং **[HOVER: cache line]** নামের fixed-size block ধরে data manage করে। অনেক modern CPU-তে একটা cache line 64 byte, যদিও exact size architecture অনুযায়ী বদলায়।
+
+ধরুন CPU `arr[0]` access করল, আর সেই access-এ **[HOVER: cache miss]** হলো। তখন সেই address-কে ধারণ করা cache line-টা hierarchy-র নিচের level থেকে আনা হতে পারে। সেই line-এর ভেতরে `arr[1]`, `arr[2]` আর আরও কাছের element-ও থাকতে পারে — ফলে পরের access-গুলো cache থেকেই মিটে যেতে পারে।
+
+> **Cache line হলো cache-এর transfer বা storage-এর একক।** "CPU সবসময় RAM থেকে ঠিক 64 byte চায়" — এমন কোনো universal নিয়ম এটা নয়।
+
+নিচের যন্ত্রে একটা address-এ চাপ দিয়ে দেখুন — line-এর বাকি অংশও কীভাবে সঙ্গে চলে আসে:
+
+**[WIDGET · CacheLineLocality]**
+
+### কোড লেভেলে প্রভাব: row-major vs column-major
+
+Memory hierarchy শুধু hardware engineer-দের মাথাব্যথা নয় — সাধারণ code-এর performance-এও এর সরাসরি প্রভাব পড়ে।
+
+C-র built-in multidimensional array memory-তে row-major order-এ contiguousভাবে সাজানো থাকে — এক row-এর সব element পাশাপাশি, তারপরেই পরের row।
+
+নিচের দুটো loop একই matrix-এর সব element যোগ করে, কিন্তু access pattern আলাদা:
 
 ```c
 #define SIZE 2048
 int arr[SIZE][SIZE];
 
-// Approach A: Cache-Friendly (Row-Major Traversal)
+// Approach A: row-major traversal
 long long sumA = 0;
 for (int i = 0; i < SIZE; i++) {
     for (int j = 0; j < SIZE; j++) {
-        sumA += arr[i][j]; // পর পর মেমরি অ্যাড্রেস এক্সেস হচ্ছে
+        sumA += arr[i][j];   // neighbouring addresses
     }
 }
 
-// Approach B: Cache-Hostile (Column-Major Traversal)
+// Approach B: column-major traversal
 long long sumB = 0;
 for (int j = 0; j < SIZE; j++) {
     for (int i = 0; i < SIZE; i++) {
-        sumB += arr[i][j]; // বিশাল মেমরি ল্যাম্প/স্ট্রাইড মারছে
+        sumB += arr[i][j];   // large-stride jumps
     }
 }
 ```
 
-### কেন Approach A চার থেকে পাঁচ গুণ দ্রুত?
+Approach A-র inner loop-এ পাশাপাশি address পড়া হয়:
 
-- **Approach A তে (`arr[i][j]`):** ইটের ওপর ইট সাজানোর মতো Inner Loop-এ মেমরির পর পর উপাদান পড়া হয়। `arr[0][0]` এক্সেস করার সাথে সাথে হার্ডওয়্যার একটি 64-byte-এর **Cache Line** লোড করে ফেলে, যার ভেতরে `arr[0][1]`, `arr[0][2]` আগে থেকেই চলে আসে। ফলে পরবর্তী এক্সেসগুলোতে ঘন ঘন **Cache Hit** হয়।
-- **Approach B তে (`arr[i][j]`):** Inner loop-এ প্রতি পদক্ষেপে `i` পাল্টাচ্ছে, অর্থাৎ মেমরিতে `SIZE * sizeof(int)` বাইট দূরের (৮ কিলোবাইট দূরের) অ্যাড্রেসে লাফ দেওয়া হচ্ছে। এই বিশাল লাফকে বলে **Stride**। ফলে প্রতিবার চাওয়া ডেটাটি বর্তমান Cache Line-এ পাওয়া যায় না। এতে ঘটে মারাত্মক **Cache Miss**, এবং প্রসেসরকে বাধ্য হয়ে বারবার RAM-এ দৌড়াতে হয়।
+**[DIAGRAM · approach a · row-major]**
 
-এ কারণেই Array ট্রাভার্সাল সবসময় Linked List-এর চেয়ে দ্রুত হয়, Redis কেন In-Memory হওয়ার কারণে এত কম Latency দেয়, কিংবা কেন Matrix multiplication অপটিমাইজ করতে Cache Blocking ব্যবহার করা হয়।
-
----
-
-// SRAM আর DRAM: ভেতরে পার্থক্য কী?
-
-L1, L2, L3 cache আর RAM — সবই semiconductor memory। কিন্তু ভেতরের ট্রানজিস্টর বিন্যাসে রয়েছে বড় ফারাক:
-
-```
-SRAM Cell (6 Transistors per bit):
-        VDD
-         |
-    +----+----+
-    | Trans.  |  <-- Flip-Flop Latch (High Speed, No Refresh)
-    +----+----+
-         |
-        GND
-
-DRAM Cell (1 Transistor + 1 Capacitor per bit):
-       Word Line
-           |
-       [Transistor] --- (Capacitor holds charge) ---> GND
-           |
-       Bit Line
+```text
+arr[0][0]
+arr[0][1]
+arr[0][2]
+arr[0][3]
+...
 ```
 
-### SRAM (Static RAM)
+একটা cache line একবার চলে এলে সেই line-এর আরও অনেক element কাজে লাগানো যায়। Cache hit-এর সম্ভাবনা বাড়ে।
 
-- **গঠন:** প্রতি ১-বিট ডেটা ধরে রাখতে ৬টি ট্রানজিস্টর দিয়ে তৈরি একটি Flip-Flop ল্যাচ সার্কিট ব্যবহার করা হয়।
-- **বৈশিষ্ট্য:** কোনো চার্জ লিকেজের ঝামেলা নেই, অত্যন্ত দ্রুত (সরাসরি ভোল্টেজ স্টেট সুইচিং)।
-- **সীমা:** ৬টি ট্রানজিস্টর অনেক বেশি জায়গা ডোমিনেট করে, বিদ্যুৎ খরচ বেশি, এবং এটি প্রস্তুত করা অত্যন্ত ব্যয়বহুল। তাই এটি কেবল CPU Cache-এ অল্প পরিমাণে ব্যবহার করা হয়।
+Approach B-তে inner loop-এ `i` বাড়ে, তাই access-গুলো হয়:
 
-### DRAM (Dynamic RAM)
+**[DIAGRAM · approach b · column-major]**
 
-- **গঠন:** প্রতি ১-বিট ডেটার জন্য মাত্র ১টি ট্রানজিস্টর এবং ১টি অতি ক্ষুদ্র ক্যাপাসিটর (Capacitor) ব্যবহার করা হয়।
-- **বৈশিষ্ট্য:** ডেনসিটি মারাত্মক বেশি — একটি ক্ষুদ্র চিপে কোটি কোটি বিট বসানো যায়, তাই এটি বেশ সস্তা।
-- **সীমা:** ক্যাপাসিটর হলো চার্জ ধরে রাখা এক ধরণের বালতির মতো, যার ইলেকট্রন সময়ের সাথে সাথে লিক বা নিঃসৃত হয়ে যায়। ফলে প্রতি কয়েক মিলিসেকেন্ড পরপর DRAM-এর প্রতিটি সেলকে আবার বিদ্যুৎ দিয়ে রিফ্রেশ (Refresh Cycle) করতে হয়। এই রিফ্রেশ সাইকেল এবং ক্যাপাসিটর চার্জ/ডিসচার্জ হওয়ার জন্য প্রয়োজনীয় অতিরিক্ত মেমরি বাস Latency-ই DRAM-কে SRAM-এর চেয়ে ধীরগতির করে তোলে।
+```text
+arr[0][0]
+arr[1][0]
+arr[2][0]
+arr[3][0]
+...
+```
 
----
+`SIZE = 2048` আর `sizeof(int) = 4` হলে প্রতিটা access-এর মাঝে দূরত্ব:
 
-// Volatility: power গেলে কী হয়?
+**[DIAGRAM · stride]**
 
-মেমরি লেয়ারগুলোর মধ্যে স্থায়ীত্বের ভিত্তিতে একটি মৌলিক বিভাজন রয়েছে:
+```text
+2048 × 4 = 8192 bytes
+```
 
-- **Volatile Memory (অস্থায়ী):** Register, L1/L2/L3 Cache, এবং RAM। বিদ্যুৎ সরবরাহ বন্ধ হওয়ার সাথে সাথেই এদের ভেতরে থাকা সমস্ত চার্জ এবং ফিপ-ফ্লপের ভোল্টেজ স্টেট শূন্য হয়ে যায়। অর্থাৎ সমস্ত ডেটা সম্পূর্ণ মুছে যায়।
-- **Non-Volatile Storage (স্থায়ী):** SSD এবং HDD। বিদ্যুৎ ছাড়াও এরা ডেটা ধরে রাখতে পারে, তবে এদের স্ট্রাকচার সম্পূর্ণ ভিন্ন:
-    - **HDD (Hard Disk Drive):** এখানে একটি মেটালিক প্লাটারের ওপর চুম্বকীয় ক্ষেত্র (Magnetic North/South Orientation) হিসেবে ০ এবং ১ সেভ করা হয়। ফিজিক্যাল রিড/রাইট হেড স্পিন করে ডেটা লেখে বা পড়ে।
-    - **SSD (Solid State Drive):** কোনো নড়াচড়া করার যন্ত্রাংশ নেই। এটি তৈরি **NAND Flash Memory** দিয়ে। এখানে **Floating Gate Transistor** বা Charge Trap সেলের ভেতরের ইনসুলেটর স্তরের মাঝে ইলেকট্রন আটকে রাখা হয় (Electron Tunneling)। একবার ইলেকট্রন ট্র্যাপড হলে বিদ্যুৎ না থাকলেও বছরের পর বছর তা ১ বা ০ স্টেট ধরে রাখে।
+অর্থাৎ পরের element পেতে memory-তে প্রায় ৮ KB লাফ দিতে হচ্ছে। এতে spatial locality খারাপ হয় — একই cache line আবার কাজে লাগার সুযোগ কমে যায়, cache miss-এর হার অনেক বেড়ে যেতে পারে।
 
----
+তাই Approach A সাধারণত Approach B-র চেয়ে অনেক বেশি cache-friendly। তবে **ঠিক কত গুণ দ্রুত হবে, সেটা hardware, compiler আর workload-এর ওপর নির্ভর করে।**
 
-// পুরো ছবিটা একবার
+> **একই algorithmic result-এর জন্যও memory access pattern performance বদলে দিতে পারে।**
 
-কল্পনা করা যাক CPU কোনো একটি নির্দেশ পালনের জন্য একটি নির্দিষ্ট মেমরি অ্যাড্রেসের ডেটা চাইল:
+এই একই locality principle-এর কারণেই data structure বা algorithm বাছার সময় শুধু Big-O complexity নয়, memory access pattern-ও গুরুত্বপূর্ণ হতে পারে। নিচের যন্ত্রে দুই mode toggle করে hit/miss গুনে দেখুন:
 
-1. **Register Check:** CPU প্রথমে নিজের Register চেক করে। পেলে সাথে সাথে ব্যবহার করে।
-2. **L1, L2, L3 Pipeline Check:** না পেলে L1 Cache-এ যায়। সেখানে না থাকলে (Cache Miss) L2, এবং এরপর L3 Cache স্ক্র্যান করে।
-3. **Main Memory Access:** L3-তেও ডেটা না থাকলে প্রসেসর সিস্টেম বাস পেরিয়ে RAM-এ যায়। যদি RAM-এ ডেটা পেয়ে যায়, তবে সেই 64-byte Cache Line-টি L3, L2 পার হয়ে L1 Cache এবং Register-এ রিফিল করা হয়।
-4. **Page Fault (Storage Access):** যদি ডেটা RAM-এও না থাকে (Virtual Memory Page Fault), তবে Operating System সিগন্যাল পায়। OS ড্রাইভ থেকে (SSD/HDD) ব্লক এনে RAM-এ লোড করে। এই সময়ে CPU লক্ষ লক্ষ সাইকেল অপেক্ষায় অলস বসে থাকে।
-
-এই কারণেই ভালো developer memory hierarchy-র দিকে খেয়াল রাখে। Array-এ locality maintain করে। Random access কম করে। ছোট কাজের ডেটা cache-fit রাখার চেষ্টা করে।
+**[WIDGET · RowColumnTraversal]**
 
 ---
 
-// আধুনিক প্রসেসরের বাস্তব জটিলতা: Cache Coherence
+## ০৫ — SRAM আর DRAM: ভেতরে পার্থক্য কী?
 
-বাস্তব প্রসেসরে মেমরি হারার্কি চালানো আরও চ্যালেঞ্জিং, বিশেষ করে Modern Multi-core CPU-তে।
+Cache আর main RAM — দুটোই semiconductor memory, কিন্তু সাধারণত এদের storage cell একরকম নয়।
 
-একটি প্রসেসরে যদি ৮টি Core থাকে, তবে ৮টি Core-এর আলাদা আলাদা L1 এবং L2 Cache থাকে। এখন কথা হলো:
+### SRAM — cache-এর দিকে
 
-- **Core 1** যদি তার L1 Cache-এ থাকা কোনো Variable-এর মান বদলে `X = 5` থেকে `X = 10` করে দেয়,
-- আর একই সময়ে **Core 2** যদি তার নিজস্ব L1 Cache থেকে `X`এর মান পড়তে চায়, সে তো পুরোনো মান `X = 5` পাবে!
+**[HOVER: SRAM]** (Static RAM) সাধারণত একাধিক transistor দিয়ে তৈরি একটা bistable cell ব্যবহার করে bit ধরে রাখে; common design-এ ৬-transistor cell দেখা যায়।
 
-এই সমস্যা সমাধান করতে প্রসেসর লেভেলে হার্ডওয়্যারProtocol (যেমন **MESI Protocol**: Modified, Exclusive, Shared, Invalid) কাজ করে। যখনই কোনো Core তার স্থানীয় Cache-এ কোনো ডেটা পরিবর্তন করে, সে একটি বাস বার্তা (Bus Snoop) পাঠিয়ে বাকি সব Core-এর Cache-এ থাকা ওই লাইনের কপিকে সাথে সাথে "Invalid" ঘোষণা করে দেয়।
+সুবিধা: খুব দ্রুত access, আলাদা refresh cycle লাগে না, আর CPU-র কাছাকাছি ঘন ঘন access করা data-র জন্য উপযুক্ত।
+
+অসুবিধা: প্রতি bit-এ বেশি hardware লাগে, তাই storage density কম — একই capacity বানাতে বেশি silicon area লাগে।
+
+এই কারণেই SRAM তুলনামূলক ছোট আর দ্রুত cache-এর জন্য উপযোগী।
+
+### DRAM — main memory-র দিকে
+
+**[HOVER: DRAM]** (Dynamic RAM) সাধারণত একটা transistor আর একটা capacitor-ভিত্তিক cell দিয়ে bit রাখে। Capacitor-এ জমা charge সময়ের সঙ্গে leak করে, তাই DRAM-কে নিয়মিত **refresh** করতে হয়।
+
+এর বড় সুবিধা density — অনেক বেশি bit খুব ছোট physical area-তে রাখা যায়। তাই large-capacity main memory-র জন্য DRAM উপযোগী।
+
+কিন্তু এর cell structure আর read/write process SRAM-এর তুলনায় বেশি জটিল, তাই latency-ও বেশি।
+
+**[DIAGRAM · trade-off]**
+
+```text
+SRAM → faster, larger per-bit footprint, more expensive per bit
+DRAM → slower, denser, cheaper per bit
+```
+
+এই trade-off-টাই বুঝিয়ে দেয় কেন cache আর main memory আলাদা technology-তে বানানো হয়।
+
+**[WIDGET · SRAMvsDRAM]**
 
 ---
 
-// এই আর্টিকেলে কী শিখলাম
+## ০৬ — Volatility: power গেলে কী হয়?
 
-- **এক memory দিয়ে কাজ হয় না।** Speed, capacity, cost — তিনটার মধ্যে trade-off আছে, তাই hierarchy দরকার।
-- **Cache কাজ করে locality-র কারণে।** প্রোগ্রাম random access করে না — যা এখন লাগছে, তার আশপাশ কিছুক্ষণ পরেও লাগবে।
-- **Cache line হলো hierarchy-র magic ingredient।** ডেটা byte-by-byte না, chunk হিসেবে move করে।
-- SRAM দ্রুত কিন্তু ৬-ট্রানজিস্টরের কারণে বড় ও ব্যয়বহুল। DRAM ডেন্স ও সস্তা, কিন্তু ক্যাপাসিটর রিফ্রেশিং-এর কারণে ধীর।
-- **Volatile আর non-volatile-এর পার্থক্য physical।** চিপের ভেতরের ফ্লিপ-ফ্লপ বা ক্যাপাসিটর বিদ্যুৎ ছাড়া স্টেট রাখতে পারে না (Volatile), কিন্তু ফ্ল্যাশ মেমরির ট্র্যাপড ইলেকট্রন বা ম্যাগনেটিক প্যাটার্ন বিদ্যুৎ ছাড়াও মেমরি ধরে রাখে (Non-Volatile)।
+Memory-কে আরেকভাবেও ভাগ করা যায়: **power বন্ধ হওয়ার পর data কি নির্ভরযোগ্যভাবে থেকে যায়?** এটাই **[HOVER: volatile আর non-volatile]**-এর পার্থক্য।
+
+Register, cache আর DRAM-based main memory volatile। মানে এগুলো power ছাড়া stored state অনির্দিষ্টকাল ধরে রাখার জন্য designed নয় — power চলে গেলে আগের data আর নির্ভরযোগ্যভাবে থাকে না।
+
+SSD আর HDD non-volatile। power ছাড়াও এরা data ধরে রাখতে পারে, আর এদের physical technology আলাদা:
+
+- **HDD:** magnetic storage ব্যবহার করে।
+- **SSD:** NAND flash memory ব্যবহার করে, যেখানে electrical charge দিয়ে stored state বহুদিন ধরে রাখা যায়।
+
+**[DIAGRAM · state retention]**
+
+```text
+Volatile
+→ requires power to retain state
+
+Non-volatile
+→ can retain state without continuous power
+```
+
+এখানে এই distinction-টুকুই যথেষ্ট। physical implementation-এর গভীর detail পরে দরকার হলে দেখা যাবে।
 
 ---
 
-// পরের article-এ
+## ০৭ — পুরো ছবিটা একবার
 
-এখন পর্যন্ত সব দেখা হয়েছে hardware level-এ। CPU, register, cache, RAM, disk — সব physical Component।
+ধরুন CPU-কে এমন একটা instruction execute করতে হবে, যার জন্য memory থেকে একটা value load করা দরকার। Simplifiedভাবে গল্পটা এমন:
 
-কিন্তু বাস্তবে laptop-এ একই সাথে ৫০টা program চলছে। Browser, Spotify, VS Code, Slack, video call, terminal — সব একই RAM, একই CPU share করছে। কে ঠিক করে কে কখন কতটুকু resource পাবে? কে ঠিক করে কোন program-এর ডেটা memory-র কোন address-এ থাকবে? কে একটা program-কে অন্য program-এর memory-তে ঢুকতে বাধা দেয়?
+- **CPU memory access-এর প্রয়োজন বুঝল।** Instruction-এর control information থেকে CPU জানে যে একটা memory value লাগবে, আর কোন address থেকে সেটা নিতে হবে।
+- **কাছের cache-এ খোঁজা হয়।** L1 data cache-এ value থাকলে সেটা cache hit — CPU কম latency-তেই data পেয়ে যায়।
+- **না থাকলে নিচের level-এ।** Processor-এর design অনুযায়ী request L2, তারপর L3-এ যেতে পারে। যেখানে data পাওয়া যায়, সেখান থেকে সেটা CPU-র দিকে ফেরে, আর প্রয়োজন অনুযায়ী cache-এ রাখা হতে পারে। কোনো cache-এই না থাকলে request main memory পর্যন্ত যায়।
+- **Data পেলে execution এগোয়।** Data execution machinery-তে ফিরে এলে instruction-এর বাকি অংশ চলতে পারে, আর result শেষ পর্যন্ত কোনো register-এ বসতে পারে।
 
-এইখানে আসে Operating System। Hardware-এর ওপরে সবচেয়ে গুরুত্বপূর্ণ software layer — সবার মধ্যে coordinator। পরের আর্টিকেলে সেই গল্প।
+**[DIAGRAM · lookup]**
 
-**[পরের article: ৬. Operating System — Grand Conductor]**
+```text
+CPU
+ ↓
+L1
+ ↓
+L2
+ ↓
+L3
+ ↓
+RAM
+```
+
+উপরের layer-এ data পাওয়া গেলে নিচ পর্যন্ত যেতেই হয় না। এই কারণেই cache hit মূল্যবান, আর cache miss expensive হতে পারে। নিচের যন্ত্রে data কোথায় পাওয়া গেল সেটা বেছে নিয়ে পুরো cascade দেখুন:
+
+**[WIDGET · MemoryLookupCascade]**
+
+### Page fault কোথায় আসে?
+
+এটা আলাদা একটা concept, যেটা আমরা এখানে বিস্তারিত করছি না। Virtual memory-তে CPU যে address ব্যবহার করছে, তার required page যদি RAM-এ এই মুহূর্তে না থাকে, তখন **[HOVER: page fault]** ঘটতে পারে, আর operating system-কে জড়াতে হয়।
+
+> **Cache miss মানে relevant cache-এ data পাওয়া যায়নি। Page fault হলো virtual memory system-এর একটা আলাদা ঘটনা।** দুটোকে গুলিয়ে না ফেলাই ভালো।
 
 ---
 
-### Hover Definitions
+## ০৮ — বাস্তবতার কোণা: একাধিক core হলে?
 
-**[HOVER: cache line]***Cache line হলো ডেটার সেই মৌলিক unit যেটা CPU একবারে memory থেকে cache-এ আনে। সাধারণত 64 byte। মানে CPU কখনো ১ byte আনে না — যে address চাচ্ছে, তার আশেপাশের 64 byte পুরোটা একসাথে টেনে নেয়। Spatial locality কাজ করে এই কারণেই — কাছের ডেটা automatically চলে আসে।*
+একাধিক CPU core থাকলে আরেকটা সমস্যা আসে।
 
-## Why so many kinds of memory?
+একই memory data-র copy একাধিক core-এর private cache-এ থাকতে পারে। কোনো একটা core সেই data বদলালে অন্য core যেন অনির্দিষ্টকাল পুরোনো, inconsistent copy ব্যবহার করতে না থাকে — তার জন্য processor-এ **[HOVER: cache coherence]** mechanism থাকে।
+
+> **একাধিক core-এর private cache থাকলে cached copy-গুলোর মধ্যে consistency রাখতে hardware-এর বাড়তি coordination দরকার হয়।**
+
+এখানে অনেক protocol আর hardware mechanism জড়িত। MESI-র মতো protocol-এর বিস্তারিত পরে আলাদা করে দেখা যেতে পারে।
+
+---
+
+## এই আর্টিকেলে কী শিখলাম
+
+- একটা memory technology সবদিক থেকে সেরা হতে পারে না — latency, capacity আর cost-এর মধ্যে trade-off আছে, তাই computer একাধিক storage layer ব্যবহার করে।
+- Memory hierarchy CPU-কে দরকারি data দ্রুত পাওয়ার সুযোগ দেয় — register আর cache ছোট কিন্তু দ্রুত, RAM অনেক বড়, storage আরও বড় কিন্তু অনেক ধীর।
+- Cache দাঁড়িয়ে আছে locality-র ওপর — recently used data আবার লাগতে পারে (temporal), আর কাছের address-ও শিগগির লাগতে পারে (spatial)।
+- Cache line কাছের data-কে কাজে লাগায় — একটা miss-এর সময় আশেপাশের data সহ একটা block আসতে পারে, ফলে পরের access-গুলো hit হতে পারে।
+- SRAM আর DRAM আলাদা trade-off দেয় — SRAM দ্রুত কিন্তু প্রতি bit-এ জায়গা বেশি; DRAM dense আর সস্তা, কিন্তু latency বেশি ও refresh লাগে।
+- Volatile আর non-volatile-এর পার্থক্য state retention-এর — volatile storage power ছাড়া state নির্ভরযোগ্যভাবে রাখতে পারে না, non-volatile পারে।
+
+---
+
+## পরের article-এ: Operating System
+
+এখন আমরা computer-এর memory hierarchy-র গল্পটা জানি। কিন্তু laptop খুলে দেখুন — browser, VS Code, Spotify, terminal, video call, সব একসাথে চলছে। এখান থেকেই নতুন প্রশ্ন: একটা program নিজের memory space পায় কীভাবে? একটা program হঠাৎ করে অন্য program-এর memory-তে ঢুকে যেতে পারে না কেন? কে ঠিক করে কোন program কখন CPU পাবে? আর virtual memory কীভাবে RAM-কে প্রতিটা program-এর কাছে নিজের আলাদা address space-এর মতো দেখায়?
+
+এই কাজগুলোতে operating system-এর পাশাপাশি CPU-র কিছু hardware mechanism-ও জড়িত। পরের আর্টিকেলে আমরা software আর hardware-এর সেই boundary-তে যাব।
+
+**[পরের article: ০৬ — Operating System: The Grand Conductor]**
+
+**Hover terms used** (definitions live in `glossary.ts`): `stall`, `locality`, `cacheline`, `cachemiss`, `sram`, `dram`, `volatile`, `pagefault`, `cachecoherence`
+
+---
+---
+
+# The Memory Hierarchy
+
+## Why one memory is never enough
+
+> *Blocks marked `[DIAGRAM · …]` render through the `<Diagram>` primitive (flow art on paper, not a code well). `[WIDGET · …]` marks an interactive instrument. Hover definitions live only in `src/articles/glossary.ts`.*
 
 Does your laptop have just one memory?
 
 The natural answer — yes, RAM. 16 GB or 32 GB, whatever it is.
 
-But actually, your laptop right now has five, six, sometimes seven or eight kinds of memory working at once. Some are so small they add up to just a few kilobytes total, but so fast the CPU can touch them within a single heartbeat. Some are so big they hold terabytes, but the CPU has to wait thousands of clock cycles to reach them.
+But in reality several kinds of storage are working at once in there. Some are so small they hold only a handful of values, but they sit right against the CPU's execution logic. Some are so large they hold terabytes, but the CPU has to wait far longer for anything that comes from them.
 
-Why this arrangement? Why can't we just have one kind of memory?
-
-That's today's story.
+Why this arrangement? In the last article we followed an instruction through fetch, decode and execute. But where do those instructions and their data actually live, and why can't one memory do the whole job? That's today's story.
 
 ---
 
-## Why can't we just have one memory?
+## 01 — Why can't we just have one memory?
 
-Simple question. Why not just build one big, fast memory and use it for everything?
+Simple question:
 
-You could, if it were affordable.
+**Why not build one huge memory and make it as fast as the storage closest to the CPU?**
 
-There's a fundamental trilemma in memory design. You want three things at once — **High Speed**, **Large Capacity**, and **Low Cost**. But no single memory ever gives you all three. You get any two; the third you have to give up.
+The problem is engineering trade-offs.
 
-- **Very Fast + Large Capacity = Extremely Expensive** (Cost-prohibitive for consumer hardware)
-- **Very Fast + Low Cost = Small Capacity** (Extremely limited footprint)
-- **Large Capacity + Low Cost = High Latency** (DRAM, Storage media)
+A memory technology has to balance things like:
 
-Because of this trilemma, a single unified memory is engineeringly unfeasible. The solution is **Hierarchy**: rather than one uniform pool, memory is organized into progressive, stacked layers.
+- **Low latency** — data arrives quickly
+- **High capacity** — lots of data can be stored
+- **Low cost** — the system stays affordable
 
-The fastest layer sits at the top — but it is small enough to hold only immediate data. Below it lies a slightly larger, slightly slower layer. Below that, larger and slower still. Descending down the stack, the largest and highest-latency storage sits at the bottom — holding persistent state.
+No single storage technology is simultaneously best at all of these.
 
-Let's look at the layers up close.
+**[DIAGRAM · trade-off]**
+
+```text
+Very fast + very large
+→ very expensive
+
+Very fast + inexpensive
+→ small capacity
+
+Very large + inexpensive
+→ higher latency
+```
+
+So computer engineers do not rely on one memory technology. Instead, storage with different trade-offs is arranged in layers — the smallest and fastest sits closest to the CPU, larger and slower sits further away.
+
+That layered arrangement is the **Memory Hierarchy**.
+
+> **There is no universal rule that every computer has exactly the same number of memory layers.** The number of levels, their sizes, whether they are shared — all of it varies by architecture. We're using a simplified hierarchy here to get at the underlying idea.
+
+> **// three questions about memory**
+>
+> When thinking about a storage layer, ask three separate questions:
+>
+> **How quickly can we get the data?** → Latency
+>
+> **How much data can it hold?** → Capacity
+>
+> **How expensive is each unit of capacity?** → Cost
+>
+> The memory hierarchy is largely an engineering solution for balancing these three.
 
 ---
 
-## The layers
+## 02 — The layers
 
-Here are the memories running in your laptop right now:
+A simplified laptop or desktop memory hierarchy can be pictured like this:
 
-**Register** — right inside the CPU. Total size a few thousand bits (less than a page of text). Speed: one clock cycle. Whatever the CPU is working on right now — all of it lives here.
+- **Registers** — the storage closest to the CPU's execution logic. They hold values, addresses and state needed directly by ongoing computation. Their capacity is tiny; their access latency is the lowest of all.
+- **L1 Cache** — a small cache very close to each core. It is often divided into separate areas for instructions and data — L1i and L1d.
+- **L2 Cache** — larger than L1, generally with somewhat higher latency. In many architectures it is closely associated with a core, though the exact design varies.
+- **L3 Cache** — a larger cache layer. In many modern multi-core processors it can be shared among cores, but the exact organisation depends on the architecture.
+- **RAM** — the system's main memory. It holds a large part of running programs and their data, with far more capacity than caches or registers, and far higher latency.
+- **SSD / HDD** — persistent storage. Far more capacity, and it keeps data when power is removed. But it is much slower for the CPU to reach than RAM.
 
-**L1 Cache** — inside the CPU, separate for each core. Size 32-64 KB. Speed 1-2 clock cycles. Actually split into two parts — L1i (for instructions) and L1d (for data).
+**[DIAGRAM · hierarchy]**
 
-**L2 Cache** — also inside the CPU, separate for each core. Size 256 KB to 1 MB. Speed 3-10 clock cycles.
+```text
+Registers
+   ↓
+L1 Cache
+   ↓
+L2 Cache
+   ↓
+L3 Cache
+   ↓
+RAM
+   ↓
+SSD / HDD
+```
 
-**L3 Cache** — shared across all cores. Size 4 to 64 MB. Speed 10-30 clock cycles.
+Moving upward generally means:
 
-**RAM (Main Memory)** — outside the CPU, on the motherboard. Size 8-32 GB, sometimes more. Speed 100-300 clock cycles.
+> **Smaller → faster → more expensive per unit of capacity**
 
-**SSD/HDD** — storage. Size 256 GB to many TB. Speed 100,000+ clock cycles.
+Moving downward generally means:
 
-Six or seven layers in total. Top to bottom — small to big, fast to slow, expensive to cheap. L1, L2, L3 together are called cache.
+> **Larger → slower → cheaper per unit of capacity**
+
+This is a conceptual hierarchy. Real processors can organise these layers differently, share some of them, or leave a particular level out entirely. Tap a layer on the instrument below to see its role:
+
+**[WIDGET · MemoryPyramid]**
+
+### Is cache just "faster RAM"?
+
+Not exactly.
+
+Cache and RAM are both memory, but they are not the same technology at different speeds, and not the same role either. CPU caches are much smaller, lower-latency, and tightly integrated with the processor. Main memory is much larger and holds a much bigger working set.
+
+> The purpose of a cache is not to *replace* RAM. It is to **keep useful data closer to the CPU** so the processor does not have to reach all the way into slower main memory every time.
 
 ---
 
-## Standing on the one-second scale
+## 03 — Why does the latency difference matter?
 
-The raw cycle counts can feel abstract. The real-world performance impact of a 1-cycle access versus a 200-cycle fetch is difficult to visualize without a human scale.
+It is easy to say "registers are fast and RAM is slow."
 
-If we scale a **1-register access to equal 1 human second**, the relative latencies across the stack look like this:
+The point that matters is that these latencies are not on the same scale. Moving down the hierarchy, access time can grow by very large factors.
 
-| **Memory Layer** | **Scaled Latency (Analogy)** | **Actual Hardware Latency** |
-| --- | --- | --- |
-| **Register** | 1 second | ~0.5 ns |
-| **L1 Cache** | 3–4 seconds | ~1–2 ns |
-| **L2 Cache** | 15 seconds | ~4–5 ns |
-| **L3 Cache** | 45 seconds | ~15–20 ns |
-| **RAM (DRAM)** | 5–7 minutes | ~60–100 ns |
-| **NVMe SSD** | 1.5–2 days | ~50–100 µs |
-| **Mechanical HDD** | 2–4 months | ~5–10 ms |
+And a number of clock cycles is not a fixed property of a memory technology either. How many cycles a given access takes depends on the processor's clock frequency, its architecture, and that particular access.
 
-Viewed through this lens: if the execution pipeline had to fetch every piece of operand data directly from secondary storage or RAM, the execution unit would spent virtually all of its operating life stalled waiting for data (**CPU Stall**).
+So rather than memorising exact numbers, keep this mental model:
 
-But there's still a question. If all data lived in L1 or L2 cache, all problems would be solved. But L1 is only 64 KB. There's no way to fit a whole program's data in that little space. How does the hardware ensure that the right data sits in the high-speed cache, while cold data remains in RAM?
+**[DIAGRAM · mental model]**
 
-This is made possible by the **Locality of Reference** principle — an inherent property of program execution behavior.
+```text
+Closer to the CPU
+→ generally lower latency
 
-### Locality: Why This Arrangement Works
+Farther down the hierarchy
+→ generally higher latency
+```
 
-Software access to memory is not stochastic or random; it follows two distinct spatial and temporal patterns:
+**[WIDGET · LatencyScale]** — a feel for how far the distant layers sit if the nearest access took one human second. Orders of magnitude, not hardware measurements.
 
-The way programs access memory isn't random. When a program accesses a variable, it's very likely to access that variable again soon. When it accesses index 5 of an array, the next access is usually index 6 — not index 500.
+If the CPU had to wait on a much slower layer for every piece of data it needed, execution would frequently sit idle waiting. That condition is a **[HOVER: stall]**.
 
-These two patterns have a name — **locality**.
+So the goal of the hierarchy, in one line:
 
-1. **Temporal Locality:** locality in time. Data being accessed right now is very likely to be accessed again a few moments later. A for-loop's counter variables, stack frame variables, or frequently invoked function pointers — these get accessed constantly.
-2. **Spatial Locality:** locality in space. An address being accessed right now is very likely to have its neighbors accessed too. Traversing an array, accessing struct fields, reading through a string — everything is one next to another.
+> **Keep data that is needed now, or likely to be needed soon, in a fast layer close to the CPU.**
 
-Hardware architectures explicitly exploit locality. When the CPU requests a single 1-byte value from RAM, the memory controller does not transfer a single byte over the bus. Instead, it reads and transfers an entire aligned 64-byte block known as a **[HOVER: cache line]**.
+But a cache is small — a whole program's data will not fit. So how does the hardware know which data is worth keeping close? That's where locality comes in.
 
-Why? Because of spatial locality. When the CPU accesses index 5 of an array, the cache line now holds elements around index 5 too. For the next 7-8 iterations, the CPU doesn't even need to go to RAM — the data is already in cache.
+---
 
-### Code-Level Impact: Row-Major vs. Column-Major Traversal
+## 04 — Locality: why the hierarchy works
 
-Memory hierarchy is not merely an underlying hardware abstraction; it directly governs software performance.
+A tiny cache helps because many programs exhibit **[HOVER: locality]** in how they access memory.
 
-Languages like C/C++ lay out multidimensional arrays in **Row-Major Order** in contiguous virtual memory — meaning elements of a row are stored in adjacent, contiguous memory addresses, followed immediately by the next row.
+Not every program has the same access pattern, and not every access is predictable. But two patterns are extremely common.
 
-Consider two matrix summation functions processing the exact same dataset:
+### Temporal locality
+
+Data that was just accessed is likely to be accessed again soon — a loop counter, a frequently used variable, data a function keeps reaching for.
+
+> **Recently used data may be needed again soon.**
+
+### Spatial locality
+
+When one memory address is accessed, nearby addresses are often needed soon as well. Traversing an array sequentially, for instance:
+
+**[DIAGRAM · sequential access]**
+
+```text
+arr[0]
+arr[1]
+arr[2]
+arr[3]
+...
+```
+
+The next access is usually close to the current one.
+
+> **Nearby data may be needed soon too.**
+
+Caches exploit both patterns. Which is why bringing in only the exact byte the CPU asked for is not necessarily the best strategy — pulling in a small block of nearby data can pay off.
+
+### Cache lines: how does a cache bring data in?
+
+Caches generally manage data in fixed-size blocks called **[HOVER: cache lines]**, rather than treating every byte as its own transfer. Many modern CPUs use a 64-byte cache line, although the exact size depends on the architecture.
+
+Say the CPU accesses `arr[0]` and that access is a **[HOVER: cache miss]**. The cache line containing that address may be brought in from a lower level of the hierarchy. That line can also hold `arr[1]`, `arr[2]` and other neighbours — so later accesses may be served straight from the cache.
+
+> **A cache line is a cache's unit of transfer and storage.** It is not a universal rule that the CPU always asks RAM for exactly 64 bytes.
+
+Tap an address on the instrument below and watch the rest of its line arrive with it:
+
+**[WIDGET · CacheLineLocality]**
+
+### Code-level impact: row-major vs column-major
+
+Memory hierarchy isn't only a hardware engineer's concern — it shows up directly in the performance of ordinary code.
+
+C's built-in multidimensional arrays are laid out in row-major order in contiguous memory — a row's elements sit next to each other, followed immediately by the next row.
+
+The two loops below sum the same matrix, but with different access patterns:
 
 ```c
 #define SIZE 2048
-int matrix[SIZE][SIZE];
+int arr[SIZE][SIZE];
 
-// Approach A: Cache-Friendly (Row-Major Traversal)
+// Approach A: row-major traversal
 long long sumA = 0;
 for (int i = 0; i < SIZE; i++) {
     for (int j = 0; j < SIZE; j++) {
-        sumA += matrix[i][j]; // Contiguous physical memory access
+        sumA += arr[i][j];   // neighbouring addresses
     }
 }
 
-// Approach B: Cache-Hostile (Column-Major Traversal)
+// Approach B: column-major traversal
 long long sumB = 0;
 for (int j = 0; j < SIZE; j++) {
     for (int i = 0; i < SIZE; i++) {
-        sumB += matrix[i][j]; // Non-contiguous address jumps (Large Stride)
+        sumB += arr[i][j];   // large-stride jumps
     }
 }
 ```
 
-#### Why Approach A is several times faster:
+Approach A's inner loop reads neighbouring addresses:
 
-- **Approach A (`matrix[i][j]`):** The inner loop increments index `j`, reading memory sequentially. Accessing `matrix[0][0]` loads a 64-byte **Cache Line** that automatically pre-populates `matrix[0][1]`, `matrix[0][2]`, etc. Every subsequent read results in an immediate **Cache Hit**.
-- **Approach B (`matrix[i][j]`):** The inner loop increments index `i`, forcing the pointer to jump by `SIZE * sizeof(int)` bytes (an 8 KB stride in memory) on every single iteration. Because the memory address leaps outside the active 64-byte cache line, every single iteration triggers a **Cache Miss**, stalling the execution unit while waiting for RAM.
+**[DIAGRAM · approach a · row-major]**
 
-This explains why sequential array traversals outperform linked-list pointer-chasing, why database index caching is critical, and why in-memory stores like Redis deliver low sub-millisecond latencies.
-
-### SRAM vs. DRAM: What's Different Inside?
-
-L1/L2/L3 Caches and system RAM are all semiconductor memories, but their fundamental transistor topologies differ significantly:
-
-```
-SRAM Cell (6 Transistors per bit):
-        VDD
-         |
-    +----+----+
-    | Trans.  |  <-- Bistable Latch (High Speed, No Refresh)
-    +----+----+
-         |
-        GND
-
-DRAM Cell (1 Transistor + 1 Capacitor per bit):
-       Word Line
-           |
-       [Transistor] --- (Capacitor holds charge) ---> GND
-           |
-       Bit Line
+```text
+arr[0][0]
+arr[0][1]
+arr[0][2]
+arr[0][3]
+...
 ```
 
-#### SRAM (Static RAM)
+Once a cache line is brought in, many more elements from that same line can be used. The chance of a cache hit goes up.
 
-- **Structure:** Uses a 6-transistor (6T) bistable latching circuit per bit.
-- **Behavior:** Holds bit states purely through differential voltage outputs. Highly stable, zero refresh overhead, and operating at sub-nanosecond latencies.
-- **Trade-off:** High transistor count means lower storage density, higher physical footprint, and significant manufacturing cost. Used exclusively for CPU caches.
+Approach B increments `i` in the inner loop, so the accesses go:
 
-#### DRAM (Dynamic RAM)
+**[DIAGRAM · approach b · column-major]**
 
-- **Structure:** Uses a 1-Transistor 1-Capacitor (1T1C) cell design per bit.
-- **Behavior:** Extremely dense and inexpensive per gigabyte. However, stored electrons in microscopic capacitors continuously leak across the dielectric layer.
-- **Trade-off:** Must be periodically rewritten (**Refresh Cycles**) every few milliseconds. The precharge and refresh overheads, combined with charge transfer latencies, make DRAM fundamentally slower than SRAM.
+```text
+arr[0][0]
+arr[1][0]
+arr[2][0]
+arr[3][0]
+...
+```
 
-### Volatility: What Happens When Power Fails?
+With `SIZE = 2048` and `sizeof(int) = 4`, each access is separated by:
 
-The hierarchy is partitioned by physical state retention:
+**[DIAGRAM · stride]**
 
-- **Volatile Memory:** Registers, Cache (SRAM), and Main Memory (DRAM). They rely on active electrical potential to hold flip-flop latches or capacitive charges. Removing power immediately clears all state information.
-- **Non-Volatile Storage:** Secondary storage media capable of retaining state indefinitely without power:
-    - **HDD (Hard Disk Drive):** Uses physical magnetic platter surfaces where read/write heads align localized magnetic domains (North/South polarization) to represent $0$ and $1$.
-    - **SSD (Solid State Drive):** Uses **NAND Flash Memory** built on **Floating Gate Transistors** or Charge Trap Flash cells. Electrons are injected via high-voltage quantum tunneling into an isolated floating gate layer. Once trapped inside the insulator barrier, the electrons remain trapped for years without electrical power.
+```text
+2048 × 4 = 8192 bytes
+```
 
-### The Complete Execution Lifecycle
+So the inner loop jumps roughly 8 KB through memory every step. That gives poor spatial locality — the chance of reusing the same cache line drops, and cache misses can climb substantially.
 
-When an instruction requires an operand from a memory address:
+Approach A will therefore usually be much more cache-friendly than Approach B. But **the exact performance difference depends on the hardware, the compiler and the workload.**
 
-1. **Register Check:** CPU checks internal registers. If present, execution proceeds instantly.
-2. **Cache Hierarchy Lookup:** On a register miss, the CPU queries L1d Cache. On an L1 miss, it queries L2, then shared L3 Cache.
-3. **RAM Refill:** On an L3 Cache Miss, a bus request is issued to the RAM Memory Controller. When the block is fetched from DRAM, the entire containing 64-byte Cache Line refills L3, L2, L1, and the target Register.
-4. **Secondary Storage Load (Page Fault):** If the requested memory page is unmapped in physical RAM, a hardware interrupt occurs, signaling the Operating System to read the block off the non-volatile drive (SSD/HDD), causing a multi-millisecond process block.
+> **Even when two pieces of code produce the same result, their memory-access patterns can perform very differently.**
 
-That's why good developers pay attention to memory hierarchy. Maintain locality in arrays. Minimize random access. Try to keep small working sets cache-fit.
+This same locality principle is why performance can depend not only on an algorithm's Big-O complexity, but also on its memory-access pattern. Toggle the two modes below and watch the hit/miss count:
 
-### Modern CPU Realities: Cache Coherence
+**[WIDGET · RowColumnTraversal]**
 
-Multicore processor architectures introduce significant cache complexity.
+---
 
-If a multi-core processor has 8 independent cores, each core possesses its own private L1 and L2 caches. If **Core 1** modifies a variable in its private L1 cache from `X = 5` to `X = 10`, **Core 2** reading `X` from its own local L1 cache would observe stale data (`X = 5`).
+## 05 — SRAM vs DRAM: what's different inside?
 
-To prevent data corruption, hardware enforces strict **Cache Coherence Protocols** (e.g., **MESI**: Modified, Exclusive, Shared, Invalid). When a core writes to a cached address, it broadcasts an invalidation signal over the internal interconnect bus, instantly marking matching lines in all other private core caches as "Invalid" and forcing a cache synchronization refill.
+Cache and main memory are both semiconductor memory, but their storage cells are typically built differently.
 
-### What This Article Covered
+### SRAM — toward the cache side
 
-- **One memory doesn't do it all.** There's a trade-off between speed, capacity, and cost, so hierarchy is needed.
-- **Cache works because of locality.** Programs don't access randomly — what's needed now, its neighbors will be needed soon too.
-- **Cache line is the magic ingredient.** Data moves in chunks, not byte-by-byte.
-- **SRAM vs. DRAM:** SRAM uses 6-transistor latches for high-speed cache; DRAM uses dense 1T1C cells requiring refresh cycles for capacity.
-- **The volatile vs non-volatile distinction is physical.** Volatile states depend on active voltage potential; non-volatile media rely on charge traps or magnetic alignments.
+**[HOVER: SRAM]** (Static RAM) generally uses a transistor-based bistable cell to hold a bit; a common design uses six transistors.
 
-### Next Article
+Advantages: very fast access, no periodic refresh cycle, and a good fit for frequently accessed data close to the CPU.
 
-Up till now everything's been at the hardware level. CPU, register, cache, RAM, disk — all physical.
+Disadvantages: more hardware per bit, so lower storage density — the same capacity needs more silicon area.
 
-But in reality your laptop has 50 programs running at once. Browser, Spotify, VS Code, Slack, video call, terminal — all sharing the same RAM, the same CPU. Who decides who gets how much resource, and when? Who decides which memory address a program's data goes to? Who stops one program from stepping into another program's memory?
+Which is why SRAM suits relatively small, fast caches.
 
-This is where the Operating System comes in. The most important software layer above the hardware — the coordinator across everything. Next article: that story.
+### DRAM — toward the main-memory side
 
-### Expanded Hover Definitions
+**[HOVER: DRAM]** (Dynamic RAM) generally stores a bit in a transistor-and-capacitor cell. The charge in that capacitor gradually leaks away, so DRAM has to be **refreshed** periodically.
 
-- **[HOVER: cache line]**
-    
-    A Cache Line is the fundamental, 64-byte aligned unit of data transfer between main memory (DRAM) and the processor cache layers. Whenever a CPU requests a single byte from RAM, the internal memory controller reads and commits the entire containing 64-byte block into cache lines to maximize spatial locality performance.
+Its major advantage is density — a very large number of bits fit into a small physical area, which makes it suitable for large-capacity main memory.
+
+Its cell structure and access process are more involved than SRAM's, so its latency is higher.
+
+**[DIAGRAM · trade-off]**
+
+```text
+SRAM → faster, larger per-bit footprint, more expensive per bit
+DRAM → slower, denser, cheaper per bit
+```
+
+That trade-off is the key to why caches and main memory are built from different technologies.
+
+**[WIDGET · SRAMvsDRAM]**
+
+---
+
+## 06 — Volatility: what happens when power is removed?
+
+Memory can also be split by another question: **does the stored data remain reliably available after power is removed?** That is the **[HOVER: volatile / non-volatile]** distinction.
+
+Registers, caches, and DRAM-based main memory are volatile. They are not designed to retain their stored state indefinitely without power — once power goes, the previous state is no longer reliably there.
+
+SSDs and HDDs are non-volatile. They retain data without continuous power, and their physical technologies differ:
+
+- **HDD:** uses magnetic storage.
+- **SSD:** uses NAND flash memory, where electrical charge represents stored state over long periods.
+
+**[DIAGRAM · state retention]**
+
+```text
+Volatile
+→ requires power to retain state
+
+Non-volatile
+→ can retain state without continuous power
+```
+
+That distinction is all this article needs. The deeper physical implementation can be explored later if it ever matters.
+
+---
+
+## 07 — The complete picture
+
+Suppose the CPU has to execute an instruction that needs a value loaded from memory. In a simplified model, the story runs like this:
+
+- **The CPU needs a memory value.** The instruction's control information tells it that a memory value is required, and what is needed to determine its address.
+- **The nearby cache is checked.** If the value is in the L1 data cache, that is a cache hit — the CPU gets its data at low latency.
+- **If not, lower levels are tried.** Depending on the processor's organisation, the request can proceed to L2, then L3. Wherever the data is found, it is returned toward the CPU and may be placed into one or more cache levels. If it is in no cache at all, the request goes to main memory.
+- **Execution continues.** Once the data reaches the execution machinery, the rest of the instruction can proceed, and a result may eventually land in a register.
+
+**[DIAGRAM · lookup]**
+
+```text
+CPU
+ ↓
+L1
+ ↓
+L2
+ ↓
+L3
+ ↓
+RAM
+```
+
+If the data is found at a higher level, the request never has to travel all the way down. That is why cache hits are valuable and cache misses can be expensive. Pick where the data turns up on the instrument below and watch the whole cascade:
+
+**[WIDGET · MemoryLookupCascade]**
+
+### Where does a page fault fit?
+
+That is a separate concept, and one we won't go into here. In a virtual-memory system, if the page an address falls in isn't currently resident in RAM, accessing it can trigger a **[HOVER: page fault]** and pull in the operating system.
+
+> **A cache miss means the data wasn't found in the relevant cache. A page fault is a separate virtual-memory event.** Keeping the two apart makes the next article easier.
+
+---
+
+## 08 — Reality corner: what changes with multiple cores?
+
+Multiple CPU cores introduce another problem.
+
+The same piece of memory data may have copies in the private caches of different cores. If one core changes that data, the others must not keep using an inconsistent copy indefinitely — so processors implement **[HOVER: cache coherence]** mechanisms.
+
+> **When multiple cores hold private caches, extra hardware coordination is needed to keep the cached copies consistent.**
+
+Many protocols and hardware mechanisms are involved. Protocols such as MESI can be explored separately later.
+
+---
+
+## What this article covered
+
+- No single memory technology is best at everything — latency, capacity and cost trade off against each other, so computers use several storage layers.
+- The hierarchy helps the CPU reach useful data quickly — registers and caches are small but fast, RAM is much larger, storage larger still but far slower.
+- Caches rely on locality — recently used data may be needed again (temporal), and nearby addresses may be needed soon too (spatial).
+- Cache lines exploit nearby data — a miss can bring in a block containing neighbours, so later accesses may become hits.
+- SRAM and DRAM make different trade-offs — SRAM is faster but takes more area per bit; DRAM is denser and cheaper per bit, but higher latency and needs refreshing.
+- Volatile and non-volatile differ in state retention — volatile storage can't reliably hold state without power; non-volatile can.
+
+---
+
+## Next article: Operating System
+
+We now understand the basic idea of the memory hierarchy. But look at a real laptop: browser, VS Code, Spotify, terminal, a video call, all running at once. That raises new questions. How does each program get its own memory space? How does one program stop reaching into another's memory? Who decides which program gets the CPU, and when? And how does virtual memory make RAM look, to every program, like its own private address space?
+
+These responsibilities involve both the operating system and hardware mechanisms inside the processor. The next article steps into that boundary between software and hardware.
+
+**[Next: 06 — Operating System: The Grand Conductor]**
+
+**Hover terms used** (definitions live in `glossary.ts`): `stall`, `locality`, `cacheline`, `cachemiss`, `sram`, `dram`, `volatile`, `pagefault`, `cachecoherence`

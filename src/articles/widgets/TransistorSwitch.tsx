@@ -111,17 +111,19 @@ export function TransistorSwitch() {
       >
         {bn ? (
           <p lang="bn" className="font-body mt-[14px] mb-0">
-            এখানে ইঞ্জিনিয়াররা তিনটা নাম ব্যবহার করেন। যেদিক দিয়ে কারেন্ট ঢোকে, তাকে{' '}
-            <span className="font-mono text-[0.9em]">Source</span> বলে। যেদিক দিয়ে বের হয়, তাকে{' '}
-            <span className="font-mono text-[0.9em]">Drain</span> বলে। আর যে control signal পুরো সুইচটাকে চালায়, সেটার নাম{' '}
-            <span className="font-mono text-[0.9em]">Gate</span>। নামগুলো মুখস্থ করার দরকার নেই — গুরুত্বপূর্ণ ব্যাপারটা নিচেই।
+            উপরের transistor-টা একটা MOSFET। এর তিনটা terminal:{' '}
+            <code>Gate</code>, <code>Source</code> আর <code>Drain</code>। Gate-এ দেওয়া voltage ঠিক করে
+            Source আর Drain-এর মাঝখান দিয়ে current কতটা সহজে যেতে পারবে। কোন দিকে current যায়, সেটা
+            circuit-এর ওপর নির্ভর করে — "যেদিক দিয়ে ঢোকে সেটাই Source", এমন সরল নিয়ম নেই।
+            নামগুলো মুখস্থ করার দরকার নেই — গুরুত্বপূর্ণ ব্যাপারটা নিচেই।
           </p>
         ) : (
           <p className="font-body mt-[14px] mb-0">
-            Engineers use three names here. The side where current enters is called{' '}
-            <span className="font-mono text-[0.9em]">Source</span>. The side where it leaves is{' '}
-            <span className="font-mono text-[0.9em]">Drain</span>. And the control signal that drives the whole switch is the{' '}
-            <span className="font-mono text-[0.9em]">Gate</span>. No need to memorize the names — the important part is below.
+            The transistor above is a MOSFET. It has three terminals:{' '}
+            <code>Gate</code>, <code>Source</code>, and <code>Drain</code>. The voltage on the Gate controls how
+            easily current can flow between Source and Drain. Which way the current flows depends on the
+            circuit — there's no simple rule like "Source is where current enters."
+            No need to memorize the names — the important part is below.
           </p>
         )}
       </Deeper>

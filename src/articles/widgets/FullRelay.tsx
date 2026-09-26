@@ -6,26 +6,23 @@ import { Caption } from '../primitives/Caption';
 
 type Layer = 'HW' | 'K' | 'U';
 
-const STAGES: { bn: string; en: string; layer: Layer; ms: number }[] = [
-  { bn: "'A' চাপলেন — switch-এর contact লাগল", en: "you press 'A' — the switch contacts close", layer: 'HW', ms: 0 },
-  { bn: 'keyboard chip scan করে byte 0x04 বানায়, USB-তে পাঠায়', en: 'keyboard chip scans, makes byte 0x04, sends over USB', layer: 'HW', ms: 2 },
-  { bn: 'USB controller পায়, একটা interrupt তোলে', en: 'USB controller receives it, raises an interrupt', layer: 'HW', ms: 3 },
-  { bn: 'CPU state save করে, kernel mode-এ যায়', en: 'CPU saves its state, switches to kernel mode', layer: 'K', ms: 4 },
-  { bn: 'interrupt handler USB থেকে scancode পড়ে', en: 'interrupt handler reads the scancode from USB', layer: 'K', ms: 5 },
-  { bn: "keyboard driver বোঝে — 'A'", en: "keyboard driver decodes it as 'A'", layer: 'K', ms: 6 },
-  { bn: 'OS event-টা focused window (VS Code)-এর queue-তে রাখে', en: "OS drops the event in the focused window's queue (VS Code)", layer: 'K', ms: 7 },
-  { bn: 'scheduler ঠিক করে — VS Code-কে জাগাও', en: 'scheduler decides — wake VS Code', layer: 'K', ms: 8 },
-  { bn: 'context switch: Chrome→VS Code, page table বদলায়', en: 'context switch: Chrome→VS Code, page tables swap', layer: 'K', ms: 10 },
-  { bn: "user mode-এ ফিরে read() 'A' ফেরত দেয়", en: "back in user mode, read() returns 'A'", layer: 'U', ms: 11 },
-  { bn: 'JIT-compiled handler চলে — "cursor-এ A লেখো"', en: 'JIT-compiled handler runs — "write A at cursor"', layer: 'U', ms: 12 },
-  { bn: "font system 'A'-কে pixel-এ rasterize করে", en: "font system rasterizes 'A' into pixels", layer: 'U', ms: 14 },
-  { bn: 'syscall → compositor → framebuffer (VRAM)', en: 'syscall → compositor → framebuffer (VRAM)', layer: 'K', ms: 16 },
-  { bn: 'GPU cable দিয়ে voltage পাঠায় monitor-এ', en: 'GPU sends voltage down the cable to the monitor', layer: 'HW', ms: 18 },
-  { bn: "pixel জ্বলে উঠল — photon চোখে পড়ল, 'A' দেখলেন", en: "pixels light up — photons hit your eye, you see 'A'", layer: 'HW', ms: 20 },
+const STAGES: { bn: string; en: string; layer: Layer }[] = [
+  { bn: "'A' চাপলেন — switch-এর contact লাগল", en: "you press 'A' — the switch contacts close", layer: 'HW' },
+  { bn: 'keyboard controller matrix scan করে, HID input report পাঠায়', en: 'the keyboard controller scans the matrix and sends an HID input report', layer: 'HW' },
+  { bn: 'USB subsystem সেটা পায়, CPU-কে interrupt দিয়ে জানায়', en: 'the USB subsystem receives it and signals the CPU with an interrupt', layer: 'HW' },
+  { bn: 'CPU ফেরার মতো state রেখে privileged code-এ যায়', en: 'the CPU preserves enough state to return, then enters privileged code', layer: 'K' },
+  { bn: 'OS-এর interrupt handling input data process করে', en: "the OS's interrupt handling processes the input data", layer: 'K' },
+  { bn: 'driver + input subsystem একটা keyboard event বানায়', en: 'driver + input subsystem build a keyboard event', layer: 'K' },
+  { bn: 'window system event-টা focused application-এর জন্য পাঠায়', en: 'the window system routes the event to the focused application', layer: 'K' },
+  { bn: 'application runnable; scheduler তাকে CPU-তে চালায়', en: 'the application becomes runnable; the scheduler runs it on the CPU', layer: 'K' },
+  { bn: "app-এর event handler state বদলায় — cursor-এ 'A'", en: "the app's event handler updates state — 'A' at the cursor", layer: 'U' },
+  { bn: "font system 'A'-এর shape rasterize করে pixel information বানায়", en: "the font system rasterizes the shape of 'A' into pixel information", layer: 'U' },
+  { bn: 'compositor final frame বানায়, display buffer-এ প্রস্তুত হয়', en: 'the compositor builds the final frame; it is prepared in a display buffer', layer: 'K' },
+  { bn: 'display pipeline cable দিয়ে monitor-এ frame পাঠায়', en: 'the display pipeline sends the frame down the cable to the monitor', layer: 'HW' },
+  { bn: "pixel আলো ছাড়ল — photon চোখে পড়ল, 'A' দেখলেন", en: "pixels emit light — photons hit your eye, you see 'A'", layer: 'HW' },
 ];
 
 const LAST = STAGES.length - 1;
-const TOTAL_MS = STAGES[LAST].ms;
 
 const LAYERS: { id: Layer; label: string }[] = [
   { id: 'HW', label: 'HW' },
@@ -36,7 +33,8 @@ const LAYERS: { id: Layer; label: string }[] = [
 const layerCol = (l: Layer) => (l === 'K' ? '#00d26a' : l === 'U' ? '#8ab89c' : '#e0c264');
 
 /** Mode flips accumulate as the relay crosses the user/kernel boundary. */
-const modeFlips = (k: number) => (k < 3 ? 0 : k < 9 ? 1 : k < 12 ? 2 : 3);
+/** Privilege transitions crossed by the given stage index. */
+const modeFlips = (k: number) => (k < 3 ? 0 : k < 8 ? 1 : k < 10 ? 2 : 3);
 
 export function FullRelay() {
   const { bn, num } = useLang();
@@ -57,7 +55,6 @@ export function FullRelay() {
 
   const cur = STAGES[step];
   const shown = step >= LAST;
-  const contextSwitches = step >= 8 ? 1 : 0;
 
   const btn = (accent: boolean): React.CSSProperties => ({
     fontFamily: "'Departure Mono',monospace", fontSize: 12, background: 'none',
@@ -72,7 +69,7 @@ export function FullRelay() {
         enTitle="INSTRUMENT 03 — THE RELAY ('A' → screen)"
         control={
           <span style={{ fontFamily: "'Departure Mono',monospace", fontSize: 10.5, color: shown ? '#00d26a' : '#8aa893', whiteSpace: 'nowrap' }}>
-            ~{num(cur.ms)}ms / ~{num(TOTAL_MS)}ms
+            {bn ? `ধাপ ${num(step + 1)}/${num(STAGES.length)}` : `step ${step + 1}/${STAGES.length}`}
           </span>
         }
       >
@@ -138,10 +135,8 @@ export function FullRelay() {
             </div>
             <div style={{ fontFamily: "'Departure Mono',monospace", fontSize: 9.5, color: '#8aa893', textAlign: 'center', lineHeight: 1.7 }}>
               {bn
-                ? `context switch: ${num(contextSwitches)}`
-                : `context switches: ${contextSwitches}`}
-              <br />
-              {bn ? `mode flip: ${num(modeFlips(step))}` : `mode flips: ${modeFlips(step)}`}
+                ? `privilege transition: ${num(modeFlips(step))}`
+                : `privilege transitions: ${modeFlips(step)}`}
             </div>
           </div>
         </div>
@@ -159,8 +154,8 @@ export function FullRelay() {
         </div>
       </Instrument>
       <Caption
-        bn="এক keypress: keyboard CPU, interrupt, kernel-এ ঢোকা, scheduler, context switch, দুটো system call, JIT, font rasterization, GPU — সব মিলিয়ে ~২০ms-এ কয়েক ডজন ধাপ, আর মাঝে OS conducting।"
-        en="One keypress: the keyboard CPU, an interrupt, entering the kernel, the scheduler, a context switch, two system calls, JIT, font rasterization, the GPU — dozens of steps in ~20ms, the OS conducting throughout."
+        bn="এক keypress-এর পুরো chain: keyboard controller, HID, interrupt, OS-এর input handling, scheduler, application event, rasterization, compositor, display — প্রতিটা layer নিজের কাজ করে পরেরজনের হাতে তুলে দেয়। এটা একটা conceptual path; আসল ধাপ আর timing system ভেদে আলাদা।"
+        en="The whole chain behind one keypress: keyboard controller, HID, interrupt, the OS's input handling, the scheduler, an application event, rasterization, the compositor, the display — each layer does its job and hands over to the next. A conceptual path; the real steps and timings vary by system."
       />
     </>
   );

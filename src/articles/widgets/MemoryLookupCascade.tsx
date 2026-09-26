@@ -4,16 +4,16 @@ import { Instrument } from '../primitives/Instrument';
 import { Caption } from '../primitives/Caption';
 import { SegmentedToggle } from '../primitives/SegmentedToggle';
 import { useReducedMotion } from '../hooks/useReducedMotion';
-import { MEMORY_LAYERS, type MemoryLayerId } from '../data/memoryLayers';
+import { LOOKUP_LAYERS, type MemoryLayerId } from '../data/memoryLayers';
 
 export function MemoryLookupCascade() {
-  const { bn, num } = useLang();
+  const { bn } = useLang();
   const reduced = useReducedMotion();
   const [target, setTarget] = useState<MemoryLayerId>('ram');
   const [revealed, setRevealed] = useState(0);
   const [playing, setPlaying] = useState(false);
 
-  const targetIdx = MEMORY_LAYERS.findIndex((s) => s.id === target);
+  const targetIdx = LOOKUP_LAYERS.findIndex((s) => s.id === target);
 
   const play = () => {
     setRevealed(0);
@@ -30,8 +30,6 @@ export function MemoryLookupCascade() {
 
   const changeTarget = (t: MemoryLayerId) => { setTarget(t); setRevealed(0); setPlaying(false); };
 
-  const totalCycles = MEMORY_LAYERS.slice(0, targetIdx + 1).reduce((a, s) => a + s.cycles, 0);
-
   return (
     <>
       <Instrument
@@ -41,13 +39,13 @@ export function MemoryLookupCascade() {
           <SegmentedToggle
             value={target}
             onChange={changeTarget}
-            options={MEMORY_LAYERS.map((s) => ({ value: s.id, label: bn ? s.bn : s.en }))}
+            options={LOOKUP_LAYERS.map((s) => ({ value: s.id, label: bn ? s.bn : s.en }))}
           />
         }
       >
         <div className="flex flex-col gap-[14px] py-[18px] px-4">
           <div className="flex flex-wrap gap-[6px]">
-            {MEMORY_LAYERS.map((s, i) => {
+            {LOOKUP_LAYERS.map((s, i) => {
               if (i > targetIdx) return null;
               const isShown = i < revealed;
               const isFinal = i === targetIdx;
@@ -79,17 +77,20 @@ export function MemoryLookupCascade() {
           </button>
           {revealed > targetIdx && (
             <div
-              className="font-mono text-[13px]"
-              style={{ color: '#00d26a', border: '1px dashed #00d26a', padding: '6px 12px', width: 'fit-content' }}
+              className="font-mono text-[12px]"
+              style={{ color: '#00d26a', border: '1px dashed #00d26a', padding: '6px 12px', width: 'fit-content', maxWidth: 420, lineHeight: 1.6 }}
+              {...(bn ? { lang: 'bn' } : {})}
             >
-              {bn ? `মোট অপেক্ষা: ~${num(totalCycles)} cycle` : `total wait: ~${num(totalCycles)} cycles`}
+              {bn
+                ? 'যত নিচের layer পর্যন্ত যেতে হয়, অপেক্ষা তত বাড়ে'
+                : 'the further down it has to go, the longer the wait'}
             </div>
           )}
         </div>
       </Instrument>
       <Caption
-        bn="Register থেকে শুরু করে যেখানে data পাওয়া যায়, ততক্ষণ পর্যন্ত প্রতিটা layer-এ miss। যত নিচে যেতে হয়, cycle-এর হিসাব তত ভয়ংকরভাবে বাড়ে।"
-        en="Every layer from register onward is a miss until the data turns up. The deeper it has to search, the more the cycle count explodes."
+        bn="যে layer-এ data পাওয়া যায়, তার আগের প্রতিটা layer একেকটা miss। উপরের layer-এ পাওয়া গেলে নিচ পর্যন্ত যেতেই হয় না — এজন্যই cache hit মূল্যবান।"
+        en="Every layer before the one that has the data is a miss. Found higher up, and the request never travels further down — which is exactly why a cache hit is worth so much."
       />
     </>
   );

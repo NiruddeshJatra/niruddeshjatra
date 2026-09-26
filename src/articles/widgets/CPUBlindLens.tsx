@@ -62,8 +62,8 @@ export function CPUBlindLens() {
         </div>
       </Instrument>
       <Caption
-        bn="একই আট bit, তিনটা ভিন্ন গল্প। CPU-র কাছে শুধুই voltage — meaning-টা ঠিক করে সফটওয়্যার।"
-        en="The same eight bits, three different stories. To the CPU, it's just voltage — software decides the meaning."
+        bn="একই আট bit, তিনটা ভিন্ন গল্প। কোন অর্থ, সেটা ঠিক করে program-এর instruction আর data-র format।"
+        en="The same eight bits, three different stories. Which meaning is decided by the program's instructions and the data's format."
       />
     </>
   );

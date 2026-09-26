@@ -40,8 +40,8 @@ export function TwoStrategies() {
   if (cm && !compiled) narr = bn ? 'compiler mode: আগে compile করুন — তখন একবারই ৩টা লাইন অনুবাদ হবে।' : 'compiler mode: compile first — the 3 lines get translated once, right then.';
   else if (cm && runs === 0) narr = bn ? 'binary তৈরি। এবার যতবার run করবেন, আর অনুবাদ হবে না — সরাসরি চলবে।' : 'binary built. Now run it as many times as you like — no more translation, it runs directly.';
   else if (cm) narr = bn ? `run #${num(runs)} — translations এখনো ৩-এই আটকে। compiler-এর কাজ একবারই হয়েছিল।` : `run #${runs} — translations still stuck at 3. The compiler's work happened once.`;
-  else if (runs === 0) narr = bn ? 'interpreter mode: কোনো compile নেই। run চাপলেই লাইন ধরে ধরে অনুবাদ + execute।' : 'interpreter mode: no compile step. Hit run and it translates + executes line by line.';
-  else narr = bn ? `run #${num(runs)} — প্রতিবার একই ৩টা লাইন আবার অনুবাদ। translations = ৩×${num(runs)}। এটাই redundant work।` : `run #${runs} — the same 3 lines re-translated every time. translations = 3×${runs}. That's the redundant work.`;
+  else if (runs === 0) narr = bn ? 'interpreter mode: আগে থেকে তৈরি native binary নেই। run চাপলেই runtime-এ অনুবাদ + execute।' : 'interpreter mode: no native binary prepared up front. Hit run and the translating + executing happens at runtime.';
+  else narr = bn ? `run #${num(runs)} — প্রতি run-এ একই ৩টা লাইনের কাজ আবার runtime-এ। translations = ৩×${num(runs)}।` : `run #${runs} — the same 3 lines are processed again at runtime on every run. translations = 3×${runs}.`;
 
   const binTxt = binOn
     ? 'binary: prog ✓ (compiled)'
@@ -111,8 +111,8 @@ export function TwoStrategies() {
         </div>
       </Instrument>
       <Caption
-        bn="একই ৩-লাইনের program। Compiler একবার translate করে (translations ৩-এই থামে); interpreter প্রতি run-এ আবার translate করে (৩×run) — এটাই speed vs flexibility-র মূল trade-off।"
-        en="The same 3-line program. The compiler translates once (translations stop at 3); the interpreter re-translates every run (3×runs) — the core speed-vs-flexibility trade-off."
+        bn="একই ৩-লাইনের program। এক পাশে অনুবাদ আগেই একবার হয়ে আছে (translations ৩-এই থামে); অন্য পাশে কাজটা প্রতি run-এ runtime-এ হয় (৩×run) — এটাই মূল trade-off। Simplified model; আসল interpreter এই কাজের অংশবিশেষ cache-ও করতে পারে।"
+        en="The same 3-line program. On one side the translation already happened once (translations stop at 3); on the other it happens at runtime on every run (3×runs) — the core trade-off. A simplified model: real interpreters can cache part of that work."
       />
     </>
   );

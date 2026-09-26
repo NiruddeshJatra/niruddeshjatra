@@ -186,8 +186,8 @@ export function NoiseVsBands() {
         </div>
       </Instrument>
       <Caption
-        bn="একই noise, দুই ভাগ্য — base-10-এর সরু band ভাঙে, binary-র নিষিদ্ধ অঞ্চল টেকে।"
-        en="Same noise, two fates — base-10's narrow bands break; binary's forbidden zone holds."
+        bn="একই noise, দুই ধরনের ফলাফল — কাছাকাছি সাজানো দশটা voltage range-এ noise-এর জায়গা কম; অনেক দূরে রাখা দুটো range-এর মাঝখানের gap-টাই noise margin। (Threshold-গুলো উদাহরণ মাত্র; আসল মান chip অনুযায়ী বদলায়।)"
+        en="Same noise, two outcomes — ten closely spaced voltage ranges leave little room for noise; two widely separated ranges leave a gap between them, the noise margin. (Thresholds are illustrative; real values vary by chip.)"
       />
     </>
   );

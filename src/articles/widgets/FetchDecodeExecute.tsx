@@ -13,21 +13,21 @@ const PHASES = ['IDLE', 'FETCH 1/2', 'FETCH 2/2', 'DECODE 1/2', 'DECODE 2/2', 'E
 const TOTAL = PHASES.length;
 
 const NARR_BN = [
-  'PC ধরে আছে 0x004 — পরের instruction-এর ঠিকানা। Clock-এর tick-এর অপেক্ষা।',
+  'PC ধরে আছে 0x004 — পরের instruction-এর ঠিকানা। ধাপে ধাপে এগোন।',
   'FETCH — PC-র address-টা Address Bus বেয়ে RAM-এ গেল; 0x004-এর ঘর খুলল।',
   'FETCH — ১৩টা bit Data Bus বেয়ে IR-এ জমা হলো; PC নিজে বেড়ে 0x005 হলো।',
   'DECODE — CU IR-এর প্রথম ৪টা bit কেটে নিল: 0001 মানে ADD।',
-  'DECODE — control wire-এ voltage: ALU add mode-এ, MUX রাস্তা খুলল, Reg C-র decoder তৈরি।',
-  'EXECUTE — ২ আর ৩ MUX পেরিয়ে ALU-তে; ৫ বেরিয়ে Reg C-তে latch হলো। পরের tick-এ আবার fetch।',
+  'DECODE — control signal সেট হলো: ALU ADD-এর জন্য configure, MUX-এর select A আর B, Reg C-র write enable ১।',
+  'EXECUTE — combinational logic settle করে ৫-এ; clock edge-এ Reg C সেটা capture করল। তারপর আবার fetch।',
 ];
 
 const NARR_EN = [
-  'The PC holds 0x004 — the address of the next instruction. Waiting on the clock.',
+  'The PC holds 0x004 — the address of the next instruction. Walk through it step by step.',
   "FETCH — the PC's address travels the Address Bus to RAM; the cell at 0x004 opens.",
   'FETCH — 13 bits ride the Data Bus into the IR; the PC increments itself to 0x005.',
   'DECODE — the CU slices the first 4 bits out of the IR: 0001 means ADD.',
-  "DECODE — voltage on the control wires: ALU in add mode, MUX paths open, Reg C's decoder primed.",
-  'EXECUTE — 2 and 3 clear the MUX into the ALU; 5 comes out and latches into Reg C. Next tick: fetch again.',
+  "DECODE — control signals set: the ALU configured for ADD, the MUX selects A and B, Reg C's write enable is 1.",
+  'EXECUTE — the combinational logic settles at 5; on the clock edge Reg C captures it. Then fetch again.',
 ];
 
 const btnBase: CSSProperties = {
@@ -177,7 +177,7 @@ export function FetchDecodeExecute() {
 
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '12px 14px', borderTop: '1px solid #2e392e', flexWrap: 'wrap' }}>
           <button onClick={() => setStep(s => (s + 1) % TOTAL)} className="well-focus" style={btnBase}>
-            tick ▶
+            {bn ? 'পরের ধাপ ▶' : 'step ▶'}
           </button>
           <button onClick={() => setStep(0)} className="well-focus" style={{ ...btnBase, color: IDLE }}>
             ↺ reset
@@ -188,8 +188,8 @@ export function FetchDecodeExecute() {
         </div>
       </Instrument>
       <Caption
-        bn="এক instruction-এর পুরো জীবন: PC address দেয় → RAM bit ফেরত দেয় → IR ধরে রাখে → CU ডিকোড করে হুকুম জারি করে → datapath কাজটা সারে। নিচের dashed লাইনটা সবার শেয়ার করা clock।"
-        en="One instruction's full life: the PC gives an address → RAM returns bits → the IR holds them → the CU decodes and issues orders → the datapath does the work. The dashed line below is the clock they all share."
+        bn="এক instruction-এর পুরো পথ: PC address দেয় → memory bits ফেরত দেয় → IR ধরে রাখে → CU decode করে control signal সেট করে → datapath result তৈরি করে। নিচের dashed clock line বলে, register কখন নতুন মান capture করবে।"
+        en="One instruction's full path: the PC gives an address → memory returns bits → the IR holds them → the CU decodes and sets the control signals → the datapath produces the result. The dashed clock line below marks when registers capture a new value."
       />
     </>
   );

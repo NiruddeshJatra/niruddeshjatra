@@ -2,398 +2,659 @@
 
 ## এক keystroke-এর ভেতরে যা কিছু ঘটে
 
+> *`[DIAGRAM · …]` blocks render through the `<Diagram>` primitive. `[WIDGET · …]` marks an interactive instrument. Hover definitions live only in `src/articles/glossary.ts`.*
+
 Keyboard-এ 'A' চাপলেন। এক মুহূর্ত পর screen-এ 'A' ফুটে উঠল।
 
 আপনার কাছে মনে হলো instant। কোনো delay টের পাননি, কোনো অপেক্ষাও করতে হয়নি। আঙুল নামল আর অক্ষরটা চলে এল।
 
-কিন্তু বাস্তবে সেটা instant ছিল না। মাঝখানে প্রায় ২০ থেকে ৩০ millisecond সময় লেগেছে, আর সেই সময়ের ভেতরে আপনার laptop-এ কয়েকটা সম্পূর্ণ আলাদা system একের পর এক কাজ করে গেছে। প্রতিটার দায়িত্ব ভিন্ন, প্রতিটা ভিন্ন সময়ে ভিন্ন মানুষের হাতে design করা, কিন্তু সবাই মিলে একসাথে কাজ করেছে।
+কিন্তু "instant" মানে literally zero time নয়। আপনার আঙুলের চাপ থেকে screen-এ আলো জ্বলা পর্যন্ত বেশ কয়েকটি আলাদা hardware এবং software layer কাজ করে।
 
 এই সিরিজে এতদিন আমরা এই system-গুলোকে আলাদা আলাদা করে দেখেছি। আজ দেখব সবাই একসাথে কীভাবে কাজ করে। একটা মাত্র keystroke-কে follow করে পুরো পথটা হেঁটে যাব — আঙুলের চাপ থেকে শুরু করে চোখে আলো পড়া পর্যন্ত।
 
 ---
 
-// প্রথম চমক: keyboard-এরও নিজস্ব একটা CPU আছে
+## ০১ — প্রথম চমক: keyboard-এর ভেতরেও একটা ছোট computer আছে
 
-'A' চাপলে সরাসরি laptop-এর CPU-তে কিছু যায় না। তার আগে সেই signal-কে থামতে হয় keyboard-এর নিজের ভেতরে বসে থাকা একটা ছোট্ট computer-এ।
+'A' চাপলে সরাসরি laptop-এর main CPU-তে কিছু যায় না। তার আগে সেই signal-কে থামতে হয় keyboard-এর নিজের ভেতরে বসে থাকা একটা ছোট্ট computer-এ।
 
-শুনতে অদ্ভুত লাগতে পারে। Keyboard তো একটা input device মাত্র, তার আবার নিজের computer কেন থাকবে? কিন্তু আছে। এমনকি সবচেয়ে সস্তা keyboard-এও একটা tiny chip বসানো থাকে, যার ভেতরে থাকে একটা mini CPU, সামান্য memory, আর কিছু আগে থেকে লেখা instruction।
+শুনতে অদ্ভুত লাগতে পারে। Keyboard তো একটা input device মাত্র, তার আবার নিজের computer কেন থাকবে? কিন্তু keyboard-এর ভেতরে সাধারণত একটা ছোট controller chip থাকে। এতে processor logic, কিছু memory আর keyboard-এর firmware থাকে। তার কাজ হলো key press detect করা আর সেটাকে computer-এর জন্য meaningful input data-তে পরিণত করা।
 
-এই chip-এর কাজটা খুব নির্দিষ্ট। সে প্রতি কয়েক millisecond অন্তর পুরো keyboard scan করে যায়। প্রতিটা key-এর জন্য আলাদা তার নেই — সেটা করতে গেলে ১০৪টা তার লাগত। বদলে key-গুলো একটা grid-এ সাজানো, সারি আর কলাম মিলে। Chip একটা করে সারিতে current পাঠায় আর সব কলাম একসাথে পড়ে। কোন সারি আর কোন কলাম — এই দুইয়ের সংযোগ থেকেই বোঝা যায় কোন key চাপা হয়েছে।
+অনেক keyboard-এ key-গুলো একটা matrix আকারে সাজানো — সারি আর কলামের intersection-এ key বসে। Controller বারবার সেই matrix scan করে দেখে কোন key-এর electrical state বদলেছে। প্রতিটা key-এর জন্য আলাদা তার টানার দরকার হয় না; সারি আর কলামের সংযোগই বলে দেয় কোন key চাপা হয়েছে।
 
 যতক্ষণ কোনো key চাপা না হচ্ছে, কোনো কলামেই কিছু ধরা পড়ে না। কিন্তু যেই কোনো key চাপা হয়, সেই key-এর নিচের switch-এর দুইটা metal contact একসাথে লেগে যায়, সেই সারি আর সেই কলামের মাঝে circuit complete হয়ে যায়, আর chip ঐ কলামে voltage দেখতে পায়।
 
-Chip সেই পরিবর্তনটা ধরে ফেলে। তারপর নিজের ভেতরের একটা lookup table থেকে খুঁজে বের করে — এই সারি আর এই কলামের সংযোগে কোন key বসে আছে? 'A' key-এর জন্য সে একটা নির্দিষ্ট byte তৈরি করে, ধরা যাক `0x04`। সেই byte-টাই USB cable দিয়ে laptop-এ পাঠিয়ে দেয়।
+**[DIAGRAM · scan cycle]**
 
-মানে laptop-এর main CPU কিছু জানার আগেই keyboard-এর ভেতরে একটা পুরো computing cycle শেষ হয়ে গেছে। Voltage পড়া হয়েছে, সিদ্ধান্ত নেওয়া হয়েছে, ডেটা তৈরি হয়েছে।
+```text
+Keyboard matrix
+      ↓
+controller scans
+      ↓
+which key changed?
+      ↓
+input report / usage code
+```
 
-আর সেই ভেতরের CPU-ও কিন্তু আমাদের দেখা সেই একই নিয়মে চলে — fetch করে, decode করে, execute করে। শুধু scale-টা অনেক ছোট।
+ধরুন 'A' key press detect হলো। USB keyboard হলে controller সাধারণত **[HOVER: USB HID]** (Human Interface Device) protocol ব্যবহার করে host-এর কাছে একটা input report পাঠায়। সেই report-এ 'A' key-এর জন্য একটা নির্দিষ্ট usage code থাকতে পারে — USB HID Usage Tables-এ `0x04` হলো "Keyboard a and A"।
 
----
+খেয়াল করুন — এই `0x04` character 'A'-এর ASCII code নয়। এটা keyboard-এর কোন key-এর কথা বলা হচ্ছে, সেটার একটা code। অক্ষরে রূপান্তরটা হবে পরে, OS-এর স্তরে — layout বদলালে একই key অন্য অক্ষরও হতে পারে।
 
-// Interrupt: CPU-কে থামানোর একমাত্র উপায়
+মানে laptop-এর main CPU কিছু জানার আগেই keyboard-এর নিজের controller একটা পুরো কাজ সেরে ফেলেছে। Electrical change পড়া হয়েছে, সিদ্ধান্ত নেওয়া হয়েছে, digital input information তৈরি হয়েছে।
 
-USB cable দিয়ে signal ঢুকল laptop-এ। Motherboard-এ বসে থাকা USB controller সেটা receive করল। এই controller একটা আলাদা chip, CPU-র বাইরে, যার একমাত্র কাজ USB device-এর সাথে কথা বলা।
+আর সেই controller-এর processor-ও কিন্তু আমাদের দেখা সেই একই নিয়মে চলে — fetch করে, decode করে, execute করে। শুধু scale-টা অনেক ছোট।
 
-Controller-এর কাছে এখন data আছে, কিন্তু CPU সেটা জানে না। CPU এই মুহূর্তে অন্য কাজে ব্যস্ত — হয়তো Chrome-এর কোনো JavaScript চালাচ্ছে, বা YouTube video decode করছে। তাকে জানাতে হবে যে নতুন কিছু এসেছে।
-
-জানানোর একমাত্র উপায় হলো interrupt। Controller একটা নির্দিষ্ট pin-এর voltage বদলে দেয়, আর সেই wire সরাসরি CPU-তে গিয়ে ঠেকে।
-
-Interrupt পাওয়ার সাথে সাথে CPU যা করছিল তা থামিয়ে দেয়। কিন্তু শুধু থামলেই তো হবে না। CPU-র register-এ এই মুহূর্তে যা কিছু আছে — কোন instruction চালাচ্ছিল, কোন value হাতে ধরা ছিল, সব সাময়িক হিসাব — সেসব হারিয়ে গেলে বিপদ। Interrupt handle করা শেষে যখন সে আগের কাজে ফিরবে, তখন সে জানতেই পারবে না কোথায় থেমেছিল।
-
-তাই থামার আগে CPU সব state একটা নির্দিষ্ট memory area-তে save করে রাখে। এই কাজটা আমরা Article 6-এ দেখেছিলাম — context switch-এর সময় যেভাবে process-এর "মাথার অবস্থা" PCB-তে জমা রাখা হয়, এখানেও প্রায় একই ব্যাপার, শুধু ছোট আকারে।
-
-State save হয়ে গেলে CPU switch করে kernel mode-এ। এতক্ষণ সে user mode-এ ছিল, Chrome-এর code চালাচ্ছিল। এখন OS-এর code চালাতে হবে, আর সেই code-এর hardware access দরকার। তাই privilege level বদলাতেই হবে।
-
----
-
-// OS-এর ভেতরে: এই event কার জন্য?
-
-Interrupt handler চলতে শুরু করে। এই handler আসলে কী জিনিস? এটা Linux বা Windows kernel-এর একটা অংশ, যেটা বছর কয়েক আগে কোনো developer C-তে লিখেছিলেন। তারপর সেটা compile হয়ে machine code হয়েছে, আর আপনার laptop boot হওয়ার সময় সেই machine code memory-তে load হয়েছে। এই মুহূর্তে সেই বহু পুরনো compiled code-ই চলছে।
-
-Handler প্রথমে USB controller থেকে scancode read করে নেয়। তারপর OS-এর keyboard driver সেই scancode দেখে বুঝে যায় — 'A' চাপা হয়েছে।
-
-এখন প্রশ্ন হলো, এই তথ্যটা কার কাছে যাবে? আপনার laptop-এ তো এই মুহূর্তে ৫০টা program চলছে। সবাইকে জানানোর তো মানে হয় না।
-
-OS জানে এই মুহূর্তে কোন window active আছে — যেটাকে বলে focused window। ধরা যাক সেটা VS Code। OS সেই window-এর সাথে যুক্ত process-টা খুঁজে বের করে, আর সেই process-এর জন্য যে event queue আছে, সেখানে event-টা রেখে দেয়।
-
-কিন্তু এখানে একটা সমস্যা আছে। VS Code-এর process এই মুহূর্তে CPU-তে চলছে না। CPU-তে ছিল Chrome। তাহলে VS Code জানবে কীভাবে যে তার জন্য একটা event এসেছে?
-
-এখানেই scheduler-এর ভূমিকা। Article 6-এ দেখেছিলাম, প্রতিটা context switch-এ scheduler ঠিক করে দেয় পরের বার CPU কে পাবে। এখন তার সামনে একটা choice — Chrome-কে আবার resume করবে, নাকি VS Code-কে জাগিয়ে তুলবে?
-
-Modern OS-এ interactive application-কে সাধারণত দ্রুত response দেওয়া হয়। কারণ user সরাসরি তাদের সাথে কাজ করছে, একটু দেরি হলেই "lag" মনে হবে। তাই scheduler সিদ্ধান্ত নেয় — VS Code-কে এখনই CPU দাও।
-
-Context switch শুরু হয়। Chrome-এর সমস্ত state তার PCB-তে জমা হয়ে যায়। VS Code-এর PCB থেকে তার আগের state আবার CPU-তে load হয়। সাথে virtual memory-র context-ও বদলে যায় — এখন থেকে CPU যেসব virtual address ব্যবহার করবে, সেগুলো VS Code-এর page table দিয়ে translate হবে, Chrome-এর নয়।
-
-সব প্রস্তুত হলে CPU আবার user mode-এ ফিরে আসে, আর VS Code-এর code চালাতে শুরু করে।
+**[WIDGET · KeyMatrixScan]** — একটা key চেপে scan cycle-টা দেখুন।
 
 ---
 
-// App জেগে উঠল
+## ০২ — Interrupt: CPU-কে জানানো
 
-VS Code একটা Electron application, মানে মূলত JavaScript-এ লেখা। Chrome-এর যে V8 engine, সেটাই ভেতরে বসে এই JavaScript চালাচ্ছে।
+USB-এর মাধ্যমে keyboard-এর input information laptop-এ পৌঁছাল। Motherboard-এ বসে থাকা USB controller সেটা receive করল — এই controller একটা আলাদা chip, CPU-র বাইরে, যার কাজ USB device-এর সঙ্গে কথা বলা।
 
-VS Code-এর event loop-এ একটা `read()` system call অনেকক্ষণ ধরে pending অবস্থায় ছিল। সে user-এর input-এর অপেক্ষায় block হয়ে বসে ছিল। এখন OS-এর কাছে event ready, তাই সেই system call return করল, আর VS Code-এর হাতে 'A' character পৌঁছে গেল।
+এখন data এসেছে, কিন্তু CPU এই মুহূর্তে অন্য কাজ করতে পারে — হয়তো Chrome-এর কোনো JavaScript চালাচ্ছে, বা video decode করছে। তাকে জানাতে হবে যে একটা hardware event ঘটেছে।
 
-এই keystroke handle করার যে code, সেটা JavaScript-এ লেখা। কিন্তু আগের আর্টিকেলে দেখেছি, V8 প্রথমে code-কে interpret করে চালায়, তারপর যেসব অংশ বারবার চলে সেগুলোকে JIT দিয়ে native machine code-এ compile করে ফেলে। Keystroke handler নিশ্চয়ই হাজার হাজার বার চলেছে। তাই এই মুহূর্তে সেটা আর interpret হচ্ছে না — সরাসরি compiled machine code-ই চলছে, প্রায় C-র মতো গতিতে।
+এই জানানোর একটা mechanism হলো **[HOVER: interrupt]**। USB subsystem host CPU-কে জানায় যে নতুন data এসেছে, আর CPU তার বর্তমান execution-এর উপযুক্ত point থেকে interrupt handling-এর দিকে যায়।
 
-Code বলল — cursor যেখানে আছে সেখানে 'A' লেখো। কিন্তু "লেখা" মানে screen-এ pixel বসানো। কোন pixel-এ কী রং হবে, সেটা কে ঠিক করবে?
+তার আগে CPU-কে এতটুকু state সংরক্ষণ করতে হয়, যাতে পরে আগের execution-এ ফিরে আসা যায়। তারপর privileged OS code interrupt-এর কাজটা সামলায়।
+
+এখানে একটা গুরুত্বপূর্ণ distinction: **interrupt আসা মানেই context switch নয়।** Interrupt handle করার পর CPU আগের কাজেই ফিরে যেতে পারে। আবার interrupt handling-এর ফলে কোনো task runnable হলে scheduler পরে অন্য task-কে CPU-তে চালাতেও পারে।
+
+**[DIAGRAM · interrupt handling]**
+
+```text
+current execution
+       ↓
+   interrupt
+       ↓
+OS interrupt handling
+       ↓
+resume previous work
+        or
+scheduler runs another task
+```
+
+অর্থাৎ interrupt মূলত একটা বার্তা — "CPU, hardware-এ একটা event ঘটেছে, এটা handle করো।"
 
 ---
 
-// অক্ষর থেকে pixel
+## ০৩ — OS-এর ভেতরে: এই event কার জন্য?
 
-এখানে font system কাজে নামে। আপনার editor-এ যে font ব্যবহার করছেন — Consolas, Fira Code, যাই হোক — সেই font file আগে থেকেই RAM-এ load করা আছে।
+Interrupt handler চলতে শুরু করে। এই handler আসলে কী জিনিস? এটা Linux বা Windows kernel-এর একটা অংশ, যেটা বছর কয়েক আগে কোনো developer লিখেছিলেন। তারপর সেটা compile হয়ে machine code হয়েছে, আর আপনার laptop boot হওয়ার সময় সেই machine code memory-তে load হয়েছে। এই মুহূর্তে সেই বহু পুরনো compiled code-ই চলছে।
+
+তারপর OS-এর keyboard driver সেই input data পড়ে বোঝে — কোন key চাপা হয়েছে। সেখান থেকে OS একটা keyboard event তৈরি করে নিজের উপরের স্তরে পাঠিয়ে দেয়।
+
+এখন প্রশ্ন — এই event কোন application-এর জন্য? আপনার laptop-এ তো এই মুহূর্তে অনেকগুলো program চলছে। Key press সাধারণত সবাইকে পাঠানো হয় না।
+
+Desktop-এর input/window system জানে কোন window এই মুহূর্তে focused। ধরা যাক সেটা VS Code। তাহলে event সেই application-এর জন্য deliver করা হবে।
+
+এরপর application যদি এই মুহূর্তে CPU-তে না চলে, তাকে runnable করা হতে পারে। Scheduler তার policy অনুযায়ী পরে তাকে CPU-তে চালানোর সুযোগ দেয়।
+
+**[DIAGRAM · event delivery]**
+
+```text
+keyboard event
+      ↓
+OS input handling
+      ↓
+application becomes runnable
+      ↓
+scheduler
+      ↓
+application runs
+```
+
+এখানেও আগের distinction-টা মনে রাখুন — **event আসা আর context switch একই ঘটনা নয়।** Application তখন CPU-তেই থাকতে পারে; তখন আলাদা করে context switch-এর দরকার নাও হতে পারে।
+
+আর যদি সত্যিই অন্য process-এর thread থেকে VS Code-এর thread-এ execution যায়, তখন প্রয়োজন অনুযায়ী তাদের execution state আর virtual memory context বদলায় — Article 6-এ যেভাবে দেখেছিলাম।
+
+---
+
+## ০৪ — App জেগে উঠল
+
+ধরুন আপনি একটা text editor-এ টাইপ করছেন — এই মুহূর্তে সেটাই focused application। Event তার কাছে পৌঁছায়, আর application-এর ভেতরের একটা event handler বুঝতে পারে: user একটা key চেপেছে।
+
+তবে event সাধারণত app-কে মাঝপথে ধাক্কা দিয়ে থামায় না। App-এর নিজের একটা loop আছে, যেটা একটার পর একটা event নিয়ে কাজ করে। আমাদের keypress সেই সারিতেই গিয়ে বসেছিল, আর app CPU-তে সুযোগ পেয়ে সেটা তুলে নিয়েছে।
+
+**[DIAGRAM · the app loop]**
+
+```text
+event waiting in the queue
+          ↓
+app takes the next event
+          ↓
+    update state
+          ↓
+mark the UI as needing a redraw
+          ↓
+  wait for the next event
+```
+
+"State update" বলতে এখানে কী বোঝায়? Editor-এর কাছে আপনার file-টা memory-তে একটা data structure হিসেবে আছে — মোটামুটি character-এর একটা তালিকা। Article 2-তে দেখেছি, প্রতিটা character memory-তে সংখ্যা হিসেবেই থাকে। তাই কাজটা আসলে এই — cursor যেখানে আছে সেখানে সেই সংখ্যাটা ঢোকানো, আর cursor এক ধাপ এগিয়ে দেওয়া।
+
+আর একটা keypress-এ প্রায়ই এর চেয়ে বেশি কিছু ঘটে। Undo history-তে একটা entry যোগ হয়, যাতে Ctrl+Z কাজ করে। Syntax highlighting আবার হিসাব হয়। Autocomplete হয়তো নতুন suggestion খুঁজতে শুরু করে। এক অক্ষর টাইপ করলেও editor-এর ভেতরে কয়েকটা ছোট কাজ একসঙ্গে জেগে ওঠে।
+
+কিন্তু খেয়াল করুন — app নিজে screen-এ কিছু আঁকেনি। সে শুধু নিজের state বদলেছে, আর ঠিক করেছে UI-র কোন অংশটা আবার আঁকা দরকার। আঁকার কাজটা এর পরের ধাপ।
+
+আর "আঁকা" মানে screen-এ pixel বসানো। কোন pixel-এ কী রং হবে, সেটা কে ঠিক করবে?
+
+---
+
+## ০৫ — অক্ষর থেকে pixel
+
+এখানে font system কাজে নামে। আপনার editor-এ যে font ব্যবহার করছেন — Consolas, Fira Code, যাই হোক — তার font data system বা application-এর memory/cache-এ আগে থেকেই থাকতে পারে। না থাকলে প্রয়োজন অনুযায়ী load করা হয়।
 
 Font file-এ প্রতিটা character-এর জন্য একটা করে shape-এর বর্ণনা থাকে। বেশিরভাগ modern font-এ সেই বর্ণনা vector আকারে — মানে গাণিতিক curve দিয়ে বলা থাকে অক্ষরটার আকৃতি কেমন হবে। এর সুবিধা হলো, যেকোনো size-এ scale করলেও অক্ষরটা ঝাপসা হয় না।
 
-কিন্তু screen তো vector বোঝে না। Screen বোঝে pixel। তাই সেই vector shape-কে আপনার current font size অনুযায়ী pixel grid-এ রূপান্তর করতে হয়। এই প্রক্রিয়ার নাম rasterization।
+কিন্তু display-এ শেষ পর্যন্ত pixel দরকার। তাই সেই shape-কে আপনার current font size অনুযায়ী pixel grid-এর ওপর বসাতে হয়। এই প্রক্রিয়ার নাম **[HOVER: rasterization]**।
 
-Rasterization শেষে 'A' character আর অক্ষর থাকে না। এখন সেটা কয়েকশো pixel-এর একটা grid, যার প্রতিটা pixel-এর জন্য R, G, B value নির্ধারিত। Article 2-তে দেখেছিলাম কীভাবে ছবি binary হয় — এখানেও ঠিক তাই ঘটল। একটা অক্ষর এইমাত্র একটা ছোট্ট ছবিতে পরিণত হলো।
+**[DIAGRAM · rasterization]**
+
+```text
+'A' character
+      ↓
+  font shape
+      ↓
+ rasterization
+      ↓
+pixel information
+```
+
+এখন 'A' আর শুধু একটা character হিসেবে নেই। তার shape screen-এর ছোট একটা অঞ্চলের pixel information-এ পরিণত হয়েছে, যার প্রতিটা pixel-এর জন্য brightness বা color information দরকার। Article 2-তে দেখেছিলাম কীভাবে ছবির pixel value শেষ পর্যন্ত bit-এ represent হয় — এখানেও সেই একই idea ফিরে এল। একটা abstract অক্ষর ধীরে ধীরে screen-এর physical image-এর দিকে এগোচ্ছে।
+
+**[WIDGET · Rasterize]** — vector থেকে pixel-এ যাওয়াটা দেখুন।
 
 ---
 
-// Framebuffer থেকে আলো
+## ০৬ — Frame থেকে আলো
 
-VS Code এখন আরেকটা system call করে — "এই pixel data screen-এ দেখাও।" আবার user mode থেকে kernel mode-এ transition, আবার OS-এর দরজায় কড়া নাড়া।
+এখন application-এর updated UI-কে screen-এর জন্য একটা final image-এ পরিণত করতে হবে। **[HOVER: Window compositor]** বিভিন্ন visible window-এর content একত্র করে screen-এর final frame তৈরি করতে পারে — সে জানে কোন window কোথায় বসানো।
 
-OS-এর window compositor এই data receive করে। Compositor-এর কাজ হলো সব window-এর content মিলিয়ে screen-এর final চেহারা তৈরি করা। সে জানে VS Code-এর window screen-এর ঠিক কোন জায়গায় বসানো, তাই সেই অনুযায়ী pixel-গুলোর সঠিক coordinate হিসাব করে।
+তারপর graphics/display pipeline সেই frame-কে একটা **[HOVER: display buffer]**-এ প্রস্তুত করে, যেখান থেকে display hardware সেটা monitor-এর দিকে পাঠাতে পারে।
 
-তারপর সেই data লেখা হয় framebuffer-এ। Framebuffer হলো GPU-র নিজস্ব memory-তে (VRAM) একটা বিশেষ এলাকা, যেখানে screen-এ এই মুহূর্তে যা দেখাচ্ছে তার পুরো ছবিটা bit আকারে জমা থাকে।
+**[DIAGRAM · display path]**
 
-GPU প্রতি ১৬.৬৭ millisecond অন্তর (মানে 60Hz refresh rate-এ) সেই framebuffer পড়ে নেয় আর সেই ডেটা HDMI বা DisplayPort cable দিয়ে monitor-এ পাঠিয়ে দেয়। Cable-এর ভেতরে যা যাচ্ছে সেটা আসলে দ্রুত পরিবর্তিত voltage — high, low, high, low। সেই voltage pattern-ই pixel data-র binary রূপ।
+```text
+Application UI
+      ↓
+  rendering
+      ↓
+  compositor
+      ↓
+  final frame
+      ↓
+ display buffer
+      ↓
+   monitor
+```
 
-এই সিরিজের একদম প্রথম আর্টিকেলে আমরা যেখান থেকে শুরু করেছিলাম, ঘুরে ফিরে সেই voltage-এই ফিরে এলাম।
+60 Hz display হলে screen প্রতি second-এ ৬০টা refresh cycle চালায় — প্রতিটা cycle মোটামুটি ১৬.৬৭ millisecond। তবে এর মানে এই নয় যে GPU ঠিক প্রতি ১৬.৬৭ ms অন্তর পুরো ছবিটা একসাথে cable-এ ছুঁড়ে দেয়; display system frame-এর data ধারাবাহিকভাবে scan out করে।
 
-Monitor-এর ভেতরের controller সেই signal receive করে। LCD screen-এ প্রতিটা pixel-এর পেছনে থাকে liquid crystal, আর controller সেই crystal-এর orientation নিয়ন্ত্রণ করে ঠিক করে দেয় কোন pixel দিয়ে কতটুকু আলো যাবে। OLED-এ ব্যাপারটা আরও সরাসরি — প্রতিটা pixel নিজেই আলো তৈরি করে।
+HDMI বা DisplayPort cable-এর মধ্য দিয়ে সেই digital information electrical signal হিসেবে যায়, আর তার মাধ্যমে pixel data ও display control information monitor-এ পৌঁছায়।
 
-'A' অক্ষরের আকৃতি অনুযায়ী নির্দিষ্ট pixel-গুলোতে voltage গেল। সেই pixel-গুলো আলো ছাড়ল। Photon বেরিয়ে এসে আপনার চোখে পড়ল।
+এই সিরিজের একদম প্রথম আর্টিকেলে আমরা যেখান থেকে শুরু করেছিলাম, ঘুরে ফিরে সেই electrical signal-এই ফিরে এলাম।
+
+Monitor-এর ভেতরের display electronics সেই data অনুযায়ী panel drive করে। LCD-তে liquid crystal দিয়ে ঠিক করা হয় backlight-এর কতটা আলো প্রতিটা pixel দিয়ে যাবে; OLED-এ প্রতিটা pixel নিজেই আলো তৈরি করে।
+
+'A'-এর shape অনুযায়ী নির্দিষ্ট pixel-গুলোতে উপযুক্ত আলো তৈরি হলো। Photon বেরিয়ে এসে আপনার চোখে পড়ল।
 
 আপনি screen-এ 'A' দেখলেন।
 
 ---
 
-// ২০ millisecond-এ কত কিছু
+## ০৭ — একটামাত্র keypress-এ কতগুলো layer
 
 আপনার কাছে পুরোটা instant মনে হয়েছে। এক আঙুলের চাপ, সাথে সাথে অক্ষর।
 
-কিন্তু এই সময়টুকুর ভেতরে ঘটে গেছে অনেক কিছু। Keyboard-এর নিজস্ব CPU একটা পুরো scan cycle চালিয়েছে। USB controller signal তৈরি করেছে। Main CPU একটা interrupt সামলেছে, নিজের state save করেছে, privilege level বদলেছে। OS-এর driver ডেটা পড়েছে, ঠিক করেছে কোন application এই event পাবে। Scheduler সিদ্ধান্ত নিয়েছে কাকে CPU দেওয়া হবে। একটা full context switch হয়েছে, page table বদলেছে। JIT-compiled JavaScript চলেছে। Font system একটা অক্ষরকে ছবিতে রূপান্তর করেছে। GPU framebuffer update করেছে। Cable-এ voltage-এর ঢেউ গেছে। Monitor-এর pixel জ্বলে উঠেছে।
+**[WIDGET · FullRelay]** — পুরো relay-টা এক ধাপ এক ধাপ করে, keypress থেকে চোখে আলো পর্যন্ত।
 
-এই সময়ে CPU-তে কয়েক বিলিয়ন instruction execute হয়েছে। Cache line RAM থেকে L3, L2 হয়ে L1-এ এসেছে বহুবার। Page table lookup হয়েছে প্রতিটা memory access-এ। দুই-তিনটা context switch হয়েছে।
+কিন্তু এই ছোট্ট ঘটনার ভেতরে আমরা অনেকগুলো layer দেখতে পেলাম:
 
-আর সবচেয়ে আশ্চর্যের ব্যাপার হলো, এই পুরো chain-এর প্রতিটা অংশ আলাদা আলাদা মানুষ, আলাদা কোম্পানি, আলাদা সময়ে তৈরি করেছে। Keyboard-এর firmware লিখেছে এক দল, USB protocol design করেছে আরেক দল, kernel-এর driver লিখেছে অন্য কেউ, V8 engine বানিয়েছে Google-এর একটা team, font rendering library লিখেছে আরও কেউ। কেউ কারো সাথে বসে আলোচনা করেনি।
+**[DIAGRAM · the whole chain]**
 
-তবু সবাই মিলে flawlessly কাজ করেছে। কারণ প্রতিটা layer পরের layer-এর জন্য একটা পরিষ্কার contract রেখে গেছে — "তুমি আমাকে এই format-এ ডেটা দাও, আমি এই কাজটা করে দেব।" ভেতরে কী হচ্ছে সেটা জানার দরকার নেই।
+```text
+Finger
+  ↓
+Keyboard switch
+  ↓
+Keyboard controller
+  ↓
+USB / HID
+  ↓
+Interrupt + OS input handling
+  ↓
+Application event
+  ↓
+Editor state
+  ↓
+Font + rasterization
+  ↓
+Compositor / graphics pipeline
+  ↓
+Display hardware
+  ↓
+Light
+  ↓
+Your eye
+```
 
-এটাই abstraction। এবং এটাই আধুনিক computing-এর সবচেয়ে বড় শক্তি।
+প্রতিটা layer-এর কাজ আলাদা। Keyboard জানে না VS Code কীভাবে text edit করে। OS জানে না 'A'-এর glyph দেখতে কেমন। Font system জানে না keyboard থেকে event কীভাবে এসেছে। Display hardware জানে না আপনি কোন editor ব্যবহার করছেন।
+
+তবু তারা একে অন্যের সঙ্গে কাজ করতে পারে। কেন?
+
+কারণ প্রতিটা layer-এর মধ্যে একটা defined interface আছে — এক layer কী ধরনের information দেবে, পরের layer সেটাকে কীভাবে interpret করবে, আর তার output কী হবে।
+
+এই ধারণাটাই **[HOVER: abstraction]**। একটা layer-এর ভেতরটা না জেনেও তার interface ব্যবহার করা যায়।
+
+এই কারণেই keyboard-এর firmware লেখা engineer-কে VS Code-এর code বুঝতে হয় না। আর VS Code-এর developer-কে LCD panel-এর liquid crystal physics বুঝে keypress handler লিখতে হয় না।
+
+আধুনিক computing-এর বিশাল complexity সামলানোর অন্যতম বড় কৌশল এটাই — প্রতিটা layer নিজের কাজটা করে, আর অন্য layer-এর সঙ্গে একটা defined interface দিয়ে কথা বলে।
 
 ---
 
-// সিরিজের শেষে
+## এই আর্টিকেলে কী শিখলাম
+
+- Keyboard-এর ভেতরে নিজের একটা controller আছে — সে সারি-কলামের matrix scan করে, input report বানায়, USB HID দিয়ে পাঠায়।
+- Interrupt হলো CPU-কে hardware event জানানোর একটা mechanism — আর interrupt আসা মানেই context switch নয়।
+- OS-এর input machinery event তৈরি করে, focused application-এর জন্য deliver করে; দরকার হলে scheduler তাকে CPU-তে চালায়।
+- Application event handle করে নিজের state বদলায়; font system অক্ষরের shape-কে rasterize করে pixel information বানায়।
+- Compositor → final frame → display buffer → cable → monitor-এর pixel আলো ছাড়ে। ঘুরে সেই electrical signal-এই ফেরত।
+- প্রতিটা layer নিজের কাজ করে আর defined interface দিয়ে পরেরজনের সঙ্গে কথা বলে — এটাই abstraction।
+
+---
+
+## ০৮ — সিরিজের শেষে
 
 আটটা আর্টিকেল আগে শুরু করেছিলাম একটা সহজ প্রশ্ন দিয়ে — `x = 5` লিখলে সেই ৫ সংখ্যাটা কম্পিউটারের কোথায় যায়?
 
-উত্তরটা খুঁজতে গিয়ে আমাদের অনেক দূর যেতে হয়েছে। Transistor থেকে শুরু করে logic gate, gate থেকে latch, latch থেকে register। তারপর binary encoding, CPU-র ভেতরের ALU আর bus, fetch-decode-execute-এর অবিরাম চক্র। এরপর memory hierarchy, cache-এর চতুরতা, locality-র সৌন্দর্য। তারপর operating system, যে সবার মাঝখানে বসে সবকিছু সামলায়। আর শেষে compiler, interpreter আর JIT — যারা মানুষের ভাষাকে machine-এর ভাষায় অনুবাদ করে।
+উত্তরটা খুঁজতে গিয়ে আমাদের অনেক দূর যেতে হয়েছে। Transistor থেকে শুরু করে logic gate, gate থেকে latch, latch থেকে register। তারপর binary representation, CPU-র ভেতরের ALU আর datapath, fetch-decode-execute-এর অবিরাম চক্র। এরপর memory hierarchy, cache-এর চতুরতা, locality-র সৌন্দর্য। তারপর operating system — process, scheduling, virtual memory, system call। আর শেষে compiler, interpreter, bytecode, VM আর JIT — source code কীভাবে execution-এর দিকে এগোয়।
 
-এই সিরিজ পড়ে আপনি নতুন CPU design করতে পারবেন না। সেটা উদ্দেশ্যও ছিল না। উদ্দেশ্য ছিল অন্য কিছু।
+সবশেষে keyboard-এর অক্ষর থেকে screen-এর অক্ষর পর্যন্ত পুরো journey-টা একসাথে দেখলাম।
 
-আমরা প্রতিদিন এমন সব tool ব্যবহার করি যাদের ভেতরের কিছুই জানি না। React লিখি, কিন্তু browser কীভাবে সেটা চালায় জানি না। Docker চালাই, কিন্তু container আসলে কী তা নিয়ে ভাবি না। এই না-জানাটা এক অর্থে ভালো — abstraction-এর পুরো উদ্দেশ্যই তো এটা। কিন্তু আরেক অর্থে এটা আমাদের অসহায় করে তোলে। কিছু ভাঙলে আমরা জানি না কোথায় খুঁজতে হবে।
+এই সিরিজ পড়ে আপনি নতুন CPU design করতে পারবেন না। সেটা উদ্দেশ্যও ছিল না। উদ্দেশ্য ছিল একটা mental map তৈরি করা।
 
-এখন অন্তত একটা মানচিত্র আছে। App slow হলে বুঝবেন cache-এর কথা ভাবা যেতে পারে। Memory leak হলে জানবেন heap কী জিনিস। Deployment-এ 502 এলে অন্তত অনুমান করতে পারবেন কোন layer-এ সমস্যা।
+আমরা প্রতিদিন এমন সব tool ব্যবহার করি যাদের ভেতরের অনেক layer নিয়ে ভাবি না। React লিখি, browser-এর rendering system নিয়ে না ভেবেও। Docker চালাই, container-এর নিচে কী হচ্ছে না জেনেও। এটা খারাপ কিছু নয় — abstraction-এর উদ্দেশ্যই তো আপনাকে সব layer একসাথে মাথায় রাখতে না দেওয়া।
 
-সবচেয়ে বড় কথা, machine আর আগের মতো রহস্যময় থাকবে না। হুড খুলে ইঞ্জিনটা একবার দেখা হয়ে গেছে। ভেতরে কোনো জাদু নেই — আছে শুধু voltage, logic, আর কয়েক দশক ধরে মানুষের জমানো চতুর কিছু ধারণা।
+কিন্তু কিছু ভেঙে গেলে সেই abstraction-এর নিচে একটু তাকাতে পারা কাজে দেয়। App slow হলে এখন অন্তত ভাবতে পারবেন — computation, memory, I/O, scheduling, rendering, নাকি অন্য কোনো layer? Memory নিয়ে সমস্যা হলে heap আর virtual memory-র কথা মনে পড়বে। Input বা display নিয়ে গোলমাল হলে keyboard থেকে screen পর্যন্ত এই পুরো chain-টা মাথায় আসতে পারে।
+
+সবচেয়ে বড় কথা, machine আর আগের মতো রহস্যময় থাকবে না। ঢাকনা খুলে ইঞ্জিনটা একবার দেখা হয়ে গেছে। ভেতরে কোনো জাদু নেই — আছে electrical signal, logic, software, interface, আর মানুষের তৈরি অনেকগুলো চতুর abstraction।
 
 সেটুকু জানাই যথেষ্ট।
 
-**পড়ার জন্য ধন্যবাদ। ভালো থাকবেন।**
+*পড়ার জন্য ধন্যবাদ। ভালো থাকবেন।*
 
 ---
 
-// আরও গভীরে যেতে চাইলে
+## ০৯ — আরও গভীরে যেতে চাইলে
 
-এই সিরিজ ছিল একটা পাখির চোখে দেখা। প্রতিটা topic-ই নিজে একটা পূর্ণ জগত। কোনো একটা layer যদি আপনার ভালো লেগে থাকে, নিচের resource-গুলো থেকে শুরু করতে পারেন। প্রায় সবগুলোই বিনামূল্যে পাওয়া যায়।
+এই সিরিজ ছিল একটা পাখির চোখে দেখা। প্রতিটা topic-ই নিজে একটা পূর্ণ জগত। কোনো একটা layer যদি আপনার ভালো লেগে থাকে, নিচের resource-গুলো থেকে শুরু করতে পারেন। বেশিরভাগই বিনামূল্যে পাওয়া যায়।
 
 **একদম শুরু থেকে বুঝতে চাইলে**
 
-*Crash Course Computer Science* — YouTube-এ ৪০ পর্বের একটা সিরিজ, প্রতিটা ১০-১৫ মিনিট। Transistor থেকে AI পর্যন্ত পুরো computing-এর মানচিত্র। ভাষা সহজ, উপস্থাপনা চমৎকার। শুরু করার জন্য এর চেয়ে ভালো কিছু নেই।
-
-*Ben Eater* — YouTube channel। এই ভদ্রলোক breadboard-এ তার দিয়ে একটা সম্পূর্ণ 8-bit computer বানিয়েছেন, আর প্রতিটা ধাপ ক্যামেরার সামনে ব্যাখ্যা করেছেন। Article 1 আর 3-এ যা পড়েছেন, সেটা চোখের সামনে তৈরি হতে দেখতে পারবেন। ধৈর্য ধরে দেখার মতো জিনিস।
-
-*Nand2Tetris* (nand2tetris.org) — শুধু একটা NAND gate থেকে শুরু করে ধাপে ধাপে একটা পুরো কম্পিউটার বানানোর কোর্স। CPU, assembler, VM, compiler, OS — সব নিজে হাতে। Coursera-তে বিনামূল্যে করা যায়। এই সিরিজের প্রায় সবকিছু এখানে হাতে-কলমে করে দেখা যাবে।
+- **Crash Course Computer Science** — YouTube-এ ৪০ পর্বের একটা সিরিজ, প্রতিটা ১০-১৫ মিনিট। Transistor থেকে AI পর্যন্ত computing-এর অনেকগুলো গুরুত্বপূর্ণ idea সহজভাবে পরিচয় করিয়ে দেয়। শুরু করার জন্য একটা ভালো overview।
+- **Ben Eater** — YouTube channel। breadboard-এ তার দিয়ে একটা সম্পূর্ণ 8-bit computer বানিয়েছেন, প্রতিটা ধাপ ক্যামেরার সামনে ব্যাখ্যা করেছেন।
+- **Nand2Tetris** (nand2tetris.org) — একটা NAND gate থেকে শুরু করে ধাপে ধাপে পুরো computer system আর তার software hierarchy বানানোর কোর্স। Official website-এ lecture, project material আর tool বিনামূল্যে; Coursera version-টা paid course।
 
 **Hardware আর CPU নিয়ে**
 
-*Computer Systems: A Programmer's Perspective* — Bryant ও O'Hallaron-এর লেখা। Carnegie Mellon-এর বিখ্যাত বই। Programmer-এর দৃষ্টিকোণ থেকে লেখা, তাই আপনার কোডের সাথে hardware-এর সম্পর্ক কোথায় সেটা স্পষ্ট হয়। Article 3, 4, 5-এর গভীর version।
-
-*Computer Organization and Design* — Patterson ও Hennessy-র লেখা। Computer architecture-এর classic textbook। একটু ভারী, কিন্তু কর্তৃত্বপূর্ণ।
-
-*Inside the Machine* — Jon Stokes। আধুনিক processor-এর ভেতরটা ছবির সাহায্যে ব্যাখ্যা করা। Textbook-এর চেয়ে সহজ পাঠ।
+- **Computer Systems: A Programmer's Perspective** — Bryant ও O'Hallaron। Programmer-এর দৃষ্টিকোণ থেকে লেখা; Article 3, 4, 5-এর গভীর version।
+- **Computer Organization and Design** — Patterson ও Hennessy। Computer architecture-এর classic textbook।
+- **Inside the Machine** — Jon Stokes। আধুনিক processor-এর ভেতরটা ছবির সাহায্যে।
 
 **Memory আর Performance নিয়ে**
 
-*What Every Programmer Should Know About Memory* — Ulrich Drepper-এর লেখা একটা দীর্ঘ প্রবন্ধ, বিনামূল্যে পাওয়া যায়। Article 5-এ যা ছুঁয়ে গেছি, তার সম্পূর্ণ রূপ। Cache, DRAM, NUMA — সব এখানে। খুঁজলেই PDF পাবেন।
-
-*Latency Numbers Every Programmer Should Know* — Jeff Dean-এর তৈরি একটা ছোট তালিকা, ইন্টারনেটে সহজেই পাওয়া যায়। বিভিন্ন operation-এ কত সময় লাগে তার একটা mental model তৈরি করে দেয়।
+- **What Every Programmer Should Know About Memory** — Ulrich Drepper-এর দীর্ঘ প্রবন্ধ, বিনামূল্যে। Article 5-এর সম্পূর্ণ রূপ।
+- **Latency Numbers Every Programmer Should Know** — Jeff Dean-এর ছোট তালিকা; বিভিন্ন operation-এ কত সময় লাগে তার mental model।
 
 **Operating System নিয়ে**
 
-*Operating Systems: Three Easy Pieces* (ostep.org) — Arpaci-Dusseau দম্পতির লেখা। সম্পূর্ণ বিনামূল্যে, PDF আকারে ওয়েবসাইটেই আছে। OS শেখার জন্য সম্ভবত সবচেয়ে ভালো বই — লেখার ধরন সহজ, উদাহরণ প্রচুর। Article 6-এর প্রতিটা বিষয় এখানে বিস্তারিত।
-
-*Linux Kernel Development* — Robert Love। Linux kernel-এর ভেতরটা কীভাবে কাজ করে জানতে চাইলে।
+- **Operating Systems: Three Easy Pieces** (ostep.org) — সম্পূর্ণ বিনামূল্যে। Article 6-এর প্রতিটা বিষয় বিস্তারিত।
+- **Linux Kernel Development** — Robert Love।
 
 **Compiler আর Language নিয়ে**
 
-*Crafting Interpreters* (craftinginterpreters.com) — Robert Nystrom-এর লেখা, ওয়েবসাইটে সম্পূর্ণ বিনামূল্যে পড়া যায়। নিজে হাতে দুইটা interpreter বানানোর মধ্য দিয়ে পুরো বিষয়টা শেখানো হয়। লেখার মান অসাধারণ — technical বই এত সুন্দরভাবে কম লেখা হয়।
-
-*V8 blog* (v8.dev/blog) — JavaScript engine-এর ভেতরে কী ঘটে, engineer-রা নিজেরাই লেখেন। JIT, garbage collection, optimization নিয়ে গভীর লেখা।
+- **Crafting Interpreters** (craftinginterpreters.com) — বিনামূল্যে পড়া যায়; নিজে হাতে দুইটা interpreter বানানোর মধ্য দিয়ে শেখা।
+- **V8 blog** (v8.dev/blog) — engine-এর ভেতরে কী ঘটে, engineer-দের নিজের লেখা।
 
 **হাতে-কলমে শিখতে চাইলে**
 
-*nandgame.com* — ব্রাউজারেই NAND gate থেকে শুরু করে ধাপে ধাপে কম্পিউটার বানানোর একটা খেলা। বিনামূল্যে, মজার, আর শেখার জন্য চমৎকার।
-
-*CS50* (Harvard) — YouTube আর edX-এ বিনামূল্যে। C থেকে শুরু করে পুরো computer science-এর ভিত্তি। শিক্ষকতার মান অসাধারণ।
-
----
+- **nandgame.com** — ব্রাউজারেই NAND gate থেকে computer বানানোর খেলা।
+- **CS50** (Harvard) — YouTube আর edX-এ; বর্তমান CS50x material free OpenCourseWare হিসেবেও available।
 
 আমি নিজেও আসলে এখানে দেওয়া প্রত্যেকটা রিসোর্স নিজে ঘেঁটে দেখার সুযোগ পাইনি। তবুও আপনাদের আর আমার নিজের সুবিধার্তে ইন্টারনেট ঘাঁটাঘাঁটি করে রিলেটেড সব রিসোর্স এখানে দিয়ে রাখলাম, যাতে পরে আরও এক্সপ্লোর করা যায়, আরও ভালোভাবে জানা যায়, নিজের জ্ঞানের কমতিগুলো শুধরানো যায়।
 
 শেষ কথা — এই তালিকা দেখে অভিভূত হওয়ার কিছু নেই। সবগুলো পড়তে হবে না। যে একটা জিনিস আপনার কৌতূহল জাগিয়েছে, সেটা নিয়েই শুরু করুন। বাকিটা সময়মতো আসবে।
 
+**Hover terms used** (definitions live in `glossary.ts`): `hid`, `interrupt`, `rasterization`, `compositor`, `framebuffer`, `abstraction`
+
+---
+---
+
 # From the Keyboard's 'A' to the Screen's 'A'
 
 ## Everything that happens inside one keystroke
+
+> *Blocks marked `[DIAGRAM · …]` render through the `<Diagram>` primitive. `[WIDGET · …]` marks an interactive instrument. Hover definitions live only in `src/articles/glossary.ts`.*
 
 You press 'A' on your keyboard. A moment later, 'A' appears on the screen.
 
 It felt instant to you. No delay you could detect, no waiting. Your finger went down and the character showed up.
 
-But it wasn't instant. Roughly 20 to 30 milliseconds passed in between, and in that window several completely separate systems inside your laptop did their work one after another. Each has a different responsibility, each was designed by different people at different times, but together they got the job done.
+But "instant" does not mean literally zero time. Between your finger pressing down and light coming off the screen, several completely separate hardware and software layers do their work. Each has a different responsibility, each was designed by different people at different times.
 
 Throughout this series we've looked at these systems one at a time. Today we watch them work together. We'll follow a single keystroke through the whole path — from the press of a finger to light hitting your eye.
 
 ---
 
-## First surprise: your keyboard has its own CPU
+## 01 — First surprise: there's a small computer inside your keyboard
 
-When you press 'A', nothing goes directly to the laptop's CPU. Before that, the signal has to stop at a tiny computer sitting inside the keyboard itself.
+When you press 'A', nothing goes directly to the laptop's main CPU. Before that, the signal has to stop at a tiny computer sitting inside the keyboard itself.
 
-It sounds strange. A keyboard is just an input device — why would it have its own computer? But it does. Even the cheapest keyboard has a tiny chip inside, holding a mini CPU, a small amount of memory, and some pre-written instructions.
+It sounds strange. A keyboard is just an input device — why would it have its own computer? But inside a keyboard there is usually a small controller chip, holding processor logic, a little memory, and the keyboard's firmware. Its job is to detect key presses and turn them into input data that means something to the computer.
 
-That chip's job is very specific. Every few milliseconds it scans the whole keyboard. There isn't a separate wire for every key — that would take 104 wires. Instead the keys sit in a grid, at the intersections of rows and columns. The chip sends current down one row at a time and reads all the columns at once. Which row, and which column — the meeting point of those two is what tells it which key went down.
+In many keyboards the keys are arranged as a matrix — each key sits at the intersection of a row and a column. The controller keeps scanning that matrix to see which key's electrical state changed. No separate wire has to run to every key; the meeting point of a row and a column is what identifies the key.
 
 As long as no key is pressed, nothing shows up on any column. But the moment a key goes down, two metal contacts under that key touch, completing the circuit between that row and that column, and the chip sees voltage on that column.
 
-The chip catches that change. Then it looks up its own internal table to figure out — which key sits at this row-and-column intersection? For the 'A' key it produces a specific byte, say `0x04`. That byte gets sent to the laptop over the USB cable.
+**[DIAGRAM · scan cycle]**
 
-So before the laptop's main CPU knows anything at all, a complete computing cycle has already finished inside the keyboard. Voltage was read, a decision was made, data was produced.
+```text
+Keyboard matrix
+      ↓
+controller scans
+      ↓
+which key changed?
+      ↓
+input report / usage code
+```
 
-And that little CPU runs by the same rules we've seen throughout this series — fetch, decode, execute. Just at a much smaller scale.
+Say the 'A' key press is detected. On a USB keyboard the controller typically sends an input report to the host using the **[HOVER: USB HID]** (Human Interface Device) protocol. That report can carry a specific usage code for the 'A' key — in the USB HID Usage Tables, `0x04` is "Keyboard a and A".
 
----
+Note what that `0x04` is not: it isn't the ASCII code for the character 'A'. It is a code for which key on the keyboard is being talked about. Turning it into a character happens later, at the OS level — change the layout and the same key can become a different letter.
 
-## Interrupt: the only way to stop a CPU
+So before the laptop's main CPU knows anything at all, the keyboard's own controller has already done a complete piece of work. An electrical change was read, a decision was made, digital input information was produced.
 
-The signal came into the laptop over the USB cable. The USB controller sitting on the motherboard received it. This controller is a separate chip, outside the CPU, whose only job is talking to USB devices.
+And that little controller's processor runs by the same rules we've seen throughout this series — fetch, decode, execute. Just at a much smaller scale.
 
-The controller now has data, but the CPU doesn't know that. The CPU is busy with something else at this moment — maybe running some Chrome JavaScript, maybe decoding a YouTube video. It needs to be told that something new arrived.
-
-The only way to tell it is an interrupt. The controller changes the voltage on a specific pin, and that wire runs straight into the CPU.
-
-The instant the interrupt arrives, the CPU stops what it was doing. But simply stopping isn't enough. Whatever is in the CPU's registers right now — which instruction it was running, which values it was holding, all the intermediate results — losing any of that would be a disaster. When it returns to its previous work after handling the interrupt, it wouldn't know where it had left off.
-
-So before stopping, the CPU saves all its state into a designated memory area. This is the same operation we saw in Article 6 — the way a process's "head state" gets stored in its PCB during a context switch. Same idea here, just at a smaller scale.
-
-Once the state is saved, the CPU switches into kernel mode. Until now it was in user mode, running Chrome's code. Now it has to run OS code, and that code needs hardware access. So the privilege level has to change.
-
----
-
-## Inside the OS: who is this event for?
-
-The interrupt handler starts running. What is this handler, exactly? It's a piece of the Linux or Windows kernel that some developer wrote in C years ago. That code was then compiled into machine code, and when your laptop booted, that machine code was loaded into memory. Right now, that very old compiled code is what's running.
-
-The handler first reads the scancode from the USB controller. Then the OS's keyboard driver looks at that scancode and figures out — 'A' was pressed.
-
-Now the question is, who does this information go to? Fifty programs are running on your laptop at this moment. Telling all of them makes no sense.
-
-The OS knows which window is currently active — what's called the focused window. Say that's VS Code. The OS finds the process attached to that window, and drops the event into that process's event queue.
-
-But there's a problem here. VS Code's process isn't running on the CPU right now. Chrome was. So how does VS Code find out that an event arrived for it?
-
-This is where the scheduler comes in. As we saw in Article 6, at every context switch the scheduler decides who gets the CPU next. It now faces a choice — resume Chrome, or wake up VS Code?
-
-Modern OSes typically give interactive applications faster response. Because the user is working with them directly, and any delay immediately feels like lag. So the scheduler decides — give VS Code the CPU right now.
-
-The context switch begins. All of Chrome's state gets saved into its PCB. VS Code's earlier state gets loaded back from its PCB into the CPU. The virtual memory context switches too — from now on, the virtual addresses the CPU uses get translated through VS Code's page table, not Chrome's.
-
-Once everything's in place, the CPU returns to user mode and starts running VS Code's code.
+**[WIDGET · KeyMatrixScan]** — press a key to watch the scan cycle.
 
 ---
 
-## The app wakes up
+## 02 — Interrupt: telling the CPU
 
-VS Code is an Electron application, meaning it's mostly written in JavaScript. Chrome's V8 engine sits inside it and runs that JavaScript.
+The keyboard's input information reached the laptop over USB. The USB controller sitting on the motherboard received it — a separate chip, outside the CPU, whose job is talking to USB devices.
 
-In VS Code's event loop, a `read()` system call had been pending for a while. It was blocked, waiting for user input. Now the OS has the event ready, so that system call returns, and the 'A' character lands in VS Code's hands.
+The data has arrived, but the CPU may be busy with something else right now — running some Chrome JavaScript, decoding a video. It has to be told that a hardware event happened.
 
-The code handling this keystroke is written in JavaScript. But as we saw in the last article, V8 first interprets code, then takes the parts that run repeatedly and JIT-compiles them into native machine code. This keystroke handler has surely run thousands of times. So right now it isn't being interpreted at all — the compiled machine code is running directly, at nearly C-level speed.
+One mechanism for telling it is an **[HOVER: interrupt]**. The USB subsystem signals the host CPU that new data has arrived, and the CPU moves from a suitable point in its current execution into interrupt handling.
 
-The code says — write 'A' at the cursor position. But "writing" means placing pixels on the screen. Who decides which pixel gets what color?
+Before that, the CPU has to preserve enough state to be able to return to the previous execution afterwards. Then privileged OS code handles the interrupt's work.
+
+An important distinction here: **an interrupt arriving does not mean a context switch.** After handling the interrupt, the CPU can go straight back to what it was doing. Or, if the interrupt handling made some task runnable, the scheduler may later run a different task on the CPU.
+
+**[DIAGRAM · interrupt handling]**
+
+```text
+current execution
+       ↓
+   interrupt
+       ↓
+OS interrupt handling
+       ↓
+resume previous work
+        or
+scheduler runs another task
+```
+
+So an interrupt is essentially one message — "CPU, an event happened in hardware; handle it."
 
 ---
 
-## From character to pixel
+## 03 — Inside the OS: who is this event for?
 
-This is where the font system comes in. The font you're using in your editor — Consolas, Fira Code, whatever it is — has already been loaded into RAM.
+The interrupt handler starts running. What is this handler, exactly? It's a piece of the Linux or Windows kernel that some developer wrote years ago. That code was then compiled into machine code, and when your laptop booted, that machine code was loaded into memory. Right now, that very old compiled code is what's running.
+
+Then the OS's keyboard driver reads that input data and works out which key was pressed. From there the OS builds a keyboard event and passes it up to its own higher layers.
+
+Now the question — which application is this event for? Plenty of programs are running on your laptop at this moment, and a key press is usually not sent to all of them.
+
+The desktop's input/window system knows which window is focused right now. Say that's VS Code. Then the event is delivered for that application.
+
+If that application isn't running on the CPU at this moment, it can be made runnable. The scheduler, following its policy, later gives it a turn on the CPU.
+
+**[DIAGRAM · event delivery]**
+
+```text
+keyboard event
+      ↓
+OS input handling
+      ↓
+application becomes runnable
+      ↓
+scheduler
+      ↓
+application runs
+```
+
+Keep the earlier distinction in mind here too — **an event arriving and a context switch are not the same event.** The application may already be on the CPU; then no separate context switch is necessarily needed.
+
+And if execution really does move from another process's thread to VS Code's thread, then their execution state and virtual memory context change as needed — exactly as we saw in Article 6.
+
+---
+
+## 04 — The app wakes up
+
+Say you're typing in a text editor — that's the focused application right now. The event reaches it, and a handler inside the application works out that the user pressed a key.
+
+The event usually doesn't barge in and stop the app mid-work, though. The app has its own loop, taking one event after another. Our keypress went and sat in that queue, and the app picked it up once it got its turn on the CPU.
+
+**[DIAGRAM · the app loop]**
+
+```text
+event waiting in the queue
+          ↓
+app takes the next event
+          ↓
+    update state
+          ↓
+mark the UI as needing a redraw
+          ↓
+  wait for the next event
+```
+
+And what does "updating state" mean here? To the editor, your file is a data structure in memory — roughly a list of characters. As we saw in Article 2, every character sits in memory as a number. So the actual work is this: put that number in where the cursor is, and move the cursor one step along.
+
+And a single keypress usually sets off more than that. An entry goes into the undo history, so Ctrl+Z will work. Syntax highlighting gets recomputed. Autocomplete may start looking for fresh suggestions. Type one character and several small jobs wake up inside the editor together.
+
+But notice — the app hasn't drawn anything on the screen. It only changed its own state and decided which part of the UI needs redrawing. The drawing is the next step.
+
+And "drawing" means placing pixels on the screen. Who decides which pixel gets what colour?
+
+---
+
+## 05 — From character to pixel
+
+This is where the font system comes in. The font you're using in your editor — Consolas, Fira Code, whatever it is — may already have its data in system or application memory or cache. If not, it gets loaded as needed.
 
 A font file contains a shape description for every character. In most modern fonts, that description is in vector form — the shape of the letter is described mathematically with curves. The advantage is that scaling to any size keeps the letter crisp.
 
-But screens don't understand vectors. Screens understand pixels. So that vector shape has to be converted into a pixel grid according to your current font size. That process is called rasterization.
+But a display ultimately needs pixels. So that shape has to be laid onto a pixel grid according to your current font size. That process is called **[HOVER: rasterization]**.
 
-After rasterization, 'A' is no longer a character. It's now a grid of a few hundred pixels, each with a determined R, G, B value. In Article 2 we saw how images become binary — the same thing just happened here. A letter has become a small picture.
+**[DIAGRAM · rasterization]**
+
+```text
+'A' character
+      ↓
+  font shape
+      ↓
+ rasterization
+      ↓
+pixel information
+```
+
+Now 'A' is no longer just a character. Its shape has become pixel information for a small region of the screen, where every pixel needs brightness or colour information. In Article 2 we saw how an image's pixel values end up represented as bits — the same idea has come back here. An abstract character is moving, step by step, toward a physical image on screen.
+
+**[WIDGET · Rasterize]** — watch a vector become pixels.
 
 ---
 
-## From framebuffer to light
+## 06 — From frame to light
 
-VS Code now makes another system call — "show this pixel data on screen." Another user-to-kernel transition, another knock on the OS's door.
+Now the application's updated UI has to become one final image for the screen. A **[HOVER: window compositor]** can combine the content of the visible windows into the screen's final frame — it knows where each window sits.
 
-The OS's window compositor receives this data. The compositor's job is to combine the content of all windows into the screen's final appearance. It knows exactly where VS Code's window sits on the screen, so it computes the right coordinates for those pixels.
+The graphics/display pipeline then prepares that frame in a **[HOVER: display buffer]**, from which the display hardware can send it toward the monitor.
 
-Then that data gets written into the framebuffer. The framebuffer is a special area in the GPU's own memory (VRAM) that holds, in bits, the complete current picture of what the screen is showing.
+**[DIAGRAM · display path]**
 
-Every 16.67 milliseconds (at a 60Hz refresh rate) the GPU reads that framebuffer and sends the data over an HDMI or DisplayPort cable to the monitor. What travels through that cable is rapidly changing voltage — high, low, high, low. That voltage pattern is the binary form of the pixel data.
+```text
+Application UI
+      ↓
+  rendering
+      ↓
+  compositor
+      ↓
+  final frame
+      ↓
+ display buffer
+      ↓
+   monitor
+```
 
-We've come full circle back to the voltage we started with in the very first article of this series.
+On a 60 Hz display the screen runs 60 refresh cycles per second — roughly 16.67 milliseconds each. But that does not mean the GPU flings the whole picture down the cable once every 16.67 ms; the display system scans out the frame data continuously.
 
-The controller inside the monitor receives that signal. In an LCD screen, each pixel has liquid crystal behind it, and the controller adjusts the orientation of that crystal to decide how much light passes through each pixel. In OLED, it's more direct — each pixel generates its own light.
+Through an HDMI or DisplayPort cable that digital information travels as electrical signals, carrying pixel data and display control information to the monitor.
 
-Voltage went to the pixels matching the shape of 'A'. Those pixels emitted light. Photons left the glass and hit your eye.
+Which brings us back to the electrical signals we started from in the very first article of this series.
+
+The display electronics inside the monitor drive the panel according to that data. In an LCD, liquid crystal decides how much of the backlight passes through each pixel; in OLED, each pixel generates its own light.
+
+The pixels matching the shape of 'A' produced the right light. Photons left the glass and hit your eye.
 
 You saw 'A' on the screen.
 
 ---
 
-## So much in 20 milliseconds
+## 07 — How many layers in one keypress
 
 The whole thing felt instant to you. One press of a finger, and immediately a letter.
 
-But inside that window, a lot happened. The keyboard's own CPU ran a full scan cycle. The USB controller generated a signal. The main CPU handled an interrupt, saved its state, changed privilege level. The OS's driver read the data and decided which application should receive the event. The scheduler decided who gets the CPU. A full context switch happened, page tables changed. JIT-compiled JavaScript ran. The font system converted a letter into a picture. The GPU updated a framebuffer. A wave of voltage went down a cable. Pixels on the monitor lit up.
+**[WIDGET · FullRelay]** — step (or run) the full relay, from keypress to light in your eye.
 
-In that time the CPU executed billions of instructions. Cache lines moved from RAM through L3 and L2 into L1, many times over. A page table lookup happened on every memory access. Two or three context switches occurred.
+But inside that small event, we got to see a lot of layers:
 
-And the most remarkable part is this — every piece of that chain was built by different people, different companies, at different times. One team wrote the keyboard's firmware, another designed the USB protocol, someone else wrote the kernel driver, a team at Google built the V8 engine, someone else wrote the font rendering library. None of them sat down together to discuss anything.
+**[DIAGRAM · the whole chain]**
 
-Yet they all worked together flawlessly. Because each layer left a clear contract for the next — "give me data in this format, and I'll do this job." Nobody needs to know what's happening inside anyone else.
+```text
+Finger
+  ↓
+Keyboard switch
+  ↓
+Keyboard controller
+  ↓
+USB / HID
+  ↓
+Interrupt + OS input handling
+  ↓
+Application event
+  ↓
+Editor state
+  ↓
+Font + rasterization
+  ↓
+Compositor / graphics pipeline
+  ↓
+Display hardware
+  ↓
+Light
+  ↓
+Your eye
+```
 
-That's abstraction. And it's the greatest strength of modern computing.
+Each layer has a different job. The keyboard doesn't know how VS Code edits text. The OS doesn't know what the glyph for 'A' looks like. The font system doesn't know how the event arrived from the keyboard. The display hardware doesn't know which editor you're using.
+
+And yet they work with one another. Why?
+
+Because between each layer there is a defined interface — what kind of information one layer hands over, how the next one interprets it, and what comes back out.
+
+That idea is **[HOVER: abstraction]**. You can use a layer's interface without knowing what's inside it.
+
+Which is why the engineer writing a keyboard's firmware doesn't have to understand VS Code's code. And a VS Code developer doesn't have to understand the liquid-crystal physics of an LCD panel to write a keypress handler.
+
+That is one of the biggest tricks for handling the sheer complexity of modern computing — every layer does its own job and talks to the others through a defined interface.
 
 ---
 
-## At the end of the series
+## What this article covered
+
+- A keyboard has its own controller inside — it scans a row/column matrix, builds an input report, and sends it over USB HID.
+- An interrupt is one mechanism for telling the CPU about a hardware event — and an interrupt arriving does not mean a context switch.
+- The OS's input machinery builds an event and delivers it for the focused application; where needed, the scheduler gives that app the CPU.
+- The application handles the event and changes its own state; the font system rasterizes the letter's shape into pixel information.
+- Compositor → final frame → display buffer → cable → the monitor's pixels emit light. Back to the electrical signals we began with.
+- Every layer does its own job and talks to the next through a defined interface — that's abstraction.
+
+---
+
+## 08 — At the end of the series
 
 Eight articles ago we started with a simple question — when you write `x = 5`, where does that 5 go inside the computer?
 
-Finding that answer took us a long way. From transistors to logic gates, gates to latches, latches to registers. Then binary encoding, the ALU and buses inside a CPU, the endless cycle of fetch-decode-execute. Then memory hierarchy, the cleverness of caches, the beauty of locality. Then the operating system, sitting between everyone and managing it all. And finally compilers, interpreters, and JIT — translating human language into machine language.
+Finding that answer took us a long way. From transistors to logic gates, gates to latches, latches to registers. Then binary representation, the ALU and datapath inside a CPU, the endless cycle of fetch-decode-execute. Then memory hierarchy, the cleverness of caches, the beauty of locality. Then the operating system — processes, scheduling, virtual memory, system calls. And finally compilers, interpreters, bytecode, VMs and JITs — how source code moves toward execution.
 
-Reading this series won't let you design a new CPU. That was never the goal. The goal was something else.
+And last of all, the whole journey from a letter on the keyboard to a letter on the screen, seen in one piece.
 
-Every day we use tools whose insides we know nothing about. We write React without knowing how the browser runs it. We run Docker without thinking about what a container actually is. That not-knowing is fine in one sense — the whole point of abstraction is exactly that. But in another sense it leaves us helpless. When something breaks, we don't know where to start looking.
+Reading this series won't let you design a new CPU. That was never the goal. The goal was to build a mental map.
 
-Now at least there's a map. When an app is slow, you'll know caches are worth thinking about. When there's a memory leak, you'll know what a heap is. When a deployment returns 502, you'll at least be able to guess which layer has the problem.
+Every day we use tools whose inner layers we never think about. We write React without thinking about the browser's rendering system. We run Docker without knowing what happens beneath a container. That's not a bad thing — the whole point of abstraction is to spare you from holding every layer in your head at once.
 
-Most of all, the machine won't feel as mysterious anymore. The hood has been opened once and the engine has been looked at. There's no magic inside — just voltage, logic, and a few decades' worth of clever ideas accumulated by people.
+But when something breaks, being able to look a little way under that abstraction helps. When an app is slow, you can now at least ask — computation, memory, I/O, scheduling, rendering, or some other layer? When there's a memory problem, heaps and virtual memory come to mind. When input or display misbehaves, this whole chain from keyboard to screen is there to think through.
+
+Most of all, the machine won't feel as mysterious anymore. The hood has been opened once and the engine has been looked at. There's no magic inside — just electrical signals, logic, software, interfaces, and a lot of clever abstractions built by people.
 
 Knowing that much is enough.
 
-**Thank you for reading. Take care.**
+*Thank you for reading. Take care.*
 
 ---
 
-## If you want to go deeper
+## 09 — If you want to go deeper
 
-This series was a bird's-eye view. Each topic is a world of its own. If one of the layers caught your interest, here's where to start. Nearly all of these are free.
+This series was a bird's-eye view. Each topic is a world of its own. If one of the layers caught your interest, here's where to start. Most of these are free.
 
 **Starting from the beginning**
 
-*Crash Course Computer Science* — a 40-episode YouTube series, 10-15 minutes each. Maps the whole of computing from transistors to AI. Clear language, excellent production. There's nothing better to start with.
-
-*Ben Eater* — a YouTube channel. This man built a complete 8-bit computer on breadboards with wires, and explained every step on camera. Everything you read in Articles 1 and 3, you can watch being built. Worth the patience.
-
-*Nand2Tetris* (nand2tetris.org) — a course that starts with a single NAND gate and walks you up to a complete computer. CPU, assembler, VM, compiler, OS — you build all of it yourself. Free on Coursera. Almost everything in this series, done hands-on.
+- **Crash Course Computer Science** — a 40-episode YouTube series, 10-15 minutes each. Introduces a lot of computing ideas simply, from transistors to AI. A good overview to start with.
+- **Ben Eater** — a YouTube channel. Built a complete 8-bit computer on breadboards with wires, explaining every step on camera.
+- **Nand2Tetris** (nand2tetris.org) — starts with a single NAND gate and walks you up through a complete computer system and its software hierarchy. Lectures, project materials and tools are free on the official site; the Coursera version is a paid course.
 
 **Hardware and CPUs**
 
-*Computer Systems: A Programmer's Perspective* — Bryant and O'Hallaron. The famous Carnegie Mellon book. Written from a programmer's perspective, so the connection between your code and the hardware stays visible throughout. The deep version of Articles 3, 4, and 5.
-
-*Computer Organization and Design* — Patterson and Hennessy. The classic computer architecture textbook. Heavier going, but authoritative.
-
-*Inside the Machine* — Jon Stokes. Explains modern processors with illustrations. An easier read than a textbook.
+- **Computer Systems: A Programmer's Perspective** — Bryant and O'Hallaron. Written from a programmer's perspective; the deep version of Articles 3, 4 and 5.
+- **Computer Organization and Design** — Patterson and Hennessy. The classic computer architecture textbook.
+- **Inside the Machine** — Jon Stokes. Explains modern processors with illustrations.
 
 **Memory and performance**
 
-*What Every Programmer Should Know About Memory* — a long paper by Ulrich Drepper, freely available. The complete version of what Article 5 touched on. Cache, DRAM, NUMA — all of it. Search for the PDF.
-
-*Latency Numbers Every Programmer Should Know* — a short table originally by Jeff Dean, easy to find online. Builds a mental model for how long different operations actually take.
+- **What Every Programmer Should Know About Memory** — a long paper by Ulrich Drepper, freely available. The complete version of Article 5.
+- **Latency Numbers Every Programmer Should Know** — a short table originally by Jeff Dean; a mental model for how long operations take.
 
 **Operating systems**
 
-*Operating Systems: Three Easy Pieces* (ostep.org) — by the Arpaci-Dusseaus. Completely free, full PDF on the website. Probably the best book for learning operating systems — readable style, plenty of examples. Every topic from Article 6 in full detail.
-
-*Linux Kernel Development* — Robert Love. For getting inside the Linux kernel specifically.
+- **Operating Systems: Three Easy Pieces** (ostep.org) — completely free. Every topic from Article 6 in full detail.
+- **Linux Kernel Development** — Robert Love.
 
 **Compilers and languages**
 
-*Crafting Interpreters* (craftinginterpreters.com) — by Robert Nystrom, fully readable free on the site. Teaches the whole subject by having you build two interpreters by hand. The writing quality is exceptional — technical books are rarely this well made.
-
-*V8 blog* (v8.dev/blog) — what happens inside a JavaScript engine, written by the engineers themselves. Deep posts on JIT, garbage collection, and optimization.
+- **Crafting Interpreters** (craftinginterpreters.com) — free to read on the site; teaches by having you build two interpreters by hand.
+- **V8 blog** (v8.dev/blog) — what happens inside a JavaScript engine, written by the engineers themselves.
 
 **Learning by doing**
 
-*nandgame.com* — a browser game that walks you from a NAND gate up to a computer. Free, fun, and genuinely educational.
-
-*CS50* (Harvard) — free on YouTube and edX. Starts with C and covers the foundations of computer science. The teaching is superb.
-
----
+- **nandgame.com** — a browser game that walks you from a NAND gate up to a computer.
+- **CS50** (Harvard) — available on YouTube and edX; the current CS50x materials are also available free as OpenCourseWare.
 
 A confession, too — I haven't worked through every resource on this list myself. I went digging around the internet and collected everything related in one place, as much for my own use as for yours, so that any of us can come back later and explore further, understand things better, and patch the gaps in what we know.
 
 One last thing — don't be overwhelmed by this list. You don't need to read all of it. Start with the one thing that made you curious. The rest will come when it comes.
+
+**Hover terms used** (definitions live in `glossary.ts`): `hid`, `interrupt`, `rasterization`, `compositor`, `framebuffer`, `abstraction`

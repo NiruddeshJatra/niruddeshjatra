@@ -197,8 +197,8 @@ export function KeyMatrixScan() {
         </div>
       </Instrument>
       <Caption
-        bn="প্রতিটা key-এর আলাদা তার নেই। Chip একটা করে সারিতে current পাঠায় আর সব কলাম একসাথে পড়ে — চাপা key যেই সারিতে, সেই সারির পালা এলেই তার কলামে voltage ধরা পড়ে। সারি আর কলামের সংযোগ থেকেই scancode তৈরি হয়।"
-        en="There is no wire per key. The chip energizes one row at a time and reads every column at once — when the pressed key's row comes around, its column reads high. That row-and-column intersection is what becomes the scancode."
+        bn="প্রতিটা key-এর আলাদা তার নেই। Chip একটা করে সারিতে current পাঠায় আর সব কলাম একসাথে পড়ে — চাপা key যেই সারিতে, সেই সারির পালা এলেই তার কলামে voltage ধরা পড়ে। সারি আর কলামের সংযোগ থেকেই বোঝা যায় কোন key — আর সেই key-এর জন্য HID usage code পাঠানো হয় (এগুলো ASCII নয়)।"
+        en="There is no wire per key. The chip energizes one row at a time and reads every column at once — when the pressed key's row comes around, its column reads high. That row-and-column intersection is what identifies the key — and the HID usage code for that key is what gets reported (these are not ASCII values)."
       />
     </>
   );

@@ -3,6 +3,7 @@ export { Kicker } from './Kicker';
 export { Section } from './Section';
 export { Instrument } from './Instrument';
 export { Caption } from './Caption';
+export { Diagram } from './Diagram';
 export { Term, TermPopup } from './Term';
 export { Deeper } from './Deeper';
 export { Recap } from './Recap';

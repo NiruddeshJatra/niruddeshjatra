@@ -99,8 +99,8 @@ export function ProcessAnatomy() {
         </div>
       </Instrument>
       <Caption
-        bn="এক process-এর address space: উপরে stack (নিচে বাড়ে), নিচে heap (উপরে বাড়ে), মাঝে ফাঁকা জায়গা যা দুই দিক ভাগ করে নেয়। নিচে static code আর global data।"
-        en="A process's address space: stack on top (grows down), heap below (grows up), a gap in the middle they share. Static code and global data sit at the bottom."
+        bn="এক process-এর address space-এর একটা conceptual ছবি: উপরে stack, নিচে heap, মাঝে ফাঁকা জায়গা যা দুই দিক ভাগ করে নেয়, আর নিচে code ও global data। Exact বিন্যাস architecture, OS আর runtime ভেদে আলাদা।"
+        en="A conceptual picture of a process's address space: stack above, heap below, a gap in the middle they share, and code plus global data at the bottom. The exact arrangement varies by architecture, OS and runtime."
       />
     </>
   );

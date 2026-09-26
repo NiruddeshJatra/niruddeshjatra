@@ -129,6 +129,17 @@
   padding-left: 1.5em;
 }
 
+/* Inline code inside prose — a bit pattern, a register name, a literal */
+.article-root article p code,
+.article-root article li code {
+  font-family: 'Departure Mono', monospace;
+  font-size: 0.86em;
+  background: rgba(255, 252, 243, 0.7);
+  border: 1px solid #d8ceb2;
+  padding: 0 4px;
+  white-space: nowrap;
+}
+
 /* Mini code blocks inside prose */
 .article-root pre {
   font-family: 'Departure Mono', monospace;

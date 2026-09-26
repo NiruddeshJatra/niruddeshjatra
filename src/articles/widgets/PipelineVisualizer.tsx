@@ -83,7 +83,7 @@ export function PipelineVisualizer() {
             value={mode}
             onChange={setModeReset}
             options={[
-              { value: 'single', label: 'single-cycle' },
+              { value: 'single', label: bn ? 'একটা করে' : 'one at a time' },
               { value: 'pipe', label: 'pipelined' },
             ]}
           />
@@ -149,8 +149,8 @@ export function PipelineVisualizer() {
         </div>
       </Instrument>
       <Caption
-        bn="অ্যাসেম্বলি লাইন: single-cycle-এ এক instruction পুরো শেষ না হলে পরেরটা শুরু হয় না; pipelined-এ একই tick-এ একজন execute, একজন decode, একজন fetch হচ্ছে।"
-        en="The assembly line: in single-cycle, the next instruction waits for the previous to fully finish; pipelined, the same tick has one instruction executing, one decoding, one fetching."
+        bn="অ্যাসেম্বলি লাইন: একটা করে চালালে এক instruction শেষ না হওয়া পর্যন্ত পরেরটা শুরু হয় না; pipelined-এ একই cycle-এ একজন execute, একজন decode, একজন fetch হচ্ছে।"
+        en="The assembly line: one at a time, the next instruction waits for the previous to finish; pipelined, the same cycle has one instruction executing, one decoding, one fetching."
       />
     </>
   );

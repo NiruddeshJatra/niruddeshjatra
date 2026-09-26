@@ -34,7 +34,7 @@ export function ContextSwitch() {
     {
       cpu: P1, pcb1: P1, pcb2: P2, p1running: true, p2running: false,
       arrow: '↑ save', arrowCol: '#e0c264', pcb1Col: '#e0c264', pcb2Col: '#8aa893',
-      narr: bn ? 'timer interrupt! P1-এর register state PCB1-তে সেভ হচ্ছে — যাতে ফিরে এসে ঠিক এখান থেকে শুরু করতে পারে।' : "Timer interrupt! P1's register state is being saved into PCB1 — so it can resume exactly here later.",
+      narr: bn ? 'timer interrupt! P1-এর execution state (register, program counter) সেভ হচ্ছে — যাতে ফিরে এসে সেখান থেকেই এগোতে পারে।' : "Timer interrupt! P1's execution state (registers, program counter) is being saved — so it can pick up there later.",
       btn: bn ? 'load P2 from PCB2 ▶' : 'load P2 from PCB2 ▶',
     },
     {
@@ -94,8 +94,8 @@ export function ContextSwitch() {
         </div>
       </Instrument>
       <Caption
-        bn={'Context switch: বর্তমান process-এর register state PCB-তে সেভ, পরের process-এর state PCB থেকে restore। CPU-র "মাথা" বদলে যায়, CPU নিজে জানেও না।'}
-        en={'A context switch: save the running process\'s register state to its PCB, restore the next process\'s from its PCB. The CPU\'s "head" swaps out without the CPU ever knowing.'}
+        bn={'Context switch: চলতি কাজের execution state সেভ, পরেরজনের state restore। CPU-র "মাথা" বদলে যায়, CPU নিজে জানেও না। এখানে দুই process দেখানো হয়েছে, তবে একই process-এর দুই thread-এর মধ্যেও এটা ঘটে।'}
+        en={"A context switch: save the running task's execution state, restore the next one's. The CPU's \"head\" swaps out without the CPU ever knowing. Two processes are shown here, but this happens between two threads of one process too."}
       />
     </>
   );

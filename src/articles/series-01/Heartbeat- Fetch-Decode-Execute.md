@@ -1,356 +1,662 @@
 # হার্টবিট: Fetch-Decode-Execute
 
-## CPU একটা instruction কীভাবে বোঝে আর চালায়?
+## Instruction কীভাবে কাজে পরিণত হয়
 
-আগের আর্টিকেলে দেখা গেছে — ২ আর ৩ কীভাবে যোগ হয়ে ৫ হয়। কিন্তু পুরো কাহিনী শেষ হয়নি। একটা প্রশ্ন উত্তর দেয়া বাকি ছিল।
+> *`[DIAGRAM · …]` blocks render through the `<Diagram>` primitive (flow art on paper, not a code well). `[WIDGET · …]` marks an interactive instrument, `[DEEPER · …]` a collapsible toggle. Hover definitions live only in `src/articles/glossary.ts`.*
 
-CPU জানল কীভাবে যে এই মুহূর্তে তাকে যোগ করতে হবে? বিয়োগ না, গুণ না — যোগ। আর এই দুইটা register-এর ডেটা নিতে হবে, বাকিগুলো না। এই instruction তাকে কে দিল?
+আগের আর্টিকেলে দেখা গেছে — ২ আর ৩ কীভাবে যোগ হয়ে ৫ হয়। কিন্তু পুরো কাহিনী শেষ হয়নি। একটা প্রশ্নের উত্তর বাকি ছিল।
+
+CPU জানল কীভাবে যে এই মুহূর্তে তাকে *যোগ* করতে হবে? বিয়োগ না, গুণ না — যোগ। আর *এই* দুইটা register-এর ডেটা নিতে হবে, বাকিগুলো না। সেই control signal-গুলো এল কোথা থেকে?
 
 আজকের গল্পটা ঠিক এখান থেকেই শুরু।
 
----
-
-### সিলিকন সিটির Time-Lapse
-
-আমরা এখনও সিলিকনের সেই ছোট্ট শহরের ভেতরেই আছি, যেখানে ALU, Register, Data Bus আর Clock একসাথে কাজ করছে। তবে আজকে আমাদের ফোকাস পার্টসগুলোর ওপর নয়, বরং সময়ের ওপর।
-
-আগের আর্টিকেলটি ছিল একটি স্থিরচিত্র—সিলিকনের ভেতরে কী কী যন্ত্রাংশ সাজানো থাকে তার বিবরণ। আর এই আর্টিকেলটি হবে একটি চলমান ভিডিও। এক মুহূর্ত থেকে আরেক মুহূর্তে সিপিইউ-র ভেতরে ঠিক কী ঘটে, কীভাবে একটি ইন্সট্রাকশন মেমরি থেকে বেরিয়ে এসে প্রসেসরের ভেতরে ঢোকে, নিজের অর্থ প্রকাশ করে এবং একটি বাস্তব কাজে পরিণত হয়—আজ আমরা সেটাই দেখব।
+> **// সিলিকন সিটির time-lapse**
+>
+> আমরা এখনও সিলিকনের সেই ছোট্ট শহরের ভেতরেই আছি, যেখানে ALU, register, datapath আর clock একসাথে কাজ করছে। তবে আজকের ফোকাস যন্ত্রাংশের ওপর নয়, কাজের ধারাবাহিকতার ওপর। আগের আর্টিকেলটি ছিল একটি স্থিরচিত্র — ভেতরে কী কী আছে তার বিবরণ। আজকেরটা চলমান ছবি: একটা instruction কীভাবে memory থেকে CPU-তে আসে, নিজের অর্থ control signal-এ রূপ নেয়, আর শেষে CPU-র state বদলে দেয়।
 
 ---
 
-// instruction-ও শুধু bit
+## ০১ — Instruction-ও শুধু bits
 
-আমরা যখন কোনো কোড লিখি, তখন আমাদের মনে হয় "কোড" আর "ডেটা" সম্পূর্ণ ভিন্ন দুটি জিনিস। কিন্তু সিলিকনের একদম গভীরে নেমে দেখলে দেখা যাবে, instruction আর ডেটা — দুটোই memory-তে ঠিক একই রকম দেখতে। শুধু voltage-এর pattern। ০ আর ১-এর একটা sequence।
+আমরা যখন code লিখি, তখন "code" আর "data" সম্পূর্ণ আলাদা জিনিস মনে হয়। কিন্তু memory-র স্তরে instruction আর data — দুটোই শেষ পর্যন্ত **bit pattern**।
 
-তার মানে, "যোগ করো" — এই instruction-টাও শেষ পর্যন্ত একটা bit sequence। "লাল pixel" — সেটাও একটা bit sequence। "42" সংখ্যাটা memory-তে যেভাবে বসে থাকে, "ADD" instruction-ও ঠিক সেভাবেই বসে থাকে। শুধু voltage। memory চিনে না কোনটা instruction, কোনটা ডেটা। memory-র কাছে সবই একই ধরনের bit।
+```text
+ADD instruction   →  একটা bit pattern
+42                →  একটা bit pattern
+একটা pixel value  →  একটা bit pattern
+```
 
-এটা আগের আর্টিকেলের সেই কথারই আরেকটা রূপ — CPU is blind, software gives meaning। এখানেও তেমনই। একই bit sequence, context ভেদে instruction হতে পারে, ডেটাও হতে পারে।
+Memory নিজে বসে সিদ্ধান্ত নেয় না — "এই bit-গুলো instruction" আর "ওগুলো data"।
 
-তাহলে CPU একটা bit sequence-কে "instruction" হিসেবে treat করবে কেন? এই প্রশ্নে আসছি একটু পরে। আগে দেখা যাক, একটা instruction আসলে দেখতে কেমন হয়।
+তবে তাই বলে CPU যেকোনো bit-কে ইচ্ছামতো instruction বানিয়ে ফেলে না। CPU যখন **instruction fetch** করার জন্য একটা নির্দিষ্ট memory address থেকে bit pattern আনে, তখনই সেই bits instruction হিসেবে decode হওয়ার process-এ ঢোকে।
+
+> Instruction নাকি data — সেটা bit pattern-এর গায়ে লেখা থাকে না; CPU কোন কাজে সেই bits ব্যবহার করছে, তার ওপরই interpretation নির্ভর করে।
+
+তাহলে প্রশ্নটা দাঁড়ায় — CPU কোন address থেকে instruction আনবে, সেটা ঠিক হয় কীভাবে? তার আগে দেখা যাক, একটা instruction দেখতে কেমন।
 
 ---
 
-// একটা instruction-এর ব্যবচ্ছেদ
+## ০২ — একটা instruction-এর ব্যবচ্ছেদ
 
-ধরুন CPU-কে বলতে চাই: "Register A আর Register B যোগ করে ফলাফল Register C-তে রাখো।" এই পুরো বাক্যটি মেমরিতে কীভাবে সাজানো থাকে?
+ধরুন CPU-কে বলতে চাই: **"Register A আর Register B যোগ করে ফলাফল Register C-তে রাখো।"** এই বাক্যটা CPU-র কাছে মানুষের ভাষায় যায় না। Machine instruction-এর একটা নির্দিষ্ট binary format থাকে, যেখানে আলাদা আলাদা bit field-এর আলাদা মানে।
 
-বাস্তব প্রসেসরে একটি instruction ৩২ বা ৬৪ বিটের হয়ে থাকে। তবে বোঝার সুবিধার জন্য আমরা ধরে নিই আমাদের instruction ১৩ বিটের একটি নির্দিষ্ট ফরম্যাট বা কাঠামো মেনে চলে:
+বাস্তব processor-এ instruction format নির্ভর করে তার architecture বা ISA-র ওপর। সব processor-এ instruction একই মাপের — এমন নয়।
 
+বোঝার সুবিধার জন্য আমরা একটা কাল্পনিক ১৩-bit format ধরে নিচ্ছি:
+
+```text
+  0001  |  001  |  010  |  011
+ Opcode | Reg A | Reg B | Reg C
 ```
- 0001  |  001  |  010  |  011
-Opcode | Reg A | Reg B | Reg C
-```
 
-একটি স্ট্যান্ডার্ড instruction প্রধানত দুটি অংশে বিভক্ত থাকে:
+- **[HOVER: Opcode]** — কোন operation হবে সেটা নির্দেশ করে। আমাদের কাল্পনিক CPU-তে ধরা যাক `0001` = ADD, `0010` = SUB, `0011` = LOAD।
+- **Register field** — কোন register থেকে operand নিতে হবে আর কোন register-এ result রাখতে হবে, সেগুলোর পরিচয় নম্বর।
 
-- **Opcode (Operation Code):** instruction-এর প্রথম অংশ, যা CPU-কে বলে দেয় কী কাজ করতে হবে। আমাদের কাল্পনিক ডিজাইনে, প্রথম ৪টি বিট হলো **Opcode**। প্রসেসরের হার্ডওয়্যারে ফিক্সড করা থাকে যে, `0001` মানে ADD (যোগ), `0010` মানে SUB (বিয়োগ), আর `0011` মানে LOAD।
-- **Operand:** insttuction-এর পরের অংশগুলো, যা বলে দেয় কার ওপর অপারেশনটি চালানো হবে। এখানে বাকি বিটগুলো হলো রেজিস্টারগুলোর ৩-বিটের বাইনারি অ্যাড্রেস বা ঠিকানা (যেমন: Register A = `001`, B = `010`, C = `011`)।
+খেয়াল করুন, `001`, `010`, `011` কোনো memory address নয় — এগুলো CPU-র register-গুলোর identifier।
 
-CPU যখন মেমরি থেকে এই ১৩টি বিট নিজের ভেতরে টেনে নেয়, সে তার Control Unit-এর decoder দিয়ে প্রথম ৪ বিট কেটে আলাদা করে এবং মুহূর্তে বুঝে যায়—"আমাকে এখন যোগ করতে হবে।" এরপর সে পরের বিটগুলো দেখে চিনে নেয় ডেটার উৎস এবং গন্তব্য।
+এই field-গুলো decode করার পর CPU এমন control signal তৈরি করতে পারে, যা A আর B-এর value ALU-তে পাঠায়, ALU-কে ADD-এর জন্য configure করে, আর destination হিসেবে Register C বেছে নেয়। এখানেই instruction-এর bit pattern থেকে CPU-র ভেতরের আচরণের যোগসূত্র তৈরি হয়। নিচের যন্ত্রে opcode আর operand পাল্টে দেখুন:
+
+**[WIDGET · InstructionAnatomy]**
 
 ---
 
-// Program Counter: কার পালা এখন?
+## ০৩ — Program Counter: কার পালা এখন?
 
-মেমরির কাছে যদি Instruction আর ডেটা হুবহু একই রকম দেখতে হয়, তাহলে CPU কীভাবে বোঝে যে মেমরির কোন অংশটি একটি কমান্ড আর কোন অংশটি সাধারণ ডেটা? আর memory-তে এত এত instruction — একটার পর একটা কীভাবে ঠিক ক্রমে execute হবে?
+Memory-র কাছে instruction আর data দেখতে একইরকম হলে স্বাভাবিক প্রশ্ন আসে — CPU কীভাবে জানে এখন কোন bits-কে instruction হিসেবে fetch করতে হবে?
 
-এই সমস্যার সমাধানের জন্য CPU-র ভেতরে একটা বিশেষ register থাকে — যার নাম **[HOVER: Program Counter]** (সংক্ষেপে PC)। কোনো কোনো আর্কিটেকচারে একে Instruction Pointer-ও বলে।
+এর জন্য CPU-তে একটা গুরুত্বপূর্ণ register আছে — **[HOVER: Program Counter]** (PC)। কোনো কোনো architecture-এ একে Instruction Pointer-ও বলে। সহজভাবে, PC ধরে রাখে **পরবর্তী instruction কোন memory address থেকে fetch হবে**।
 
-এই PC-র কাজ একটাই — এই মুহূর্তে memory-র কোন address থেকে পরের instruction পড়তে হবে, সেই address-টা ধরে রাখা।
+আমাদের simplified CPU-তে instruction-গুলো যদি fixed-size হয়, তাহলে একটা instruction fetch করার পর PC পরেরটার address-এ এগিয়ে যেতে পারে।
 
-```jsx
-[ RAM Memory ]
-0x004: 0001001010011  <-- PC Points Here (Instruction!)
-0x008: 0000000000010  <-- Data Area (Number 2)
-0x00C: 0000000000011  <-- Data Area (Number 3)
+```text
+[ Memory ]
+
+0x004: 0001001010011   ← PC
+0x008: 0000000000010   ← data
+0x00C: 0000000000011   ← data
 ```
 
-কম্পিউটার যখন কোনো প্রোগ্রাম চালু করে, তখন অপারেটিং সিস্টেম PC-র ভেতরে ওই প্রোগ্রামের ঠিক প্রথম instruction-এর address বসিয়ে দেয়। ব্যস, প্রসেসরের ইঞ্জিন চালু হয়ে গেল। সিপিইউ চোখ বন্ধ করে PC-র নির্দেশ করা address-এ যায় এবং ওখান থেকে যে bit sequence পায়, সেটিকে instruction হিসেবে ধরে নেয়। কাজ শেষে PC নিজে থেকে এক ধাপ বাড়ে — পরের instruction-এর দিকে ইঙ্গিত করে।
+PC এখন 0x004 নির্দেশ করছে। CPU সেখান থেকে fetch করলে ওই bit pattern instruction হিসেবে decode হওয়ার পথে যায়। তারপর simplified model-এ PC পরের instruction-এর দিকে এগোয়।
 
-সহজ কথায়, "কোনটা instruction, কোনটা data" — এই পার্থক্যটা memory-তে নেই। কোথাও লেখা থাকে না। পার্থক্যটা তৈরি হয় PC-র মাধ্যমে। PC প্রসেসরের কাজের সময়ে মেমরির যে অংশকে ইঙ্গিত করে, ভেতরের সার্কিটগুলো সেই bit-গুলোকে instruction হিসেবে treat করে। বাকি অংশগুলো সাধারণ data হিসেবে মেমরিতে পড়ে থাকে।
+কোনো program চালু হলে system সেটির entry point থেকে execution শুরুর ব্যবস্থা করে — আমাদের model-এ ধরে নিতে পারি, PC-তে প্রথম instruction-এর address বসানো হয়।
 
-এবার সব উপাদান হাতে আছে। Instruction memory-তে বসে আছে। PC ঠিক জানে কোনটা এখন পড়তে হবে। এবার actual cycle-টা কীভাবে ঘটে?
+**[WIDGET · ProgramCounterDemo]**
+
+তবে বাস্তব CPU-তে PC সবসময় শুধু "এক ধাপ বাড়ে" — এমন নয়। Instruction-এর size, branch, jump, function call, return — এসবের কারণে পরের instruction কোথা থেকে আসবে, সেটা বদলে যেতে পারে।
+
+> Memory-তে instruction আর data-র জন্য আলাদা কোনো label থাকে না। CPU-র instruction-fetch process ঠিক করে, কোন memory location-এর bits instruction হিসেবে decode হবে।
+
+এবার সব উপাদান হাতে আছে। Instruction memory-তে বসে আছে, PC জানে কোনটা এখন পড়তে হবে। কিন্তু সেই bits থেকে আসল কাজটা হয় কীভাবে?
 
 ---
 
-## Fetch-Decode-Execute: কম্পিউটিং-এর মৌলিক রিদম
+## Mental model: article ০৩ + instruction
 
-একটি instruction মেমরি থেকে এসে পুরোপুরি সম্পন্ন হওয়া পর্যন্ত পুরো প্রক্রিয়াটি তিনটি প্রধান ধাপে বিভক্ত। একে বলা হয় Instruction Cycle বা প্রসেসরের মৌলিক লাইফ-সাইকেল। ধাপ তিনটি হলো: Fetch, Decode, এবং Execute।
+> **// একটা mental model মনে রাখুন**
+>
+> আগের article-এ আমরা দেখেছিলাম:
+>
+> ```text
+> Current State
+>      ↓
+> Combinational Logic
+>      ↓
+> Next State
+>      ↓
+> Clock Edge
+>      ↓
+> New State
+> ```
+>
+> এবার instruction যোগ করলে ছবিটা দাঁড়ায়:
+>
+> ```text
+> Instruction bits
+>        ↓
+>      Decode
+>        ↓
+> Control signals
+>        ↓
+> Current State
+>        ↓
+> Combinational Datapath
+>        ↓
+> Next State
+>        ↓
+> Clock Edge
+>        ↓
+> New State
+> ```
+>
+> **Instruction বলে কী করতে হবে।** Control logic সেই কাজের configuration তৈরি করে। Datapath result তৈরি করে। আর clock দেয় নতুন state capture করার timing boundary।
 
-### ১. Fetch (instruction টেনে আনা)
+---
 
-এই প্রথম ধাপে কোনো মগজ খাটানোর কাজ নেই, এটি স্রেফ ট্রান্সপোর্টেশন বা পরিবহনের ধাপ।
+## ০৪ — Fetch-Decode-Execute: মৌলিক flow
 
-CPU-এর Control Unit প্রথমে PC-তে থাকা মেমরি address-টি পড়ে নেয়। এরপর প্রসেসরের Address Bus-এর মাধ্যমে সেই ঠিকানাটি র‍্যামে (RAM) পাঠানো হয়। মেমরি সেই নির্দিষ্ট address-টি খুঁজে বের করে তার ভেতরে থাকা ১৩টি bit-কে Data Bus-এর তার দিয়ে CPU-র কাছে ফেরত পাঠায়। এই bit-গুলো এসে প্রসেসরের ভেতরের আরেকটি বিশেষ register-এ জমা হয়, যার নাম **[HOVER: Instruction Register]** (সংক্ষেপে IR)।
+একটা instruction CPU-তে আসা থেকে তার effect CPU-র state-এ বসা পর্যন্ত পুরো ব্যাপারটাকে তিনটি বড় conceptual phase-এ ভাগ করে দেখা যায়: Fetch → Decode → Execute।
 
-ঠিক এই মুহূর্তেই, PC মেমরির পরবর্তী instruction-টি ধরার জন্য নিজের ভেতরের address value এক ধাপ বাড়িয়ে নেয় (increment করে)।
+এটা একটা কাজে দেওয়া mental model। কিন্তু একটা কথা গুরুত্বপূর্ণ:
 
-### ২. Decode (instruction-এর অর্থ উদ্ধার)
+> **Fetch, Decode আর Execute মানেই তিনটা clock tick — এমন নয়।** কোনো processor-এ একটা instruction একাধিক clock cycle নিতে পারে; আবার pipelined CPU-তে একই সময়ে ভিন্ন instruction এই তিন phase-এর ভিন্ন অংশে থাকতে পারে।
 
-Instruction-এর bit-গুলো এখন প্রসেসরের ভেতরে, IR register-এ এসে বসে আছে। কিন্তু প্রসেসরের ভেতরের হার্ডওয়্যার এখনো জানে না এই ভোল্টেজের হিজিবিজি প্যাটার্নটি আসলে কী করতে বলছে।
+তাই "phase" বলতে এখানে বোঝাচ্ছি কাজের ধরন, নির্দিষ্ট সময় নয়।
 
-এই ধাপে চার্জ নেয় প্রসেসরের আসল ডিরেক্টর—**[HOVER: Control Unit]** (সংক্ষেপে CU)। Control Unit নিজে কোনো গাণিতিক হিসাব করে না, সে মূলত অন্য পার্টসগুলোকে পরিচালনা করে।
+**[DIAGRAM · flow · simplified model]**
 
-CU প্রথমে IR-এ থাকা instruction-এর প্রথম ৪টি bit (**[HOVER: Opcode]**) কেটে নেয়। এরপর একটি অভ্যন্তরীণ ডিকোডার সার্কিটের মাধ্যমে সেই ৪টি bit-কে অ্যানালাইসিস করে। বিট প্যাটার্ন যদি হয় 0001 (ADD), তবে Control Unit মুহূর্তে বুঝে যায় এখন যোগ করতে হবে। সে সাথে সাথে পুরো চিপের ভেতরে থাকা বিভিন্ন Control Wires বা নিয়ন্ত্রণ তারের ভোল্টেজ বদলে দেয়:
-
-- ALU-কে বলে: "তোমার ভেতরের যোগ করার সার্কিট (Add Mode) অন করো।"
-- Multiplexer-কে বলে: "রাস্তা খুলে দাও, যেন Register A আর Register B-র data সরাসরি ALU-র ইনপুটে চলে যায়।"
-- Destination Decoder-কে বলে: "তুমি তৈরি থাকো, ALU-র আউটপুট কিন্তু সরাসরি Register C-তে যাবে।"
-
-### ৩. Execute (বাস্তব রূপায়ণ)
-
-সব সিগন্যাল রেডি, ট্রাফিক লাইট গ্রিন। এবার শুরু হয় আসল অ্যাকশন।
-
-ক্লকের টাইমিং সিগন্যাল অনুযায়ী Register A-এর value (২) এবং Register B-এর value (৩) মাল্টিপ্লেক্সার পার হয়ে ALU-র ফুল-অ্যাডার সার্কিটে প্রবেশ করে। লজিক গেটের মধ্য দিয়ে কারেন্ট প্রবাহিত হয়ে আউটপুট লাইনে ৫ (0101) তৈরি হয়। এই নতুন ভোল্টেজ প্যাটার্নটি অভ্যন্তরীণ data বাসের তার বেয়ে সরাসরি Register C-তে গিয়ে পৌঁছায়। ক্লকের পরবর্তী ট্রানজিশনে সেই ৫ value-টি Register C-র ফ্লিপ-ফ্লপগুলোতে পার্মানেন্টলি ল্যাচ বা সেভ হয়ে যায়।
-
-## অবিরাম হার্টবিট
-
-একটি instruction-এর গল্প শেষ হলো। কিন্তু CPU-র ডিকশনারিতে "বিশ্রাম" বলে কোনো শব্দ নেই।
-
-ক্লকের পরের পালস আসার সাথে সাথেই CPU আবার প্রথম ধাপ অর্থাৎ Fetch-এ ফেরত চলে যায়। PC যেহেতু আগের ধাপেই এক ধাপ বেড়ে মেমরির পরের address-টি ধরে রেখেছে, তাই CPU এবার মেমরির নতুন ঠিকানা থেকে পরের instruction-টি টেনে আনে, সেটিকে ডিকোড করে এবং execute করে।
-
-এই চক্রটি কম্পিউটারে অবিরাম চলতে থাকে: **Fetch -> Decode -> Execute -> Fetch...** যতক্ষণ না কম্পিউটারটি বন্ধ করা হচ্ছে। একটি 3.0 GHz ক্লক স্পিডের প্রসেসরে প্রতি সেকেন্ডে এই সাইকেলটি কোটি কোটি বার সম্পন্ন হয়।
-
+```text
+Fetch
+  ↓
+Decode
+  ↓
+Execute / state update
 ```
-+---> [ FETCH ]  --> মেমরি থেকে instruction IR-এ আনা ও PC আপডেট করা
-|         |
-|         v
-|   [ DECODE ] --> Control Unit (CU) দিয়ে ওরিয়েন্টেশন ও সিগন্যাল তৈরি
-|         |
-|         v
-+--- [ EXECUTE ] --> ALU এবং data বাসের মাধ্যমে ফাইনাল স্টেট পরিবর্তন
+
+*Caption:* Fetch-Decode-Execute বলে কী ধরনের কাজ হচ্ছে; clock বলে stored state কখন update হওয়ার সুযোগ পাবে। দুটো এক জিনিস নয়।
+
+### ১ · Fetch — instruction আনা
+
+Fetch phase-এর কাজ একটাই — পরবর্তী instruction-এর bits CPU-র execution machinery-র কাছে আনা।
+
+- PC-তে পরবর্তী instruction-এর address আছে।
+- CPU সেই address ব্যবহার করে memory subsystem-এর কাছে instruction চায়।
+- Memory থেকে instruction-এর bits CPU-র কাছে আসে।
+- CPU-র একটা internal storage element — আমাদের model-এ **[HOVER: Instruction Register]** (IR) — সেই bits ধরে রাখে।
+
+একই সঙ্গে simplified model-এ PC পরবর্তী instruction-এর দিকে এগোয়।
+
+> Fetch মানে clock tick এসে data-কে ঠেলে এক জায়গা থেকে আরেক জায়গায় পাঠানো নয়। Signal propagate করে, আর data ready হলে CPU নির্দিষ্ট timing boundary-তে নিজের state update করতে পারে।
+
+**[DIAGRAM · flow · fetch]**
+
+```text
+PC
+ ↓
+instruction address
+ ↓
+memory subsystem
+ ↓
+instruction bits
+ ↓
+IR
 ```
 
-আপনি যখন স্ক্রিনে এই আর্টিকেলটি স্ক্রোল করছেন, মাউস নড়াচ্ছেন, ব্যাকগ্রাউন্ডে গান শুনছেন কিংবা কোনো AI চ্যাটবটের সাথে কথা বলছেন—তার পেছনে রয়েছে এই তিনটি ধাপের কোটি কোটি বারের অবিরাম পুনরাবৃত্তি। সফটওয়্যারের যত জটিল লেয়ারই আমরা উপরে তৈরি করি না কেন, একদম নিচে সিলিকনের বাস্তবতায় সবকিছু এই সাধারণ রিদমে এসে থিতু হয়।
+### ২ · Decode — instruction থেকে control তৈরি
 
-## পুরো গল্পটা একবার
+Instruction-এর bits এখন CPU-র ভেতরে। এবার সেই bits থেকে পরবর্তী কাজের control information তৈরি করতে হবে। এই কাজটা করে **[HOVER: Control Unit]** (CU) আর তার decoding logic।
 
-এবার সেই যোগ করার instruction-এর পুরো যাত্রা একবার চালিয়ে দেখা যাক।
+```text
+0001 | 001 | 010 | 011
+  ↓     ↓     ↓     ↓
+ ADD    A     B     C
+```
 
-কোথাও memory-তে একটা bit sequence বসে আছে — 0001 001 010 011। কেউ জানে না এটা কী। শুধু voltage-এর একটা pattern।
+Instruction-এর field দেখে control logic এমন signal তৈরি করতে পারে:
 
-কিন্তু PC-তে সেই bit sequence-এর address রাখা আছে। Clock একটা tick দিল। Fetch শুরু। CPU সেই address-এ গেল, bit-গুলো তুলে আনল, IR-এ বসিয়ে দিল। এই মুহূর্তে PC নিজে থেকে বেড়ে গেল — এখন পরের address-এ point করছে।
+```text
+Select Register A
+Select Register B
+ALU operation = ADD
+Destination = Register C
+Write Enable for C = 1
+```
 
-Clock আরেকটা tick দিল। Decode শুরু। Control Unit IR-এর প্রথম ৪ bit দেখে বলল — "ADD।" সঙ্গে সঙ্গে control signal ছড়িয়ে পড়ল CPU-র বিভিন্ন অংশে। ALU যোগ mode-এ গেল। Mux Register A আর Register B বেছে নিল। Decoder Register C-কে প্রস্তুত করল।
+খেয়াল করুন — CU এখানে ALU-কে "চালু" করেনি, MUX-কে "রাস্তা খুলতে" বলেনি।
 
-Clock another tick দিল — এবার execute। ২ আর ৩ চলে গেল ALU-র দিকে, ৫ বেরিয়ে এল, Register C-তে বসে গেল।
+> Control logic datapath-এর বিভিন্ন অংশকে নির্দিষ্ট configuration-এ সেট করে। তারপর combinational logic সেই configuration আর current input অনুযায়ী output তৈরি করে।
 
-তিনটা ধাপে একটা instruction সম্পন্ন। CPU-র কাছে এটা মাত্র একটা হার্টবিট। আর এই মুহূর্তেই — কোনো বিরাম নেই — PC পরের instruction-এর দিকে ইঙ্গিত করছে। সেটাও fetch হবে। Decode হবে। Execute হবে।
+**[DIAGRAM · flow · decode]**
 
-আপনার React app। YouTube video। Photoshop। AI chatbot। সব — literally সব — এই তিনটা stage-এর অবিরাম repetition। উপরের সব software layer একসাথে যা করে, সেটা শেষে এই তিনটা stage-এই এসে দাঁড়ায়।
+```text
+Instruction bits
+      ↓
+   Decode
+      ↓
+Control signals
+      ↓
+Configured datapath
+```
 
-## বাস্তবতার কোণা: আধুনিক প্রসেসরের Pipelining
+### ৩ · Execute — computation আর state update
 
-বোঝার সুবিধার জন্য আমরা এখানে data ফ্লো-কে এমনভাবে দেখিয়েছি যেন একটি instruction-এর তিন ধাপ পুরোপুরি শেষ হওয়ার পর পরবর্তী instruction-এর কাজ শুরু হয়। একে বলে Single-Cycle Architecture।
+Control signal এখন datapath-কে configure করে রেখেছে। Register A আর B-এর বর্তমান value MUX-এর input-এ আছে; select signal অনুযায়ী সেগুলো ALU-র input-এ পৌঁছায়।
 
-কিন্তু বাস্তব আধুনিক প্রসেসরগুলো এভাবে অলস বসে থাকে না। সেখানে ব্যবহৃত হয় Pipelining মেকানিজম। একটি কারখানার অ্যাসেম্বলি লাইনের কথা ভাবুন—যেখানে একই সময়ে একটি গাড়িতে পেইন্ট করা হচ্ছে, তার পেছনের গাড়িতে চাকা লাগানো হচ্ছে, আর তারও পেছনের গাড়িটির বডি জোড়া দেওয়া হচ্ছে।
+ALU-র combinational logic সেই input নিয়ে কাজ করে, আর propagation delay পেরোনোর পর output-এ দাঁড়ায় ৫ (`0101`)।
 
-CPU-ও ঠিক এই কাজটিই করে। যখন একটি instruction Execute ধাপে থাকে, তখন তার ঠিক পরের instruction-টি প্রসেসরের Decode ধাপে প্রসেস হতে থাকে, এবং একই সময়ে মেমরি থেকে তারও পরের instruction-টি Fetch হতে থাকে।
+> **Clock ALU-কে হিসাব শুরু করায়নি।** Control signal datapath configure করেছে, আর combinational logic current input থেকে result তৈরি করেছে।
 
-এছাড়া মডার্ন প্রসেসরে আরও কিছু হাই-লেভেল আর্কিটেকচারাল মেকানিজম থাকে:
+এখন সেই result Register C-এর input-এ available, আর `WE_C` active। পরবর্তী appropriate clock edge-এ Register C সেটা capture করতে পারে:
 
-- **Superscalar:** একই ক্লক সাইকেলে একাধিক সমান্তরাল পাইপলাইন ব্যবহার করে একসাথে কয়েকটা instruction এক্সিকিউট করা।
-- **Out-of-Order Execution:** যদি দেখা যায় কোনো instruction-এর জন্য প্রয়োজনীয় data মেমরি থেকে আসতে দেরি হচ্ছে, তবে CPU বসে না থেকে কোডের লাইনের ক্রম পরিবর্তন করে পরের ইন্ডিপেনডেন্ট instruction-টি আগে রান করে ফেলে।
-- **Branch Prediction:** কোডের ভেতরে কোনো if-else কন্ডিশন বা লুপ থাকলে, কন্ডিশনটি সত্যি নাকি মিথ্যা হবে তা প্রসেসর আগে থেকেই অনুমান (predict) করে স্পেকুলেটিভলি PC-র address লোড করে কাজ এগিয়ে রাখে। অনুমান ভুল হলে সেই কাজ বাতিল করে আবার সঠিক ট্র্যাকে ফিরে আসে।
+**[DIAGRAM · flow · capture]**
+
+```text
+ALU result = 0101
+       │
+       ▼
+   Clock edge
+       │
+       ▼
+Register C captures 0101
+```
+
+অর্থাৎ পুরো hardware pattern-টা এই:
+
+> **Instruction-এর bits → control signals → datapath configuration → combinational computation → state update**
+
+নিচের যন্ত্রে পুরো পথটা ধাপে ধাপে চালিয়ে দেখুন:
+
+**[WIDGET · FetchDecodeExecute]** — button হলো "পরের ধাপ", clock tick নয়।
+
+---
+
+## ০৫ — অবিরাম চক্র
+
+একটা instruction-এর state update হয়ে গেলেই CPU থেমে যায় না। পরের instruction-এর জন্য আবার fetch শুরু হয় — আর modern processor-এ একই সময়ে অন্য instruction-গুলো ভিন্ন stage-এ থাকতে পারে।
+
+**[WIDGET · InstructionCycleLoop]**
+
+তবে এই loop দেখে ভাববেন না যে প্রতিটা instruction ঠিক এই তিন ধাপে, নির্দিষ্ট সংখ্যক clock tick-এ শেষ হয়।
+
+> **Clock cycle হলো timing-এর একক; Fetch-Decode-Execute হলো কাজের conceptual stage।**
+
+একটা 3 GHz CPU-তে প্রতি সেকেন্ডে প্রায় ৩ বিলিয়ন clock cycle থাকে। কিন্তু প্রতি সেকেন্ডে ঠিক ৩ বিলিয়ন instruction পুরো fetch-decode-execute সেরে ফেলে — তা নয়। একটা cycle-এ একাধিক instruction-এর কাজ এগোতে পারে, আবার একটা instruction একাধিক cycle নিতেও পারে।
+
+---
+
+## ০৬ — পুরো গল্পটা একবার
+
+Memory-তে কোথাও একটা bit pattern বসে আছে — `0001 001 010 011`। তার গায়ে "instruction" লেখা নেই।
+
+কিন্তু PC-তে সেই address রাখা আছে। CPU সেখান থেকে fetch করে, আর bits চলে আসে IR-এ। PC এগিয়ে যায় পরেরটার দিকে।
+
+Control logic সেই bits-এর field পড়ে control signal তৈরি করে: কোন register select হবে, ALU কোন operation করবে, কোন register result নেবে।
+
+Configured datapath-এ ২ আর ৩ ALU-তে পৌঁছায়, combinational logic settle করে ৫-এ, আর একটা clock edge-এ Register C সেই ৫ capture করে। এই মুহূর্তে result CPU-র state-এর অংশ।
+
+তারপর আবার পরের instruction। এই loop চলতেই থাকে।
+
+আপনার React app, YouTube, Photoshop বা AI chatbot — সবই শেষ পর্যন্ত machine instruction-এ নেমে আসে, আর সেই instruction-গুলো fetch, decode আর execution-এর বিভিন্ন stage-এর মধ্য দিয়ে process হয়। বাস্তব CPU-তে এই stage-গুলো অনেক বেশি জটিল, একসাথে overlap-ও করে — কিন্তু conceptual flow-টা এখান থেকেই শুরু।
+
+---
+
+## ০৭ — সবকিছু এত সরল নয়: Pipelining
+
+বোঝার সুবিধার জন্য আমরা instruction-এর flow দেখিয়েছি একটা সরল ধারাবাহিক প্রক্রিয়া হিসেবে — একটা instruction-এর তিন phase conceptually শেষ হওয়ার পর পরেরটা। এটা শুধু একটা teaching model।
+
+বাস্তব processor-এ pipelining ব্যবহার করে একই সময়ে একাধিক instruction-এর কাজ ভিন্ন stage-এ চলতে পারে:
+
+**[DIAGRAM · flow · pipelining]**
+
+```text
+Cycle 1:  I1 Fetch
+Cycle 2:  I1 Decode   | I2 Fetch
+Cycle 3:  I1 Execute  | I2 Decode  | I3 Fetch
+```
+
+I1 যখন execute হচ্ছে, তখনই I2 decode আর I3 fetch হতে পারে। এভাবে প্রতিটা clock cycle-এ আরও বেশি কাজ এগোয়। নিচের যন্ত্রে দুই mode-এর তফাত দেখুন:
+
+**[WIDGET · PipelineVisualizer]** — "একটা করে" বনাম "pipelined"।
+
+**[DEEPER · আরেকটু গভীরে — superscalar, out-of-order, branch prediction]**
+
+Pipelining ছাড়াও modern CPU-তে আরও কিছু mechanism থাকে:
+
+- **Superscalar:** একটা core-এ একাধিক execution unit থাকায় একই clock cycle-এ একাধিক instruction-এর কাজ শুরু বা শেষ হতে পারে।
+- **Out-of-order execution:** কোনো instruction-এর operand এখনো তৈরি না থাকলে, তার পরের স্বাধীন instruction-গুলোর কাজ আগে এগোতে পারে।
+- **Branch prediction:** conditional branch-এর সম্ভাব্য path অনুমান করে CPU সেই path-এর instruction আগেভাগে fetch/decode করতে পারে। অনুমান ভুল হলে সেই speculative কাজ বাতিল করে সঠিক path-এ ফেরে।
+
+এগুলো basic fetch-decode-execute model-কে বাতিল করে না; বরং সেই flow-কে আরও parallel আর sophisticated করে তোলে।
+
+---
 
 ## এই আর্টিকেলে কী শিখলাম
 
-- **কোড ও data-র অভিন্নতা:** মেমরির কাছে কোড আর data-র গঠনে কোনো পার্থক্য নেই, দুটোই স্রেফ ভোল্টেজ বা bit সিকোয়েন্স।
-- **পার্থক্য গড়ে দেয় Program Counter:** PC মেমরির যে address-কে নির্দেশ করে, CPU সেই bit-গুলোকেই instruction হিসেবে treat করে।
-- **Control Unit হলো ডিরেক্টর:** CU কোনো ম্যাথ করে না, সে instruction-এর ওকপকোড (Opcode) পড়ে ডিকোডারের মাধ্যমে সঠিক কন্ট্রোল সিগন্যাল জেনারেট করে বাকি পার্টসগুলোকে পরিচালনা করে।
-- **কম্পিউটিং-এর রিদম:** প্রতিটি প্রসেসরের মূল প্রাণশক্তি লুকিয়ে আছে Fetch-Decode-Execute সাইকেলের অবিরাম লুপের মাঝে।
+- Instruction-ও শেষ পর্যন্ত bits — memory-র স্তরে instruction আর data দুটোই bit pattern হিসেবে থাকে।
+- Instruction format বলে দেয় কী করতে হবে — opcode operation শনাক্ত করে, বাকি field operand আর destination জানায়।
+- Program Counter ঠিক করে পরের instruction কোথা থেকে fetch হবে — branch বা অন্য control-flow হলে সেই address বদলাতে পারে।
+- Control Unit instruction-এর field থেকে control signal তৈরি করে — কোন register select হবে, ALU কোন operation করবে, কোন register result capture করবে।
+- Fetch-Decode-Execute একটা conceptual flow — modern CPU-তে এগুলো একাধিক clock cycle জুড়ে থাকতে পারে, আর একাধিক instruction-এর stage overlap করতে পারে।
+- Clock আর Fetch-Decode-Execute এক জিনিস নয় — clock দেয় timing boundary, FDE বলে কাজের ধরন।
 
-## পরের আর্টিকেলে
+---
 
-এই যে কোটি কোটি instruction আর data নিয়ে প্রসেসর প্রতি ন্যানোসেকেন্ডে খেলা করছে, এগুলো আসলে থাকে কোথায়?
+## পরের article-এ: Memory Hierarchy
 
-CPU-র ভেতরের register-গুলো অত্যন্ত ফাস্ট হলেও সেখানে জায়গা খুবই সীমিত—মাত্র কয়েক হাজার bit। এত ছোট জায়গায় তো আমাদের গেম, ব্রাউজার কিংবা অপারেটিং সিস্টেম ধরবে না। তাহলে কি সব data র‍্যামে (RAM) থাকে? কিন্তু র‍্যাম তো প্রসেসরের তুলনায় অনেক দূরে এবং ধীরগতির।
+এখন আমরা জানি CPU কীভাবে instruction fetch করে, decode করে, আর control signal দিয়ে datapath-কে কাজে লাগায়। কিন্তু একটা প্রশ্ন বাকি — যে instruction আর data CPU বারবার ব্যবহার করে, সেগুলো থাকে কোথায়? CPU-র সবচেয়ে কাছের storage খুব দ্রুত, কিন্তু ছোট; বড় storage অনেক বেশি ধরে, কিন্তু সেখান থেকে data আনতে সময় বেশি লাগে। এই speed, size আর cost-এর trade-off থেকেই তৈরি হয় **Memory Hierarchy** — পরের article-এর বিষয়।
 
-এই স্পিড আর সাইজের ব্যালেন্স বজায় রাখার জন্য মডার্ন কম্পিউটারে একটি চতুর ব্যবস্থা করা হয়েছে—প্রসেসরের এই মেমরি ম্যানেজমেন্টের গল্পটাই হবে আমাদের পরের আর্টিকেলের বিষয়।
+**[পরের article: ০৫ — The Memory Hierarchy]**
 
-### Hover Definitions
+**Hover terms used** (definitions live in `glossary.ts`): `opcode`, `pc`, `ir`, `cu`
 
-- **[HOVER: Program Counter]**
-    
-    প্রোগ্রাম কাউন্টার (PC) হলো CPU-র ভেতরের একটি অত্যন্ত গুরুত্বপূর্ণ বিশেষায়িত রেজিস্টার, যা মেমরিতে থাকা পরবর্তী instruction-এর সুনির্দিষ্ট address বা ঠিকানা ধরে রাখে। প্রতিবার একটি instruction মেমরি থেকে তুলে আনার সাথে সাথেই PC স্বয়ংক্রিয়ভাবে এক ধাপ বেড়ে পরবর্তী লাইনের ঠিকানা লক করে ফেলে। কোডে কোনো loop বা if-statement থাকলে, এই PC-র ভেতরের address-টি জাম্প করে বদলে যায়, যা সফটওয়্যারকে সিদ্ধান্ত নেওয়ার ক্ষমতা দেয়।
-    
-- **[HOVER: Instruction Register]**
-    
-    ইন্সট্রাকশন রেজিস্টার (IR) হলো CPU-র কোর মেমরির ভেতরে অবস্থিত একটি অস্থায়ী হোল্ডিং জোন বা বাফার। মেমরি (RAM) থেকে fetch করে আনা instruction-এর র-ভোল্টেজ bit-গুলো সরাসরি এই IR-এ এসে জমা হয় এবং যতক্ষণ না সেই instruction-এর execution সম্পূর্ণ শেষ হচ্ছে, ততক্ষণ bit-গুলো এখানেই স্থির থাকে যেন Control Unit নিখুঁতভাবে তা read করতে পারে।
-    
-- **[HOVER: Control Unit]**
-    
-    কontrol ইউনিট (CU) হলো প্রসেসরের ভেতরের মূল ডিরেক্টর বা অর্কেস্ট্রা কন্ডাক্টর। এটি নিজে কোনো গাণিতিক হিসাব করে না বা data জমা রাখে না; এর কাজ হলো ইন্সট্রাকশন রেজিস্টার (IR) থেকে opcode পড়া এবং ডিকোডার সার্কিটের মাধ্যমে পুরো চিপের নিয়ন্ত্রণ তারগুলোতে (Control Wires) ভোল্টেজ পাঠানো। এটিই নির্ধারণ করে কখন ALU অন হবে, কখন বাস (Bus) দিয়ে data ছুটবে এবং কোন register-এর দরজা খুলবে।
-    
-- **[HOVER: Opcode]**
-    
-    Opcode (Operation Code) হলো একটি বাইনারি instruction-এর একদম শুরুর নির্দিষ্ট কিছু bit (যেমন ১ম ৪ বা ৮ bit), যা মূল অপারেশনের ধরন নির্দেশ করে। এটি CPU-র ভেতরের কন্ট্রোল সার্কিটের জন্য একটি ইগনিশন কি (ignition key) এর মতো কাজ করে—এই bit প্যাটার্ন দেখেই প্রসেসরের হার্ডওয়্যার বুঝতে পারে তাকে যোগ (ADD), বিয়োগ (SUB), নাকি মেমরি থেকে data লোড (LOAD) করতে হবে।
-    
+---
+---
 
 # Heartbeat: Fetch-Decode-Execute
 
-### How Does a CPU Understand and Execute an Instruction?
+## How an instruction becomes work
 
-In the last article, we traced the exact hardware path of how the numbers 2 and 3 combine to form 5. Yet, the core mystery of execution remains unsolved.
+> *Blocks marked `[DIAGRAM · …]` render through the `<Diagram>` primitive (flow art on paper, not a code well). `[WIDGET · …]` marks an interactive instrument, `[DEEPER · …]` a collapsible toggle. Hover definitions live only in `src/articles/glossary.ts`.*
 
-How did the CPU actually know it was supposed to perform an ADD operation at that exact moment? Why not a subtraction or a multiplication? And how did it know to pull data from those two specific registers while ignoring the rest? Who issued that command, or **[HOVER: Instruction]**?
+In the last article we traced how 2 and 3 become 5 inside the hardware. But the story wasn't finished. One question was left open.
 
-That is the story we are breaking down today.
+How did the CPU know it was supposed to *add* at that moment? Not subtract, not multiply — add. And to take the data from *those* two registers and no others. Where did those control signals come from?
 
-### A Silicon Time-Lapse
+That is where today's story starts.
 
-We are still operating inside that same compact silicon landscape where the ALU, registers, bus, and clock coexist. However, our focus today shifts from physical components to time itself.
-
-If the previous article was a still photograph detailing the internal hardware topography of the chip, this article is a moving picture. We will track exactly what happens inside the CPU from one clock cycle to the next—watching how an instruction leaves system memory, enters the processor, decodes its own meaning, and translates into raw execution.
-
-### Instructions are Just Bits
-
-When we write programs, we naturally treat "code" and "data" as fundamentally distinct concepts. But at the silicon level, instructions and data look identical in memory. Both are nothing more than physical voltage patterns—a sequence of $0$s and $1$s.
-
-The command "ADD," the color values of a red pixel on your screen, and the integer "42" are all stored in memory using the exact same physical mechanism. Memory is entirely passive; it cannot differentiate between an execution command and a raw variable. To the hardware, it is all just electrical charges.
-
-This reinforces our core architectural rule: **The CPU is blind; software gives meaning.** The exact same bit sequence can represent an instruction or a piece of data depending entirely on the context.
-
-How, then, does the CPU distinguish a command sequence from data? It comes down to **timing**. When the CPU fetches bits during its specific command-retrieval phase (the Fetch Phase), it automatically treats those bits as an instruction. Before we look at that cycle, let's dissect what an instruction looks like under the hood.
-
-### Anatomy of an Instruction
-
-Suppose we want to command the CPU to: *"Add the contents of Register A and Register B, then store the result in Register C."*
-
-While modern production processors utilize 32-bit or 64-bit instruction sets, we can illustrate the concept using a simplified 13-bit instruction format:
-
-```
- 0001  |  001  |  010  |  011
-Opcode | Reg A | Reg B | Reg C
-```
-
-Every hardware instruction is cleanly partitioned into specific bit fields:
-
-- **Opcode (Operation Code):** The opening segment of the bit sequence that dictates the nature of the operation. In our 13-bit model, the first 4 bits serve as the opcode. The CPU's hardwired logic recognizes `0001` as ADD, `0010` as SUB, and `0011` as LOAD.
-- **Operand Fields:** The remaining segments of the instruction that specify *what* the operation should act upon. In this case, these fields contain the 3-bit binary addresses pointing directly to the internal registers (Register A = `001`, B = `010`, C = `011`).
-
-The moment the CPU pulls these 13 bits into its core, it isolates the first 4 bits. The internal control circuitry decodes this pattern instantly: *"Execute an addition."* It then reads the remaining operands to locate its data sources and target destination.
+> **// a silicon time-lapse**
+>
+> We're still inside the same small silicon town where the ALU, registers, datapath and clock all work together. But today the focus shifts from the parts to the sequence of work. The previous article was a still photograph — what sits inside the chip. This one is a moving picture: how an instruction travels from memory into the CPU, turns its own meaning into control signals, and finally changes the CPU's state.
 
 ---
 
-### Program Counter: Whose Turn Is It?
+## 01 — Instructions are just bits
 
-If instructions and raw data look identical within memory, why does the CPU interpret a random sequence of bits as a command rather than a simple number? And with billions of instructions packed into system memory, how does the hardware guarantee they execute in the exact order intended by the software?
+When we write programs, "code" and "data" feel like completely different things. But at the memory level, instructions and data are both ultimately **bit patterns**.
 
-To manage this sequence, the CPU relies on a dedicated internal register known as the **[HOVER: Program Counter]** (PC for short), frequently referred to as the *Instruction Pointer*.
-
-The PC is bound to a single architectural task: it continuously holds the exact memory address of the next instruction scheduled for execution.
-
-```
-[ RAM Memory ]
-0x004: 0001001010011  <-- PC Points Here (Instruction!)
-0x008: 0000000000010  <-- Data Area (Number 2)
-0x00C: 0000000000011  <-- Data Area (Number 3)
+```text
+ADD instruction   →  a bit pattern
+42                →  a bit pattern
+a pixel value     →  a bit pattern
 ```
 
-When the operating system initializes a application, it loads the memory address of the program's very first instruction directly into the PC. From that moment, the hardware engine is locked in. The CPU accesses the address stored in the PC and implicitly treats whatever bit sequence it retrieves as a valid machine command.
+Memory itself never looks at those bits and decides "this is an instruction" or "that is data."
 
-To put it plainly, the boundary between "instruction" and "data" does not exist as a physical marker inside the memory cells. The distinction is defined entirely by the Program Counter. Whatever the PC targets during the command phase is isolated as an instruction; everything else remains inert data.
+That doesn't mean the CPU can treat any bit pattern as a command, though. When the CPU **fetches** bits from a particular address as part of instruction fetching, those bits enter the instruction-decoding process.
 
-With our operational units defined, the instructions queued in memory, and the PC tracking the active address, we can now map the execution engine.
+> Whether a bit pattern is treated as an instruction or as data isn't written into the bits; it depends on how the CPU is using them.
 
-### Fetch-Decode-Execute: The Core Computing Rhythm
-
-The transition of an instruction from system memory to finished state execution is governed by a recurring cycle divided into three structural phases: **Fetch**, **Decode**, and **Execute**.
-
-#### 1. Fetch
-
-The cycle opens with the Fetch stage—a purely logistical phase focused on data transport rather than processing.
-
-The CPU’s control unit samples the memory address currently held inside the PC. It pushes this address across the **Address Bus** out to the system RAM. The memory hardware locates the specified address, samples the 13-bit configuration stored within it, and sends those bits back across the **Data Bus** directly to the CPU core. These bits are immediately latched into another specialized internal repository: the **[HOVER: Instruction Register]** (IR for short).
-
-Simultaneously, the PC increments its internal value, automatically pointing to the address of the next instruction in line for the subsequent cycle.
-
-#### 2. Decode
-
-The instruction is now sitting inside the CPU within the IR, but the underlying execution hardware cannot yet interpret this specific configuration of voltages.
-
-This is where the director of the microprocessor takes control: the **[HOVER: Control Unit]** (CU). The CU does not compute numbers or alter variables; its sole purpose is to orchestrate the rest of the CPU components.
-
-The CU isolates the opening 4 bits (the Opcode field) from the IR. It routes these bits through a hardware network called a decoder circuit. By decoding the binary configuration—such as `0001` for an ADD command—the CU determines exactly which execution paths must activate. It instantly alters the electrical state of the internal **Control Wires**:
-
-- **To the ALU:** "Engage the internal addition circuitry (Add Mode)."
-- **To the Multiplexer:** "Open the internal data paths so the contents of Register A and Register B bypass the bus and route straight to the ALU inputs."
-- **To the Destination Decoder:** "Prime the gating logic of Register C to intercept and latch the upcoming output from the ALU."
-
-#### 3. Execute
-
-With all control vectors set and the hardware paths stabilized, the execution phase begins.
-
-Driven by the clock timing rhythm, the value from Register A ($2$) and the value from Register B ($3$) clear the multiplexer gates and hit the ALU's Full Adder architecture. The current propagates through the interconnected logic gates, stabilizing at the output as binary $5$ (`0101`). This voltage pattern is driven onto the internal data bus lines directly to the input gates of Register C. On the final timing boundary, the value $5$ is latched cleanly into Register C's flip-flops, finalizing the state transition.
-
-### The Continuous Heartbeat
-
-The execution of the instruction wraps up, but the CPU does not pause.
-
-The moment the next clock pulse arrives, the CPU loops back to the **Fetch** stage. Because the PC updated its address tracking during the previous phase, the CPU smoothly pulls the next command from memory, decodes its operational signals, and drives it through the execution stage.
-
-This loop repeats indefinitely: **Fetch -> Decode -> Execute -> Fetch...** for as long as the machine remains powered on. In a 3.0 GHz processor, this cycle executes billions of times every single second.
-
-```
-+---> [ FETCH ]  --> Retrieve instruction from memory into IR & advance PC
-|         |
-|         v
-|   [ DECODE ] --> Parse Opcode via CU to assert hardware control lines
-|         |
-|         v
-+--- [ EXECUTE ] --> Compute values through ALU and commit state via Data Bus
-```
-
-Every single interaction on a modern computer—from the vertical scrolling of a browser window to tracking mouse coordinates or querying an AI language model—reduces to the relentless repetition of these three stages. Regardless of how many abstract software frameworks are layered on top, everything ultimately resolves down to this hardware rhythm running on silicon.
-
-### Reality Corner: Microarchitectural Pipelining
-
-To keep the concepts accessible, we mapped the data flow as a rigid sequential process where one instruction must complete its entire cycle before the next begins. This paradigm represents a classical *Single-Cycle Architecture*.
-
-Modern production processors are far more dynamic, utilizing a technique called **Pipelining**. Think of an assembly line in a manufacturing plant: workers do not wait for a single car to be built, painted, and boxed before starting the next. Instead, multiple cars occupy different stages of the line simultaneously.
-
-A pipelined CPU mirrors this efficiency. While Instruction 1 is inside the *Execute* block, Instruction 2 is simultaneously passing through the *Decode* block, and Instruction 3 is already being pulled from system memory during the *Fetch* stage.
-
-Beyond pipelining, modern desktop and server chips deploy highly sophisticated execution strategies:
-
-- **Superscalar Architecture:** Designing multiple parallel hardware execution pipelines within a single core to execute multiple distinct instructions during the same clock cycle.
-- **Out-of-Order Execution (OoO):** If an instruction is blocked waiting for data to arrive from slow system memory, the control logic bypasses it to execute subsequent, independent commands that already have their operands ready.
-- **Branch Prediction:** When encountering conditional logic (like `if-else` blocks or loops), the CPU speculatively guesses the execution outcome and pre-loads the PC with the predicted address path. If the guess is correct, execution speed scales dramatically; if it fails, the speculative work is flushed, and the PC resets to the correct path.
-
-### What This Article Covered
-
-- **Uniform Data Storage:** Instructions and variables share the same hardware format in memory—both are simply physical voltage patterns without inherent contextual labels.
-- **The Role of the Program Counter:** The PC establishes the boundary between code and data. The hardware treats a bit sequence as a command solely because the PC pointed to it during a command phase.
-- **The Control Unit as Orchestrator:** The CU interprets the Opcode bit fields and uses internal hardware decoders to toggle the control signals that guide the ALU, multiplexers, and buses.
-- **The Computational Engine:** The Fetch-Decode-Execute pipeline acts as the fundamental heartbeat of modern computing architecture.
-
-### In the Next Article: The Memory Hierarchy
-
-We have established that the processor manipulates instructions and data at nanosecond intervals—but where does all this state live?
-
-While internal registers operate at maximum speed, they offer incredibly scarce storage space—typically just a few thousand bits. This is nowhere near enough capacity to house modern operating systems, browsers, or applications. Are these files stored exclusively in RAM? System RAM is spacious, but it sits physically distant from the CPU core, making it far too slow to keep up with the ALU.
-
-To solve this speed and capacity bottleneck, modern computer engineering implements a layered approach called the **Memory Hierarchy**—arranging storage from fastest-and-smallest to slowest-and-largest. That architectural framework will be the focus of our next breakdown.
-
-**[Next Article: 5. The Memory Hierarchy]**
+So the question becomes — how does the CPU decide which address to fetch an instruction from? Before that, let's see what an instruction actually looks like.
 
 ---
 
-### Hover Definitions
+## 02 — Anatomy of an instruction
 
-- **[HOVER: Program Counter]**
-    
-    The Program Counter (PC) is a dedicated register inside the CPU that holds the specific memory address of the next instruction waiting to be executed. As soon as the current instruction is fetched from RAM, the PC automatically increments its value to point to the next address sequence. When control flow structures like loops or conditional statements occur in code, the PC's address is forcefully overwritten to cause a branch, enabling software logic decisions.
-    
-- **[HOVER: Instruction Register]**
-    
-    The Instruction Register (IR) is a dedicated internal hardware buffer within the CPU control path. Raw voltage bits fetched directly from system memory (RAM) are stored in the IR, where they are held completely static until the execution phase is fully completed. This guarantees that the execution logic and control unit have stable, unaltered access to the active instruction bits.
-    
-- **[HOVER: Control Unit]**
-    
-    The Control Unit (CU) serves as the primary director or orchestrator of the entire processor. It contains no arithmetic circuitry and stores no program data; instead, it reads the operational bits from the Instruction Register (IR) and routes them through a decoder network. This hardware logic translates the raw instruction into specific electrical control lines, directly signaling when the ALU should switch modes, when the data bus should open, or which registers should latch new values.
-    
-- **[HOVER: Opcode]**
-    
-    The Opcode (Operation Code) comprises the initial, fixed-length bit fields (such as the first 4 or 8 bits) of a raw binary instruction that specify the nature of the execution task. It acts as an ignition key for the internal control unit logic; by matching this specific bit pattern, the processor hardware immediately knows whether it must perform an arithmetic operation (ADD/SUB), move data internally, or fetch data from memory (LOAD).
+Suppose we want to tell the CPU: **"Add the contents of Register A and Register B, then store the result in Register C."** The CPU doesn't receive that sentence in human language. Machine instructions use a defined binary format, where different bit fields carry different meanings.
+
+Real instruction formats depend on the processor's architecture, or ISA. Not all processors use instructions of the same size.
+
+To keep things simple, let's invent a 13-bit format:
+
+```text
+  0001  |  001  |  010  |  011
+ Opcode | Reg A | Reg B | Reg C
+```
+
+- **[HOVER: Opcode]** — identifies which operation to perform. In our fictional CPU, say `0001` = ADD, `0010` = SUB, `0011` = LOAD.
+- **Register fields** — identify which registers supply the operands and which one receives the result.
+
+Note that `001`, `010`, and `011` are not memory addresses — they are identifiers for the CPU's registers.
+
+Once those fields are decoded, the CPU can generate control signals that route A and B into the ALU, configure the ALU for ADD, and select Register C as the destination. This is where an instruction's bit pattern connects to the CPU's internal behaviour. Change the opcode and operands on the instrument below:
+
+**[WIDGET · InstructionAnatomy]**
+
+---
+
+## 03 — Program Counter: whose turn is it?
+
+If instructions and data look the same in memory, a natural question follows — how does the CPU know which bits to fetch as the next instruction?
+
+That's the job of an important register: the **[HOVER: Program Counter]** (PC), called the Instruction Pointer in some architectures. In simple terms, the PC holds **the memory address the next instruction should be fetched from**.
+
+If our simplified CPU uses fixed-size instructions, then after fetching one instruction the PC can advance to the address of the next.
+
+```text
+[ Memory ]
+
+0x004: 0001001010011   ← PC
+0x008: 0000000000010   ← data
+0x00C: 0000000000011   ← data
+```
+
+The PC points at 0x004. When the CPU fetches from that address, the bit pattern it gets enters the instruction-decoding process. In our simplified model the PC then advances to the next instruction.
+
+When a program starts, the system arranges for execution to begin at the program's entry point — in our model, we can picture the address of the first instruction being placed into the PC.
+
+**[WIDGET · ProgramCounterDemo]**
+
+In a real CPU, though, the PC does not always simply "add one step." Instruction size, branches, jumps, function calls and returns can all change where the next instruction comes from.
+
+> Memory holds no label marking instructions apart from data. The CPU's instruction-fetch process is what determines which location's bits get decoded as an instruction.
+
+Now we have all the pieces. The instruction sits in memory, and the PC knows which one to read. But how do those bits turn into actual work?
+
+---
+
+## Mental model: article 03 + the instruction
+
+> **// one mental model to remember**
+>
+> In the previous article we saw:
+>
+> ```text
+> Current State
+>      ↓
+> Combinational Logic
+>      ↓
+> Next State
+>      ↓
+> Clock Edge
+>      ↓
+> New State
+> ```
+>
+> Now add the instruction, and the picture becomes:
+>
+> ```text
+> Instruction bits
+>        ↓
+>      Decode
+>        ↓
+> Control signals
+>        ↓
+> Current State
+>        ↓
+> Combinational Datapath
+>        ↓
+> Next State
+>        ↓
+> Clock Edge
+>        ↓
+> New State
+> ```
+>
+> **The instruction specifies WHAT should happen.** Control logic configures the operation. The datapath produces the result. And the clock provides the timing boundary for capturing the new state.
+
+---
+
+## 04 — Fetch-Decode-Execute: the basic flow
+
+The journey of an instruction — from entering the CPU to leaving its mark on the CPU's state — can be split into three broad conceptual phases: Fetch → Decode → Execute.
+
+That's a useful mental model. But one thing matters:
+
+> **Fetch, Decode and Execute do not mean three clock ticks.** In some processors an instruction takes several clock cycles; in a pipelined CPU, different instructions can sit in different parts of these phases at the same time.
+
+So "phase" here describes the kind of work being done, not a fixed amount of time.
+
+**[DIAGRAM · flow · simplified model]**
+
+```text
+Fetch
+  ↓
+Decode
+  ↓
+Execute / state update
+```
+
+*Caption:* Fetch-Decode-Execute describes what kind of work happens; the clock describes when stored state gets a chance to update. They are not the same thing.
+
+### 1 · Fetch — bringing in the instruction
+
+The Fetch phase has one job — bring the bits of the next instruction to the CPU's execution machinery.
+
+- The PC holds the address of the next instruction.
+- The CPU uses that address to request the instruction from the memory subsystem.
+- The instruction bits arrive from memory.
+- An internal storage element — in our model the **[HOVER: Instruction Register]** (IR) — holds those bits.
+
+At the same time, in our simplified model, the PC advances toward the next instruction.
+
+> Fetch doesn't mean a clock tick shoves data from one place to another. Signals propagate, and once the data is ready the CPU can update its state at the appropriate timing boundary.
+
+**[DIAGRAM · flow · fetch]**
+
+```text
+PC
+ ↓
+instruction address
+ ↓
+memory subsystem
+ ↓
+instruction bits
+ ↓
+IR
+```
+
+### 2 · Decode — generating control signals
+
+The instruction bits are inside the CPU now. Those fields have to become the control information the operation needs. That's the work of the **[HOVER: Control Unit]** (CU) and its decoding logic.
+
+```text
+0001 | 001 | 010 | 011
+  ↓     ↓     ↓     ↓
+ ADD    A     B     C
+```
+
+Reading those fields, the control logic can generate signals such as:
+
+```text
+Select Register A
+Select Register B
+ALU operation = ADD
+Destination = Register C
+Write Enable for C = 1
+```
+
+Notice what is not happening: the CU is not "switching the ALU on" or "opening the MUX."
+
+> Control logic configures the parts of the datapath for the required operation. The combinational logic then produces its output from that configuration and the current inputs.
+
+**[DIAGRAM · flow · decode]**
+
+```text
+Instruction bits
+      ↓
+   Decode
+      ↓
+Control signals
+      ↓
+Configured datapath
+```
+
+### 3 · Execute — computation and state update
+
+The control signals have configured the datapath. The current values in Register A and B sit at the MUX inputs, and the select signals present them to the ALU.
+
+The ALU's combinational logic works on those inputs, and after the propagation delay its output settles at 5 (`0101`).
+
+> **The clock did not tell the ALU to start calculating.** The control signals configured the datapath, and the combinational logic produced the result from its current inputs.
+
+That result is now available at Register C's input, and `WE_C` is active. At the next appropriate clock edge, Register C can capture it:
+
+**[DIAGRAM · flow · capture]**
+
+```text
+ALU result = 0101
+       │
+       ▼
+   Clock edge
+       │
+       ▼
+Register C captures 0101
+```
+
+So the core hardware pattern is this:
+
+> **Instruction bits → control signals → datapath configuration → combinational computation → state update**
+
+Step through the whole path on the instrument below:
+
+**[WIDGET · FetchDecodeExecute]** — the button is "step," not a clock tick.
+
+---
+
+## 05 — The continuous loop
+
+Once an instruction's state update has happened, the CPU doesn't stop. Fetching begins again for the next one — and in a modern processor other instructions may be sitting in different stages at the same time.
+
+**[WIDGET · InstructionCycleLoop]**
+
+But don't read this loop as saying every instruction finishes in exactly these three steps, in a fixed number of clock ticks.
+
+> **A clock cycle is a unit of timing; Fetch-Decode-Execute describes conceptual stages of work.**
+
+A 3 GHz CPU has roughly 3 billion clock cycles per second. That does not mean it completes exactly 3 billion full fetch-decode-execute cycles per second. Work from several instructions can progress in one cycle, and a single instruction can also take several cycles.
+
+---
+
+## 06 — The whole story, once through
+
+Somewhere in memory sits a bit pattern — `0001 001 010 011`. Nothing on it says "instruction."
+
+But the PC holds that address. The CPU fetches from it, and the bits land in the IR. The PC advances toward the next one.
+
+Control logic reads those fields and generates control signals: which registers are selected, which operation the ALU performs, which register receives the result.
+
+On the configured datapath, 2 and 3 reach the ALU, the combinational logic settles at 5, and on a clock edge Register C captures it. At that moment the result becomes part of the CPU's state.
+
+Then the next instruction. The loop keeps going.
+
+Your React app, YouTube, Photoshop, an AI chatbot — all of it eventually becomes machine instructions, and those instructions are processed through stages corresponding to fetch, decode and execution. Real CPUs make those stages far more complex and overlapping, but the conceptual flow begins here.
+
+---
+
+## 07 — Reality corner: pipelining
+
+To keep things simple we showed instruction flow as a straightforward sequential process — one instruction passing through the three conceptual phases before the next. That is only a teaching model.
+
+Real processors use pipelining, so work from several instructions can occupy different stages at the same time:
+
+**[DIAGRAM · flow · pipelining]**
+
+```text
+Cycle 1:  I1 Fetch
+Cycle 2:  I1 Decode   | I2 Fetch
+Cycle 3:  I1 Execute  | I2 Decode  | I3 Fetch
+```
+
+While I1 is being executed, I2 can be decoded and I3 fetched. That way more work progresses during each clock cycle. Compare the two modes on the instrument below:
+
+**[WIDGET · PipelineVisualizer]** — "one at a time" vs "pipelined".
+
+**[DEEPER · go deeper — superscalar, out-of-order, branch prediction]**
+
+Beyond pipelining, modern CPUs use several more mechanisms:
+
+- **Superscalar:** a core can have several execution units, so work from multiple instructions can start or finish in the same clock cycle.
+- **Out-of-order execution:** if one instruction is still waiting on an operand, independent later instructions may be allowed to make progress first.
+- **Branch prediction:** the CPU predicts the likely path of a conditional branch and may fetch and decode from that path early. If the prediction is wrong, that speculative work is discarded and it returns to the correct path.
+
+None of these replace the basic fetch-decode-execute idea. They make that flow more parallel and more sophisticated.
+
+---
+
+## What this article covered
+
+- Instructions are ultimately bits — at the memory level, instructions and data are both just bit patterns.
+- The instruction format says what to do — the opcode identifies the operation, the other fields name operands and destination.
+- The Program Counter decides where the next instruction is fetched from — branches and other control flow can change that address.
+- The Control Unit turns instruction fields into control signals — which registers are selected, which ALU operation runs, which register captures the result.
+- Fetch-Decode-Execute is a conceptual flow — in modern CPUs these stages can span multiple clock cycles and overlap across instructions.
+- The clock is not the same thing as Fetch-Decode-Execute — the clock gives timing boundaries; FDE describes the kinds of work.
+
+---
+
+## Next article: The Memory Hierarchy
+
+We now know how a CPU fetches an instruction, decodes it, and uses control signals to drive the datapath. But one question remains — where do all the instructions and data the CPU keeps using actually live? The storage closest to the CPU is very fast but small; larger storage holds far more but takes longer to reach. That trade-off between speed, size and cost is what produces the **Memory Hierarchy** — the subject of the next article.
+
+**[Next: 05 — The Memory Hierarchy]**
+
+**Hover terms used** (definitions live in `glossary.ts`): `opcode`, `pc`, `ir`, `cu`

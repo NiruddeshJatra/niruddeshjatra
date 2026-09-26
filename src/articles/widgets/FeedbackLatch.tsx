@@ -3,15 +3,11 @@ import { useLang } from '../context/LanguageContext';
 import { Instrument } from '../primitives/Instrument';
 import { Caption } from '../primitives/Caption';
 
-const useReducedMotion = () =>
-  typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-
 type LatchState = 'one' | 'zero' | 'off' | 'garbage';
 function randBit(): LatchState { return Math.random() > 0.5 ? 'one' : 'zero'; }
 
 export function FeedbackLatch() {
   const { bn, num } = useLang();
-  const reduced = useReducedMotion();
   const [state, setState] = useState<LatchState>('zero');
   const [powered, setPowered] = useState(true);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -39,10 +35,6 @@ export function FeedbackLatch() {
   const gBCol = powered ? (Q === 0 ? on : dim) : dead;
   const wQCol = powered ? (Q === 1 ? on : dim) : dead;
   const wQbCol = powered ? (Q === 0 ? on : dim) : dead;
-  const ltDash = powered ? '6 8' : undefined;
-
-  const flow = (active: boolean): React.CSSProperties =>
-    (active && !reduced) ? { animation: 'flow 0.6s linear infinite' } : {};
 
   const qVal = Q !== null ? num(Q) : (state === 'off' ? '×' : '?');
   const qbVal = Q !== null ? num(Q === 1 ? 0 : 1) : (state === 'off' ? '×' : '?');
@@ -88,10 +80,10 @@ export function FeedbackLatch() {
               <text x="248" y="125" fill={gBCol} fontSize="12" fontFamily="Departure Mono,monospace">NOT</text>
 
               {/* Q wire: top output → right → down → bottom input */}
-              <path d="M141 60 H320 V120 H295" fill="none" stroke={wQCol} strokeWidth="2" strokeDasharray={ltDash} style={flow(Q === 1 && powered)} />
+              <path d="M141 60 H320 V120 H295" fill="none" stroke={wQCol} strokeWidth="2" />
 
               {/* Q̄ wire: bottom output → left → up → top input */}
-              <path d="M219 120 H30 V60 H70" fill="none" stroke={wQbCol} strokeWidth="2" strokeDasharray={ltDash} style={flow(Q === 0 && powered)} />
+              <path d="M219 120 H30 V60 H70" fill="none" stroke={wQbCol} strokeWidth="2" />
             </svg>
 
             {/* Absolute Q / Q̄ value labels */}
@@ -127,8 +119,8 @@ export function FeedbackLatch() {
         </div>
       </Instrument>
       <Caption
-        bn="দুটো NOT gate feedback loop-এ আটকে থাকে। power off মানে সব তথ্য মুছে যায় — power on করলে random state।"
-        en="Two NOT gates trapped in a feedback loop. Power off erases everything — power on restores a random state."
+        bn="দুটো NOT gate একে অপরকে ধরে রাখে — দুটো stable state। একটা থেকে অন্যটায় নিতে বাইরে থেকে জোর করে লিখতে হয়। Power কাটলে state আর নিশ্চিত থাকে না; আবার চালু করলে যেকোনো একটায় থিতু হয়।"
+        en="Two NOT gates hold each other in place — two stable states. Moving from one to the other takes an outside write. Cut the power and the state is no longer guaranteed; power back on and it settles into either one."
       />
     </>
   );

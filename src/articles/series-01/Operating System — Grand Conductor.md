@@ -1,191 +1,249 @@
-# Operating System — Grand Conductor
+# অপারেটিং সিস্টেম: মহাব্যবস্থাপক
 
-## ৫০টা program একসাথে চলে কীভাবে?
+## এতগুলো program একসাথে চলে কীভাবে?
+
+> *`[DIAGRAM · …]` blocks render through the `<Diagram>` primitive. `[WIDGET · …]` marks an interactive instrument, `[DEEPER · …]` a collapsible toggle. Hover definitions live only in `src/articles/glossary.ts`.*
 
 আপনার laptop-এ এই মুহূর্তে কতগুলো program চলছে?
 
-সহজে যা মনে পড়ে — browser, code editor, terminal, Spotify। কিন্তু task manager খুলে দেখলে দেখা যায় ৫০-১০০টা process background-এ চলছে। System service, background sync, notification handler — সব।
+সহজে যা মনে পড়ে — browser, code editor, terminal, Spotify। কিন্তু task manager বা system monitor খুলে দেখলে দেখা যায়, এর বাইরেও অনেক process আর background task চলছে। System service, background sync, notification handler — সব।
 
-কিন্তু laptop-এর CPU-তে কি ১০০টা core আছে? না। বেশিরভাগ laptop-এ ৪ থেকে ১৬টা core। মানে hardware-এর দিক থেকে দেখলে, একই সময়ে সর্বোচ্চ ১৬টা কাজ হতে পারে।
+কিন্তু laptop-এ কি ততগুলো CPU core আছে? না। হাতে গোনা কয়েকটা। আর প্রতিটা core একই সময়ে সীমিত সংখ্যক instruction stream চালাতে পারে।
 
-তাহলে ১০০টা program একসাথে চলে কীভাবে?
+তাহলে এতগুলো program একসাথে চলে কীভাবে?
 
-উত্তর একটাই। ওরা আসলে একসাথে চলছে না। ওরা এত দ্রুত পালা করে চলছে যে আপনার চোখে "একসাথে" মনে হচ্ছে। আর এই পুরো পালা-বদলের কাজ যে করছে, সে আপনার laptop-এর সবচেয়ে গুরুত্বপূর্ণ software — **Operating System**।
+মূল কৌশলের নাম **concurrency**। CPU খুব দ্রুত বিভিন্ন runnable কাজের মধ্যে সময় ভাগ করে দেয় — এত দ্রুত যে আপনার চোখে "একসাথে" মনে হয়। আর একাধিক core থাকলে কিছু কাজ সত্যিই একই সময়ে চলে।
+
+এই ভাগাভাগির পুরো ব্যবস্থাপনা যে করে, সে আপনার laptop-এর সবচেয়ে গুরুত্বপূর্ণ software — **Operating System**। আর সে শুধু CPU ভাগ করে না। Memory, file, device, network access, permission — এসবও application-গুলোর মধ্যে managed আর isolated রাখে।
 
 আজকের গল্প OS-কে ঘিরে।
 
----
-
-// একটা কথা আগে বলে রাখি
-
-এই সিরিজে এতদিন সব কথা ছিল hardware নিয়ে। Transistor, gate, CPU, register, cache, RAM। আজ প্রথম software-এর দুনিয়ায় পা রাখা।
-
-কিন্তু এই software সাধারণ কোনো app না। এটা এমন এক software যেটা বাকি সব software-কে চালায়। Linux, Windows, macOS, Android, iOS — এদের সবার নাম আলাদা, কিন্তু কাজ মূলত একই। Hardware আর application-এর মাঝখানে বসে সবার resource ভাগ করে দেওয়া। কে কখন CPU পাবে, কার কতটুকু memory লাগবে, কে file পড়তে পারবে — সব OS ঠিক করে দেয়।
+> **// একটা কথা আগে বলে রাখি**
+>
+> এই সিরিজে এতদিন সব কথা ছিল hardware নিয়ে। Transistor, gate, CPU, register, cache, RAM। আজ প্রথম software-এর দুনিয়ায় পা রাখা।
+>
+> কিন্তু এই software সাধারণ কোনো app না। Operating System এমন একটা system software, যেটা hardware-এর resource পরিচালনা করে আর application-কে সেগুলো ব্যবহারের জন্য abstraction ও controlled access দেয়। Linux, Windows, macOS, Android, iOS — এদের implementation আলাদা, কিন্তু কাজের তালিকা মোটামুটি একই: process আর thread management, memory management, device management, filesystem, networking, protection।
 
 আজকে যেসব প্রশ্নের উত্তর খুঁজব:
 
-- একটা CPU-তে ৫০টা program একসাথে চলে কীভাবে?
-- একটা program-এর bug আরেকটাকে ক্র্যাশ করায় না কেন?
-- আপনার লেখা app hardware-এ direct access পায় না কেন, তাহলে file/network use করে কীভাবে?
+- অনেকগুলো program বা thread কীভাবে সীমিত CPU resource ভাগ করে নেয়?
+- একটা program-এর memory অন্য program থেকে আলাদা থাকে কীভাবে?
+- আপনার লেখা app hardware-এ সরাসরি access পায় না, তাহলে file বা network ব্যবহার করে কীভাবে?
 
 ---
 
-// Program আর Process — দুটো এক জিনিস না
+## ০১ — Program আর Process এক জিনিস না
 
 শুরুতেই একটা distinction পরিষ্কার করে নেওয়া দরকার। এই দুইটা শব্দ প্রায়ই মিশিয়ে ব্যবহার হয়, কিন্তু আসলে দুই জিনিস।
 
-Program হলো disk-এ পড়ে থাকা একটা .exe বা .app file। কোড, ডেটা — সব একটা structured file-এ গুছানো। এই মুহূর্তে সে কিছুই করছে না। শুধু বসে আছে।
+**Program** হলো instruction আর data-র একটা নিষ্ক্রিয় বর্ণনা — যেমন disk-এ পড়ে থাকা একটা executable file বা program image। এই মুহূর্তে সে কিছুই করছে না। শুধু বসে আছে।
 
-সেই file-এ double-click করলেন। এখন সেটা "চলতে" শুরু করেছে — সেটাই process।
+**[HOVER: Process]** হলো সেই program-এর একটা *running instance* — চলতে থাকা কাজটা, আর তার জন্য যা যা state ও resource লাগে সেগুলো সহ।
 
-সহজ কথায় বলতে গেলে, একটা recipe (program) আর সেই recipe দেখে রান্না করা (process) — দুই জিনিস। একই recipe দিয়ে দশজন রাঁধুনি দশটা আলাদা রান্না করতে পারেন। ঠিক তেমনি একই program থেকে অনেকগুলো process চলতে পারে। Chrome খুলে ২০টা tab খুললেন — প্রতিটার জন্য প্রায়ই একটা করে আলাদা process।
+সহজ কথায় — একটা recipe (program) আর সেই recipe দেখে করা রান্না (process) দুই জিনিস। একই recipe দিয়ে দশজন রাঁধুনি দশটা আলাদা রান্না করতে পারেন; ঠিক তেমনি একই program থেকে একাধিক process চলতে পারে।
 
----
+তবে browser নিয়ে একটা সতর্কতা:
 
-// একটা Process-এর ভেতরে কী থাকে?
-
-OS যখন একটা process তৈরি করে, তখন সেটার জন্য একটা পুরো "workspace" প্রস্তুত করে দেয়। এই workspace-এ কয়েকটা নির্দিষ্ট অংশ থাকে:
-
-**PID (Process ID):** Process-এর নাম — মানে একটা unique নম্বর। যাতে OS বুঝতে পারে কোন process কার কথা বলছে।
-
-**Memory space:** নিজস্ব একটা memory এলাকা, যেখানে এই process-এর সব কিছু (কোড, ডেটা, ইত্যাদি) থাকে। এই এলাকা কীভাবে "নিজস্ব" হয় সেটা একটু পরের section-এ দেখব — এটা virtual memory-র গল্প।
-
-সেই memory এলাকার ভেতরে আবার কয়েকটা section:
-
-**Code section:** Program-এর instruction গুলো এখানে থাকে। এই অংশ read-only, যাতে program ভুল করে বা কেউ ইচ্ছা করে নিজের কোড পাল্টে ফেলতে না পারে।
-
-**Data section:** এখানে থাকে সেই সব variable যেগুলো program-এর শুরু থেকে শেষ পর্যন্ত টিকে থাকে। যেমন C-তে function-এর বাইরে declare করা `int counter = 0;` — এই ধরনের global variable এখানে বসে থাকে। Program যতক্ষণ চলবে, ততক্ষণ এই variable-ও থাকবে।
-
-**Stack:** যখন একটা function call হয়, তার parameter আর local variable-এর জন্য সাময়িক জায়গা লাগে। Function শেষ হলে সেই জায়গা মুছে যাবে। এই সাময়িক জায়গার নাম stack।
-
-কল্পনা করুন একটা কাগজের tray-তে একের পর এক কাগজ রাখছেন — সবশেষ কাগজটা সবার ওপরে থাকে, সেটাই আগে সরাতে হবে। Function call-ও এভাবেই — যে function সবশেষ call হয়েছে, সে-ই আগে শেষ হয়। এই "শেষে এসে আগে যায়" pattern-এর নামই stack।
-
-**Heap:** কখনো কখনো program চলাকালীন হঠাৎ বড় একটা array বা object তৈরি করতে হয় — যেটা কতটা বড় হবে তা আগে জানা ছিল না। এই dynamic memory-র জন্য জায়গা আসে heap থেকে। JavaScript-এ যখন `new Array(1000)` লেখেন, বা C-তে `malloc()` করেন — memory আসে heap থেকে।
-
-**File descriptors:** Program চলাকালীন file খুলল, network connection বানাল — এসব track করতে হয়। কারণ পরে আবার সেই file-এ কিছু লিখতে হতে পারে, বা সেই connection বন্ধ করতে হতে পারে। File descriptor হলো এই connection-গুলোর "handle" — একটা ছোট নম্বর, যেটা দিয়ে program বলতে পারে "এই connection-টার সাথে কাজ করো।"
-
-**Register state:** এই process যখন CPU-তে চলছিল, তখন CPU-র register-এ যা যা ছিল — সেই সব। কেন এটা track করে রাখতে হবে? কারণ OS এই process-কে সরিয়ে অন্যটা চালাবে। কিছুক্ষণ পর যখন এই process আবার চালু হবে, তখন সে ভুলে যাবে সে কোথায় থেমেছিল, কোন value নিয়ে কাজ করছিল। তাই সরিয়ে রাখার আগে সব save করা লাগে।
-
-Process-এর memory layout সাধারণত এভাবে সাজানো:
-
-```
-উপরের address    ┌─────────────────────┐
-                 │       Stack         │  ← function call-এর সাথে বাড়ে-কমে
-                 │         ↓           │      নিচের দিকে বাড়ে
-                 │                     │
-                 │      (unused)       │
-                 │                     │
-                 │         ↑           │
-                 │        Heap         │  ← malloc/new-এ বাড়ে
-                 ├─────────────────────┤       উপরের দিকে বাড়ে
-                 │    Data / BSS       │  ← global variables
-                 ├─────────────────────┤
-                 │       Code          │  ← program-এর instruction
-নিচের address    └─────────────────────┘
-```
-
-*ANIMATION HINT: একটা process-এর memory layout দেখানো। প্রথমে code section-এ instruction ঢুকছে (static)। তারপর data section-এ global variable বসছে। এরপর program run শুরু — heap-এ malloc হচ্ছে, নিচ থেকে উপরে দিকে জায়গা বড় হচ্ছে; একই সাথে stack-এ function call হচ্ছে, উপর থেকে নিচের দিকে একটার পর একটা বাক্স যুক্ত হচ্ছে, function শেষ হলে সেই বাক্স মুছে যাচ্ছে। মাঝে unused space, যেখান দিয়ে দুই দিক এগোচ্ছে।*
-
-এই সবগুলো OS একটা কেন্দ্রীয় জায়গায় track করে রাখে, যাকে বলে PCB (Process Control Block)। OS-এর কাছে প্রতিটা process মানে PCB-তে একটা entry।
+> **"একটা tab = একটা process" — এমন কোনো বাঁধা নিয়ম নেই।** Modern browser একাধিক ধরনের process ব্যবহার করে — browser/UI process, renderer process, GPU-related process। কোন page কোন process-এ বসবে, সেটা browser-এর architecture আর তার resource ও security policy-র ওপর নির্ভর করে।
 
 ---
 
-// এক CPU-তে অনেকজন: পালা-বদলের গল্প
+## ০২ — একটা process-এর ভেতরে কী থাকে?
 
-এবার আসল প্রশ্ন। CPU একটাই (বা কয়েকটা core)। কিন্তু process অনেকগুলো। তাহলে?
+OS যখন একটা process তৈরি করে, তখন শুধু program-এর code memory-তে তুলে দেয় না। Process-এর সঙ্গে তার execution আর resource নিয়ে বেশ কিছু state জড়িয়ে থাকে:
 
-উত্তর: OS প্রতিটা process-কে সামান্য সময়ের জন্য CPU-তে বসিয়ে দেয় — সাধারণত ১ থেকে ১০ millisecond। সেই সময় শেষ হলে, বা process নিজে থেকে থামলে (যেমন disk থেকে ডেটা পড়ার জন্য অপেক্ষা করলে), OS তাকে সরিয়ে অন্য process-কে বসিয়ে দেয়।
+**PID (Process ID):** Process-কে চিহ্নিত করার একটা identifier — যাতে OS বুঝতে পারে কোন process-এর কথা বলা হচ্ছে।
 
-এই "সরানো আর বসানো"-র নাম **Context Switch**।
+**Memory space:** Process-এর একটা virtual address space থাকে, যেখানে তার code, data, stack, heap আর অন্যান্য mapped region বসে। এই এলাকা কীভাবে "নিজস্ব" হয়, সেটা একটু পরের section-এর গল্প।
 
-কল্পনা করুন আপনি ৫টা আলাদা subject-এ homework করছেন — গণিত, বাংলা, ইংরেজি, বিজ্ঞান, সমাজ। এক সাথে সবগুলো করা সম্ভব না। তাই একটা করে করছেন। কিন্তু একটা থেকে আরেকটায় যাওয়ার আগে কয়েকটা কাজ করতে হয়:
+সেই address space-এর ভেতরে কয়েকটা গুরুত্বপূর্ণ অংশ:
 
-- এখন যে subject-এ আছেন, সেটার page number কোথায় ছিল সেটা bookmark দিয়ে রাখা।
-- কোন চিন্তা কোথায় ছিল সেটাও রাফখাতায় টুকে রাখা।
+**Code section:** Program-এর executable instruction-গুলো সাধারণত এখানে থাকে। সাধারণ protection-এর অধীনে এই অংশ read-only হিসেবে map করা হতে পারে, যাতে চলতি code সহজে নিজেকে পাল্টে ফেলতে না পারে।
+
+**Data section:** Global আর static variable-এর মতো data এখানে থাকে। যেমন C-তে function-এর বাইরে declare করা `int counter = 0;` — এই ধরনের global variable এখানে বসে থাকে। Program যতক্ষণ চলবে, ততক্ষণ এই variable-ও থাকবে।
+
+**Stack:** Function call-এর সময় parameter, local variable আর return information-এর জন্য জায়গা লাগে; সেটা আসে stack থেকে।
+
+কল্পনা করুন একটা tray-তে একের পর এক কাগজ রাখছেন — সবশেষ কাগজটাই সবার ওপরে, সেটাই আগে সরাতে হবে। Function call-ও তেমনই: যে function সবশেষ call হয়েছে, সে-ই আগে শেষ হয়। এই "শেষে এসে আগে যায়" pattern-এর নামই stack।
+
+**Heap:** Program চলার সময় dynamically allocate করা memory-র জন্য heap ব্যবহার হয়। C-তে `malloc()` করলে বা JavaScript runtime-এ `new Array(1000)` লিখলে memory আসে এখান থেকেই।
+
+**File descriptors:** Process কোনো file, socket, pipe বা অন্য OS resource ব্যবহার করলে OS তাকে একটা handle দেয়। Unix-এর মতো system-এ সেই handle একটা ছোট integer — file descriptor। ওই নম্বর দেখিয়েই process বলে, "এই resource-টার সাথে কাজ করো।"
+
+**Execution state:** এই process যখন CPU-তে চলছিল, তখন CPU-র register-এর মান, program counter — এই ধরনের execution state লাগে। কেন এটা track করে রাখতে হয়? কারণ context switch-এর সময় এই state সংরক্ষণ করে পরে আবার restore করা যায়। Context Switching নিয়ে আমরা একটু পরে জানবো।
+
+> **Process হলো address space আর resource-এর একটা context; CPU-তে যে execution state save আর restore হয়, সেটা মূলত thread-এর সঙ্গে জড়িত।** এক process-এ একাধিক thread থাকলে address space এক, কিন্তু register state আর stack প্রত্যেকের নিজের।
+
+এই সব তথ্য kernel তার নিজের data structure-এ track করে। Classic OS বইয়ে প্রতি process-এর এই record-টাকে বলা হয় **[HOVER: PCB]** (Process Control Block) — তবে বাস্তব kernel-এ এটা একটামাত্র literal "central table" হতেই হবে এমন নয়।
+
+নিচের যন্ত্রে process-এর memory কীভাবে সাজানো থাকে, তার একটা conceptual ছবি:
+
+**[WIDGET · ProcessAnatomy]**
+
+একটা কথা মনে রাখবেন — এটা একটা conceptual layout। Exact বিন্যাস architecture, OS, executable format আর runtime-এর ওপর নির্ভর করে; "stack সবসময় নিচের দিকে নামে, heap উপরে ওঠে" কোনো universal physical নিয়ম নয়।
+
+---
+
+## ০৩ — এক CPU-তে অনেক কাজ: পালা-বদলের গল্প
+
+এবার আসল প্রশ্ন। CPU core সীমিত, কিন্তু runnable process আর thread অনেকগুলো। তাহলে?
+
+OS-এর scheduler ঠিক করে দেয় কোন runnable thread কোন core-এ কখন চলার সুযোগ পাবে। একটা thread কিছুক্ষণ চলে; তারপর হয় preemption-এর কারণে তাকে সরে যেতে হয়, নয়তো সে নিজেই অপেক্ষায় চলে যায় — যেমন কোনো I/O শেষ হওয়ার অপেক্ষায়।
+
+এই execution context বদলে যাওয়ার ঘটনার নাম **context switch**।
+
+কল্পনা করুন আপনি ৫টা আলাদা subject-এ homework করছেন — গণিত, বাংলা, ইংরেজি, বিজ্ঞান, সমাজ। একসাথে পাঁচটা খাতায় লেখা যায় না। তাই একটা করে করছেন। কিন্তু একটা ছেড়ে আরেকটায় যাওয়ার আগে কয়েকটা কাজ করতে হয়:
+
+- এখন যে subject-এ আছেন, সেটার page কোথায় ছিল তা bookmark দিয়ে রাখা।
+- কোন চিন্তা কোথায় ছিল, রাফখাতায় টুকে রাখা।
 - বই বন্ধ করা।
 - পরের subject-এর বই বের করা।
-- আগেরবার যে page-এ থেমেছিলেন সেই page-এ ফেরত যাওয়া।
-- কোথায় কী চিন্তা ছিল সেটা মনে করা।
+- আগেরবার যে page-এ থেমেছিলেন সেখানে ফেরত যাওয়া।
+- কোথায় কী ভাবছিলেন, মনে করা।
 
 তারপরই কাজ শুরু করা যায়।
 
-CPU-তেও ঠিক এমনই হয়। শুধু bookmark না — CPU-র "মাথায়" (মানে register-এ) যা যা তথ্য ছিল, কোন instruction চালাচ্ছিল, কোন value hand-এ ধরা ছিল, সব সাময়িক ডেটা — save করে রাখতে হয়। সেই save-এর জায়গা হলো process-এর PCB। এরপর নতুন process-এর PCB থেকে তার আগের সব "মাথার অবস্থা" আবার CPU-তে load করা হয়। এখন CPU সেই process-এর কাজ চালিয়ে যেতে পারবে যেখানে সে আগেরবার থেমেছিল।
+CPU-তেও ধারণাটা একই:
 
-CPU নিজে জানে না কতগুলো process আছে বা কার সাথে কাজ করছে। সে শুধু instruction execute করে যাচ্ছে যেটা যেভাবে দেওয়া হচ্ছে। OS-ই প্রতি কয়েক millisecond অন্তর তার সামনে নতুন process দাঁড় করিয়ে দিচ্ছে।
+**[DIAGRAM · context switch]**
 
-এই পালা-বদলের একটা দাম আছে। প্রতিবার save-load করতে সময় যায় — মানে switch যত ঘনঘন হবে, actual কাজের জন্য সময় ততই কম মিলবে। তাই OS চেষ্টা করে balance রাখতে — অনেক ঘনঘন switch না, আবার এতটা কমও না যে user টের পায় "hang" হয়ে গেছে।
+```text
+current thread's execution state
+              ↓
+            saved
+              ↓
+other thread's saved state
+              ↓
+           restored
+              ↓
+       execution resumes
+```
 
----
+Save করা state-এর মধ্যে থাকে register-এর মান, program counter — এই ধরনের execution information। পরে সেই state আবার restore করলে কাজটা মোটামুটি যেখানে থেমেছিল সেখান থেকেই এগোতে পারে।
 
-// Scheduling: কার পালা এখন?
+> **Context switch মানেই পুরো process বদলে যাওয়া নয়** — একই process-এর দুইটা thread-এর মধ্যেও context switch হতে পারে।
 
-আরেকটা প্রশ্ন। যদি একই সময়ে ১০০টা process ready অবস্থায় থাকে, OS কীভাবে ঠিক করে পরের বার কে CPU পাবে?
+CPU নিজে ঠিক করে না এখন কোন application "গুরুত্বপূর্ণ"। সে শুধু তার সামনে থাকা instruction চালিয়ে যায়। OS-এর scheduler runnable কাজের তথ্য আর নিজের policy দেখে পরেরজনকে বেছে নেয়। নিচে এক ধাপ এক ধাপ করে switch-টা ঘটিয়ে দেখুন:
 
-এই সিদ্ধান্ত নেওয়ার নাম **scheduling**। কে কখন CPU পাবে, কতক্ষণ পাবে — এই সিদ্ধান্তগুলো নেয় OS-এর ভেতরের একটা algorithm, যাকে বলে **scheduler**।
+**[WIDGET · ContextSwitch]**
 
-কী মাথায় রেখে scheduler কাজ করে? মূলত তিনটা কথা — সবাই যেন fair chance পায়, জরুরি কাজ যেন আগে হয়, আর system যেন responsive থাকে। কিন্তু এই তিনটাকে একসাথে satisfy করা কঠিন। তাই বিভিন্ন সময়ে বিভিন্ন algorithm design হয়েছে:
-
-**Round-Robin:** সবাইকে সমান সময় দাও। ক্লাসে teacher যেমন সবাইকে পালা করে বলার সুযোগ দেন — এই algorithm-ও তেমনই। সরল, fair। কিন্তু সমস্যা একটা — system-এর কিছু process (যেমন mouse cursor update বা keyboard driver) অন্যদের চেয়ে বেশি জরুরি। তাদের সমান সময় দেওয়ার মানে, cursor lag করবে।
-
-**Priority-based:** এই সমস্যার সমাধান — যাদের priority বেশি, তারা আগে চান্স পাবে। কিন্তু এখানেও risk আছে। যদি কোনো low-priority process অনেক দিন পর্যন্ত CPU-ই না পায়, সেটাকে বলে "starvation" — অনাহারে থাকা।
-
-**Modern Linux-এ ব্যবহার হয় CFS (Completely Fair Scheduler)** — নাম-ই বলে দিচ্ছে লক্ষ্য কী। প্রতিটা process কতটা CPU time পেয়েছে সেটার হিসাব রাখে। যে কম পেয়েছে, তাকে পরের চান্স দেয়। এভাবেই fairness আর responsiveness — দুটোরই ব্যবস্থা হয়।
-
-সব algorithm-এর ভেতরের হিসাব জানার দরকার নেই। এতটুকু মনে রাখলেই চলবে — OS-এর একটা "রেফারি" আছে যে প্রতি context switch-এ ঠিক করে দেয় পরের বার CPU কার হাতে যাবে।
-
----
-
-// Virtual Memory: প্রতিটা program-এর নিজস্ব একটা জগত
-
-Multitasking-এর আরেকটা সমস্যা — memory।
-
-আপনার laptop-এ এখন Chrome, VS Code, Spotify — সবাই একই RAM ব্যবহার করছে। প্রতিটা program কোনো না কোনো memory address-এ কিছু লিখছে। যদি Chrome ভুল করে সেই address-এ কিছু লেখে যেখানে VS Code-এর ডেটা আছে, VS Code crash করবে। আরও খারাপ — একটা malicious app যদি ইচ্ছা করে অন্য app-এর data (যেমন password) পড়ে ফেলে?
-
-তাই OS একটা কৌশল বার করেছে। **প্রতিটা process-কে নিজের একটা পুরো memory এলাকা দিয়ে দাও — যেখানে সে ভাবতে পারে পুরো RAM তার একার।**
-
-কীভাবে সম্ভব? মাঝখানে একটা "অনুবাদক" (translator) বসানো হয়েছে।
-
-Program যখন কোডে লেখে "এই ডেটা memory address ১০০-তে রাখো", সে ভাবে সে actual RAM-এর ১০০ নম্বর ঘরে রাখছে। কিন্তু আসলে সেই "১০০" একটা virtual address — মানে "কল্পিত" address। মাঝখানের অনুবাদক (একটা hardware unit, নাম MMU — Memory Management Unit) সেই virtual address-কে instant translate করে দেয় actual physical address-এ।
-
-Chrome-এর জন্য "virtual address ১০০" হয়তো actual physical address 8,42,000। VS Code-এর জন্য একই "virtual address ১০০" হয়তো actual 1,15,60,000। দুই program একই virtual address ব্যবহার করছে, কিন্তু বাস্তব RAM-এ তারা সম্পূর্ণ ভিন্ন জায়গায়। কেউ কারো এলাকায় ঢুকছে না।
-
-এই অনুবাদের rule OS নিজে তৈরি করে দেয় — প্রতিটা process-এর জন্য একটা করে "translation table", যার নাম **page table**।
-
-*ANIMATION HINT: দুই process পাশাপাশি দেখানো। প্রতিটা থেকে একটা তীর "virtual address 100" বলে বাইরে বের হচ্ছে। মাঝখানে MMU বসে আছে — একজন "অনুবাদক"। MMU সেই তীরটা পাল্টে দিয়ে দুই ভিন্ন physical address-এ পাঠাচ্ছে। বোঝা যায়: একই virtual address, ভিন্ন actual location।*
-
-Virtual memory-র মাধ্যমে দুইটা বড় সুবিধা পাওয়া যায়:
-
-**Isolation:** এক process আরেক process-এর memory-তে ঢুকতে পারে না। কারণ তার translation table তাকে সেই এলাকায় নিয়েই যায় না। কে কোথায় কী লিখছে, অন্যদের জানার কোনো উপায় নেই। এটাই আধুনিক system security-র foundation।
-
-**বেশি memory-র illusion:** Physical RAM 16 GB হলেও প্রতিটা program ভাবতে পারে তার অনেক বড় একটা memory আছে — RAM-এর চেয়েও বড়। কীভাবে সম্ভব? কারণ যা এই মুহূর্তে use হচ্ছে না, তা RAM-এ থাকতেই হবে এমন না। OS সেই অংশ disk-এ সরিয়ে রাখতে পারে। যখন আবার লাগবে, তখন RAM-এ ফিরিয়ে আনবে। Program জানতেও পারবে না কিছু হয়েছে। এই "সরানো-ফেরানো" ব্যবস্থাকে বলে **swap**।
-
-সহজ কথায় — virtual memory হলো OS-এর দেওয়া একটা মিষ্টি মিথ্যা। প্রতিটা program ভাবছে সে একা এই কম্পিউটারের একচ্ছত্র অধিপতি। বাস্তবে ৫০ জন রাজা পাশাপাশি বসে আছে, কেউ কাউকে দেখছে না।
+এই পালা-বদলের একটা দাম আছে। প্রতিবার save আর restore-এ কিছু সময় যায় — অর্থাৎ switch যত ঘনঘন হবে, CPU-র কিছুটা সময় ততই bookkeeping-এ খরচ হবে। তাই OS-কে একটা balance খুঁজতে হয়: এত ঘনঘন নয় যে overhead-ই বড় হয়ে ওঠে, আবার এত কম নয় যে user "hang" টের পায়।
 
 ---
 
-// Kernel Mode আর User Mode: দুই স্তরের দরজা
+## ০৪ — Scheduling: কার পালা এখন?
 
-আরেকটা fundamental separation আছে — এবার security-র দিক থেকে।
+আরেকটা প্রশ্ন। যদি একই সময়ে অনেকগুলো thread runnable থাকে, OS কীভাবে ঠিক করে পরের বার CPU কে পাবে?
 
-Windows-এ Admin account আর regular user account-এর পার্থক্য জানেন। Admin সব করতে পারে — settings change, software install, system files edit। Regular user restricted — সে system-এর কিছু ভাঙতে পারবে না, কিন্তু নিজের কাজ করতে পারবে।
+এই সিদ্ধান্ত নেওয়ার নাম **scheduling**, আর যে নেয় তার নাম **scheduler**।
 
-CPU-রও ঠিক এমন দুইটা mode আছে:
+Scheduler-কে একসাথে কয়েকটা জিনিস সামলাতে হয় — সবাই যেন fair chance পায়, জরুরি কাজ যেন সময়মতো হয়, system যেন responsive থাকে। এই তিনটা একসাথে মেলানো কঠিন, তাই ইতিহাসে আর বিভিন্ন system-এ নানা algorithm ব্যবহার হয়েছে:
 
-**Kernel Mode** = admin mode। এই mode-এ থাকা code যা খুশি করতে পারে — hardware-এ direct access, অন্য process-এর memory দেখা, page table পাল্টানো, সব। শুধু OS-এর নিজের code এই mode-এ চলে।
+- **Round-Robin:** runnable কাজগুলোকে পালা করে সময় দাও। ক্লাসে teacher যেমন সবাইকে পালা করে বলার সুযোগ দেন। সরল আর fair — কিন্তু এখানে কোন কাজটা বেশি জরুরি, সেই পার্থক্য ধরা পড়ে না।
+- **Priority-based:** কিছু কাজকে বেশি priority দেওয়া যায়, যাতে তারা আগে CPU পায়। এখানে ঝুঁকি একটাই — কোনো low-priority কাজ দীর্ঘ সময় CPU না-ও পেতে পারে। একে বলে **starvation**।
+- **Fair-share scheduling:** যে এখন পর্যন্ত সবচেয়ে কম CPU time পেয়েছে, পরের সুযোগটা তার। Linux বহু বছর এই ধারায় **CFS (Completely Fair Scheduler)** ব্যবহার করেছে; kernel 6.6 থেকে সেই জায়গায় এসেছে **EEVDF**, যেটা virtual runtime-এর পাশাপাশি deadline-ও হিসাব করে — যাতে latency-sensitive কাজ শুধু fairly নয়, সময়মতোও চলে।
 
-**User Mode** = restricted mode। এই mode-এ থাকা program hardware-এ direct access পায় না। কোনো sensitive operation করার চেষ্টা করলে CPU নিজে থেকেই বন্ধ করে দেয়। সব regular application এই mode-এ চলে — আপনার browser, editor, game, সবাই।
+সব algorithm-এর ভেতরের হিসাব জানার দরকার নেই। এতটুকু মনে রাখলেই চলবে:
 
-কেন এই বিভাজন? সহজ কারণ — যদি প্রতিটা app যা খুশি করতে পারত, একটা bad app পুরো system-এ ছড়িয়ে পড়তে পারত। User mode-এ থেকে app শুধু নিজের কাজটা করতে পারে, বাকি কিছুতে হাত দিতে পারে না।
+> **Scheduler হলো OS-এর সেই রেফারি, যে ঠিক করে runnable কাজগুলোর মধ্যে CPU time কীভাবে বণ্টন হবে।**
 
-কিন্তু app-এর তো কিছু কাজ করতেই হবে যেগুলোতে hardware লাগে — file পড়া, network-এ পাঠানো, screen-এ আঁকা। এসব তাহলে সে কীভাবে করে?
 
-উত্তর: OS-এর কাছে অনুরোধ করে। সেই অনুরোধ পাঠানোর mechanism-এর নাম **System Call**।
+
+**[WIDGET · Scheduler]** — round-robin / priority / fair-share।
+
+## ০৫ — Virtual Memory: প্রতিটা process-এর নিজস্ব address space
+
+Multitasking-এর আরেকটা বড় সমস্যা — memory isolation।
+
+আপনার laptop-এ এখন Chrome, VS Code, Spotify — সবাই একই physical RAM ব্যবহার করছে। একটা program যেন ইচ্ছামতো আরেকটার private memory পড়তে বা লিখতে না পারে, সেটা নিশ্চিত হয় কীভাবে?
+
+এখানেই আসে **virtual memory**। সহজ কথায়: প্রতিটা process পায় নিজের একটা আলাদা **virtual address space**।
+
+Program যখন কোনো memory address ব্যবহার করে, সেটাকে সরাসরি physical RAM-এর ঘর ভাবার দরকার নেই। সেটা একটা virtual address। Hardware-এর MMU (Memory Management Unit) আর OS-এর তৈরি mapping information মিলে সেই virtual address-কে corresponding physical location-এর সঙ্গে মিলিয়ে দেয়।
+
+**[DIAGRAM · address mapping]**
+
+```text
+Process A
+virtual address 100
+        ↓
+physical location X
+
+Process B
+virtual address 100
+        ↓
+physical location Y
+```
+
+দুই process একই virtual address number ব্যবহার করতে পারে, কিন্তু তাদের address space আলাদা বলে physical mapping আলাদা হয়। কেউ কারো এলাকায় ঢুকছে না।
+
+এই mapping-এর তথ্য **page table**-এর মতো data structure-এ থাকে, আর MMU সেটা ব্যবহার করে translation সেরে ফেলে। নিচে দুই process টগল করে দেখুন একই virtual address কীভাবে ভিন্ন জায়গায় যায়:
+
+**[WIDGET · MMUTranslator]**
+
+### Isolation
+
+একটা সাধারণ user process নিজের অনুমোদিত virtual memory-র বাইরে গিয়ে অন্য process-এর private memory সরাসরি পড়তে বা লিখতে পারে না। আধুনিক system security-র একটা বড় ভিত্তি এটাই।
+
+এটাকে এভাবে ভাবতে পারেন — একই শহরে ৫০ জন থাকছে, কিন্তু প্রত্যেকের হাতে আলাদা মানচিত্র। কারো মানচিত্রে অন্যের ঘরের রাস্তাটা আঁকাই নেই।
+
+### Virtual memory আর swap এক জিনিস না
+
+এই পার্থক্যটা জরুরি।
+
+**Virtual memory** হলো address space abstraction, protection আর virtual-to-physical mapping-এর পুরো ব্যবস্থাটা।
+
+**Swap** হলো সেই ব্যবস্থার ভেতরের একটা mechanism, যেখানে memory-র কিছু content RAM থেকে সরিয়ে secondary storage-এ রাখা হতে পারে, যাতে RAM অন্য কাজে লাগে। সেই page পরে আবার দরকার হলে storage থেকে ফিরিয়ে আনতে হয় — আর তখন **[HOVER: page fault]**-এর মধ্য দিয়ে সেই কাজটা হয়।
+
+**[DIAGRAM · virtual memory vs swap]**
+
+```text
+Virtual Memory
+├── address space abstraction
+├── protection / isolation
+├── virtual → physical mapping
+└── other mechanisms
+
+Swap
+└── one mechanism: move memory contents
+    out to secondary storage
+```
+
+তাই virtual memory-কে শুধু "RAM-এর চেয়ে বেশি memory পাওয়ার কৌশল" ভাবা ঠিক নয়। Swap ছাড়াও virtual memory থাকে।
+
+আর একটা কথা — program physical location জানে না ঠিকই, কিন্তু swap হলে সে টের পায় না তা নয়। Performance-এ সেটা স্পষ্ট ধরা পড়ে।
+
+> **Physical RAM সবাই মিলে ভাগ করে, কিন্তু প্রতিটা process দেখে নিজের আলাদা virtual address space।**
 
 ---
 
-## System Call: OS-এর কাছে অনুরোধের দরজা
+## ০৬ — Kernel Mode আর User Mode: দুই স্তরের দরজা
 
-System call হলো user-এ থাকা app আর kernel-এ থাকা OS-এর মাঝে একটা controlled দরজা। App বলে "এই কাজটা আমার হয়ে করে দাও", OS সেটা করে দেয়।
+আরেকটা fundamental separation আছে — এবার privilege আর security-র দিক থেকে।
+
+Windows-এ Admin account আর regular user account-এর পার্থক্যটা মনে করুন। Admin সব করতে পারে — settings বদলানো, software install, system file edit। Regular user restricted — নিজের কাজ করতে পারে, কিন্তু system ভাঙতে পারে না।
+
+CPU-র execution-কেও একটা simplified model হিসেবে দুই ধরনের privilege level-এ ভাবা যায়:
+
+**Kernel Mode:** এখানে চলা kernel code privileged operation করতে পারে — memory-management configuration, কিছু hardware-related control, এই ধরনের কাজ।
+
+**User Mode:** সাধারণ application এই restricted mode-এ চলে। privileged operation তারা সরাসরি করতে পারে না — আপনার browser, editor, game, সবাই এখানেই।
+
+বাস্তব CPU architecture-এ privilege mechanism-এর implementation ভিন্ন হতে পারে; কোথাও দুইয়ের বেশি level-ও থাকে। এই article-এর জন্য মূল কথাটা এইটুকু:
+
+> **Application code আর trusted OS code একই privilege level-এ চলে না।**
+
+কোনো application যদি এমন কিছু করতে যায় যার অনুমতি তার নেই, CPU সেটা নিঃশব্দে হতে দেয় না — একটা exception বা trap ঘটে, আর নিয়ন্ত্রণ চলে যায় kernel-এর হাতে। এরপর কী হবে (process terminate, signal, error return) সেটা OS ঠিক করে।
+
+কেন এই বিভাজন? সহজ কারণ — প্রতিটা app যদি যা খুশি করতে পারত, একটা খারাপ app পুরো system-এ ছড়িয়ে পড়তে পারত।
+
+কিন্তু app-এর তো file পড়তে হবে, network ব্যবহার করতে হবে, নতুন process বানাতে হবে। তাহলে সে করে কীভাবে? OS-এর কাছে অনুরোধ করে — আর সেই অনুরোধের রাস্তার নাম system call।
+
+---
+
+## ০৭ — System Call: OS-এর কাছে অনুরোধের দরজা
+
+**[HOVER: System call]** হলো user mode-এ থাকা application আর kernel-এর মধ্যে একটা controlled interface। Application নিজে privileged কাজটা না করে OS-কে বলে — "আমার হয়ে এই কাজটা করে দাও।"
 
 C-তে একটা সহজ উদাহরণ:
 
@@ -194,207 +252,266 @@ C-তে একটা সহজ উদাহরণ:
 #include <unistd.h>
 
 int main() {
-    int fd = open("file.txt", O_RDONLY);  // system call
-    char buffer[100];
-    read(fd, buffer, 100);                 // system call
-    close(fd);                             // system call
-    return 0;
+  int fd = open("file.txt", O_RDONLY);  // library wrapper → syscall
+  char buffer[100];
+  read(fd, buffer, 100);                // library wrapper → syscall
+  close(fd);                            // library wrapper → syscall
+  return 0;
 }
 ```
 
-এই `open()`, `read()`, `close()` — দেখতে সাধারণ function call-এর মতো। কিন্তু ভেতরে এরা কিছু বিশেষ কাজ করে। এরা CPU-কে একটা special instruction execute করতে বলে (x86-64-এ যার নাম `syscall`)। সেই instruction CPU-কে বলে "user mode থেকে kernel mode-এ চলে যাও, OS-এর কাছে গিয়ে এই কাজটা করে ফিরে এসো।"
+একটা সূক্ষ্ম কিন্তু গুরুত্বপূর্ণ কথা: `open()`, `read()`, `close()` নিজেরা system call নয় — এরা library/API function। Linux-এ C library-র এই wrapper-গুলো প্রয়োজন হলে kernel-এর system call interface ব্যবহার করে। x86-64 Linux-এ সেই কাজটা হয় `syscall` instruction দিয়ে, যা user mode থেকে kernel-এর নির্ধারিত entry point-এ নিয়ে যায়।
 
-পুরো ব্যাপারটা সংক্ষেপে এমন:
+**[DIAGRAM · request path]**
 
-1. App parameter গুলো নির্দিষ্ট জায়গায় রেখে দেয়।
-2. `syscall` instruction fire করে।
-3. CPU নিজে থেকেই kernel mode-এ চলে যায়।
-4. OS-এর pre-defined handler কাজটা সম্পন্ন করে।
-5. Result নিয়ে CPU আবার user mode-এ ফিরে আসে।
-6. App result পেয়ে যায়।
+```text
+Application
+    ↓
+library / API function
+    ↓
+system call interface
+    ↓
+kernel
+    ↓
+requested operation
+    ↓
+result
+    ↓
+Application
+```
 
-সব ধরনের কাজের জন্যই এই ধরনের system call আছে:
+পুরো ব্যাপারটা সংক্ষেপে:
 
-- **File operation:** `open()`, `read()`, `write()`, `close()`
+1. Application system call-এর argument গুলো নির্দিষ্ট জায়গায় প্রস্তুত করে।
+2. System call mechanism ব্যবহার করে kernel-এ entry নেওয়া হয়।
+3. CPU privilege transition করে kernel-এর নির্দিষ্ট entry point-এ যায়।
+4. Kernel অনুরোধটা যাচাই করে আর কাজটা করে।
+5. Result বা error information ফেরত বসানো হয়।
+6. Execution আবার user mode-এ ফিরে আসে।
+
+OS-এর প্রায় সব service-এর জন্যই এমন system call আছে:
+
+- **File:** `open()`, `read()`, `write()`, `close()`
 - **Network:** `socket()`, `send()`, `recv()`
-- **Process:** `fork()` (নতুন process বানানো), `exit()` (শেষ করা)
-- **Memory:** `mmap()` (নতুন memory চাওয়া)
+- **Process:** `fork()` (নতুন process), `exit()` (শেষ করা)
+- **Memory:** `mmap()` (address space-এ region map করা)
 
-এই transition একটু costly। প্রতিটা system call এ CPU cycle লাগে। তাই performance-এর দিকে খেয়াল রাখা code যতটা সম্ভব কম system call করে।
+> **প্রতিটা high-level function call কিন্তু system call নয়।** অনেক library function পুরো কাজটাই user space-এ সেরে ফেলতে পারে; দরকার হলে তবেই kernel-এ যায়।
+
+এই kernel transition-এর একটা overhead আছে। তাই performance-sensitive code অপ্রয়োজনে বারবার kernel-এ যাওয়া এড়ায়। নিচের যন্ত্রে দরজাটা এক ধাপ এক ধাপে পার হয়ে দেখুন:
+
+**[WIDGET · SyscallDoorway]**
 
 ---
 
-## Thread: এক Process-এর ভেতরে অনেক worker
+## ০৮ — Thread: এক process-এর ভেতরে অনেক execution path
 
-এতক্ষণ process-এর কথা বললাম। কিন্তু Chrome-এ ২০টা tab মানে ২০টা full process বানালে খুব expensive হয়ে যাবে। প্রতিটা process-এর জন্য আলাদা memory setup, আলাদা page table — অনেক overhead।
+এতক্ষণ process-এর কথা বললাম। এবার thread।
 
-কখনো কখনো এক process-এর ভেতরেই অনেকগুলো কাজ একসাথে করতে হয়, কিন্তু আলাদা memory দরকার হয় না — কারণ সবার data share করা লাগবে। এখানে আসে **Thread**।
+একটা process-এর ভেতরে একাধিক **[HOVER: thread]** থাকতে পারে। তারা একই process-এর virtual address space আর অনেক process-level resource share করে, কিন্তু প্রত্যেকের নিজের stack আর নিজের execution state থাকে।
 
-Process যদি একটা কারখানা হয়, thread হলো সেই কারখানার শ্রমিক। এক কারখানায় অনেক শ্রমিক একসাথে কাজ করতে পারে, একই মেশিন share করে, একই কাঁচামাল share করে। কিন্তু প্রতিটার নিজের একটা কাজের ধারা আছে।
+Process যদি একটা কারখানা হয়, thread হলো সেই কারখানার শ্রমিক। এক কারখানায় অনেক শ্রমিক একসাথে কাজ করে, একই মেশিন আর একই কাঁচামাল ব্যবহার করে — কিন্তু প্রত্যেকের নিজের কাজের ধারা আছে।
 
-Thread-ও তাই। এক process-এর ভেতরে multiple thread একই memory, একই file connection share করে। কিন্তু প্রতিটার নিজস্ব stack, নিজস্ব register state। একসাথে চললেও কোনোটি অন্য একটিতে ঝামেলা সৃষ্টি করে না — যতক্ষণ না কেউ কারো memory পাল্টে দেয়।
+**[DIAGRAM · inside a process]**
 
-Process আর Thread-এর মূল পার্থক্য:
+```text
+Process
+├── Thread A → own stack + execution state
+├── Thread B → own stack + execution state
+└── Thread C → own stack + execution state
+
+shared between them:
+virtual address space
+files and other process resources
+```
+
+একই process-এর দুইটা thread একই memory access করতে পারে — এতে data ভাগাভাগি সহজ হয়, আবার coordination-এর দায়িত্বও এসে পড়ে। কে কখন কী লিখছে সেটা ঠিকঠাক না সামলালে ফল অনিশ্চিত হয়ে যেতে পারে।
+
+### Concurrency ≠ parallelism
+
+**Concurrency** মানে একাধিক কাজের অগ্রগতি overlap করা। **Parallelism** মানে একাধিক কাজ সত্যিই একই সময়ে আলাদা core-এ চলা। Single-core CPU-তেও concurrency সম্ভব; একাধিক core থাকলে কিছু thread সত্যিই parallel-এ চলতে পারে।
 
 | দিক | Process | Thread |
 | --- | --- | --- |
-| Memory | নিজস্ব | share করে |
-| তৈরি করার cost | বেশি | কম |
-| একে অপরের সাথে যোগাযোগ | কঠিন | সহজ (memory share করে) |
-| একজন crash করলে | অন্যরা বেঁচে থাকে | পুরো process crash |
+| Address space | সাধারণত আলাদা | process-এর মধ্যে share করে |
+| Execution state | process context | নিজের register state আর stack |
+| Resource sharing | বেশি isolated | বেশি shared |
+| Context switch | বেশি state জড়িত | একই process হলে কিছু state shared |
+| Crash হলে | অন্য process সাধারণত বেঁচে থাকে | fatal হলে পুরো process যেতে পারে |
 
-Web browser typical-ভাবে একটা tab-এ multiple thread ব্যবহার করে — একটা UI-র জন্য, একটা JavaScript-এর জন্য, একটা network-এর জন্য। সব একই process-এ চলছে, একই memory share করছে, কিন্তু কেউ কাউকে block করছে না।
-
----
-
-// পুরো ছবিটা একবার: Keyboard-এর 'A' Screen-এ যাওয়ার গল্প
-
-এবার সব একসাথে। ধরুন আপনি keyboard-এ 'A' চাপলেন। কী কী ঘটে?
-
-1. **Hardware interrupt:** Keyboard controller CPU-কে একটা signal পাঠায় — "একটা key press হয়েছে!"
-2. **CPU থামে:** CPU যা করছিল (হয়তো Chrome-এর কোনো instruction), সেটা থামিয়ে interrupt handler-এ চলে যায়।
-3. **Kernel mode:** Handler kernel mode-এ চলে যায়, OS-এর keyboard driver activate হয়।
-4. **Event তৈরি:** Driver keyboard থেকে ডেটা পড়ে বুঝতে পারে 'A' চাপা হয়েছে।
-5. **কোন app এই event পাবে?:** OS দেখে এই মুহূর্তে কোন window active আছে (আপনার text editor)। সেই process-এর event queue-তে event রাখা হয়।
-6. **Scheduler-এর decision:** Scheduler ঠিক করে এখনই এই process-কে CPU দেওয়া হবে কি না।
-7. **Context switch:** যদি হ্যাঁ হয়, তাহলে currently running process থেকে সরে text editor process-এ যায়।
-8. **App-এ ফেরত:** Text editor সচল হয়, তার pending `read()` return করে, 'A' পায়।
-9. **Screen-এ আঁকা:** Text editor আরেকটা system call করে "এই character screen-এ দেখাও"। OS-এর graphics stack activate হয়।
-10. **GPU-তে:** GPU driver framebuffer update করে।
-11. **আপনি screen-এ 'A' দেখেন।**
-
-শুধু একটা keypress-এর জন্য কয়েক ডজন step, কয়েকটা context switch, কয়েকটা system call, একটা interrupt। এবং সবার মাঝখানে OS conducting করছে — বলছে কে কখন কী করবে।
-
-এই কারণেই OS-কে "Grand Conductor" বলা হয়। Hardware আর application-এর মাঝখানে বসে সব-কিছুর orchestra চালাচ্ছে, প্রতি nanosecond এ।
+বাস্তব software-এ process আর thread — দুটোই একসাথে ব্যবহার হয়। যেমন একটা modern browser একাধিক process ব্যবহার করে (UI, renderer, GPU), আর সেই process-গুলোর ভেতরেও একাধিক thread চলে।
 
 ---
 
-// এই আর্টিকেলে কী শিখলাম
+## ০৯ — পুরো ছবিটা একবার: keyboard-এর 'A' screen-এ যাওয়ার গল্প
 
-- **Program disk-এ পড়ে থাকে, process RAM-এ চলে।** একই program থেকে অনেক process তৈরি হতে পারে।
-- **CPU একটা, process অনেক — OS পালা করে চালায়।** এত দ্রুত switch করে যে "একসাথে" মনে হয়।
-- **Virtual memory প্রতিটা program-কে নিজের একটা জগত দেয়।** যাতে কেউ কারো এলাকায় ঢুকতে না পারে।
-- **Kernel/user mode security-র foundation।** Regular app hardware-এ direct access পায় না।
-- **System call-ই সেই দরজা** — যেখান দিয়ে app OS-এর কাছে কাজ চেয়ে নেয়।
-- **Thread হলো process-এর ভেতরে concurrency।** এক workspace, একাধিক worker।
+এবার সব একসাথে। ধরুন আপনি keyboard-এ 'A' চাপলেন।
+
+নিচের পথটা একটা simplified conceptual model — ভিন্ন operating system, input stack, window system আর graphics architecture-এ আসল ধাপগুলো আলাদা হতে পারে।
+
+**[DIAGRAM · conceptual path]**
+
+```text
+Keyboard
+   ↓
+input controller
+   ↓
+interrupt / input event
+   ↓
+kernel + device driver
+   ↓
+input subsystem
+   ↓
+window system → focused application
+   ↓
+application updates its state
+   ↓
+rendering / graphics system
+   ↓
+display
+```
+
+ধাপে ধাপে ধারণাটা:
+
+1. Keyboard hardware থেকে input-এর signal বা data তৈরি হয়।
+2. Hardware-এর মাধ্যমে CPU-কে জানানো হয় যে input এসেছে।
+3. OS-এর privileged code আর device driver সেই input process করে।
+4. Input subsystem সেটাকে একটা higher-level input event হিসেবে প্রকাশ করে।
+5. Window system বা application সেই event পায়।
+6. Application নিজের state update করে — যেমন text field-এ 'A' যোগ করা।
+7. UI আবার render করতে হয়।
+8. Rendering আর display pipeline-এর মধ্য দিয়ে পরিবর্তনটা শেষ পর্যন্ত screen-এ পৌঁছায়।
+
+নিচের যন্ত্রে step চেপে পুরো relay-টা দেখুন:
+
+**[WIDGET · KeypressRelay]**
+
+শুধু একটা keypress-এর জন্য এতগুলো ধাপ, কয়েকটা privilege transition, কয়েকটা component-এর হাতবদল। আর মাঝখানে OS scheduling, protection, device access আর এই সব component-এর মধ্যে coordination সামলাচ্ছে।
+
+এই কারণেই OS-কে "Grand Conductor" বলা — hardware আর application-এর মাঝখানে বসে পুরো orchestra-টা চালানো।
+
+> তবে মনে রাখবেন — **এটা একটা conceptual flow, কোনো নির্দিষ্ট OS-এর exact instruction-by-instruction sequence নয়।** বাস্তবে interrupt handling, driver, event queue, window system, rendering আর GPU pipeline অনেক বেশি জটিল।
 
 ---
 
-// পরের article-এ
+## এই আর্টিকেলে কী শিখলাম
 
-Hardware দেখা হলো। OS দেখা হলো।
+- **Program আর process এক জিনিস না।** Program হলো instruction আর data-র নিষ্ক্রিয় বর্ণনা; process হলো তার একটা running execution context।
+- **অনেক runnable thread সীমিত CPU resource ভাগ করে নেয়।** Scheduler ঠিক করে কে কখন CPU time পাবে।
+- **Context switch-এ execution state save আর restore হয়** — একই process-এর দুই thread-এর মধ্যেও সেটা ঘটতে পারে।
+- **Virtual memory প্রতিটা process-কে আলাদা virtual address space দেয়।** Hardware আর OS-এর mapping ও protection mechanism মিলে physical memory access নিয়ন্ত্রণ করে — আর virtual memory মানেই swap নয়।
+- **Kernel mode আর user mode privilege আলাদা রাখে।** সাধারণ application privileged operation সরাসরি করতে পারে না; চেষ্টা করলে trap হয়।
+- **System call হলো kernel service ব্যবহারের controlled interface** — তবে প্রতিটা library function call system call নয়।
+- **Thread হলো process-এর ভেতরের আলাদা execution path।** Memory আর resource shared, কিন্তু stack আর execution state যার যার নিজের।
 
-কিন্তু আপনি যে code লেখেন — JavaScript, Python, Go — সেটা তো CPU-এর নিজস্ব ভাষা না। CPU শুধু machine code বোঝে, সেই hex numbers।
+---
 
-মাঝখানে তাহলে কী ঘটে? আপনার লেখা text file কীভাবে CPU-র জন্য executable instruction হয়ে যায়?
+## পরের article-এ: কোড থেকে মেশিন কোড
 
-Compiler, interpreter, JIT — এদের গল্পটা পরের আর্টিকেলে।
+Hardware দেখা হলো। OS দেখা হলো। কিন্তু আপনি যে code লেখেন — JavaScript, Python, Go, C — সেটা তো CPU-র নিজের ভাষা না। CPU শেষ পর্যন্ত machine instruction চালায়; সেগুলো memory-তে থাকে binary bit pattern হিসেবে, আর আমরা মানুষ সুবিধার জন্য সেগুলোকে প্রায়ই hexadecimal-এ লিখি। তাহলে আপনার লেখা text file কীভাবে সেই machine instruction হয়ে ওঠে? কখন compiler লাগে, interpreter কী করে, আর JavaScript-এর মতো ভাষায় JIT কোথায় এসে দাঁড়ায়? সেই গল্প পরের আর্টিকেলে।
 
-**[পরের article: ৭. কোড থেকে মেশিন কোড]**
+**[পরের article: ০৭ — কোড থেকে মেশিন কোড]**
 
+**Hover terms used** (definitions live in `glossary.ts`): `process`, `pcb`, `contextswitch`, `scheduler`, `virtualmem`, `pagefault`, `syscall`, `thread`, `concurrency`
+
+---
 ---
 
 # Operating System — The Grand Conductor
 
-## How do 50 programs run at once?
+## How do this many programs run at once?
+
+> *Blocks marked `[DIAGRAM · …]` render through the `<Diagram>` primitive. `[WIDGET · …]` marks an interactive instrument, `[DEEPER · …]` a collapsible toggle. Hover definitions live only in `src/articles/glossary.ts`.*
 
 How many programs are running on your laptop right now?
 
-The easy answer — browser, code editor, terminal, Spotify. But open task manager and you'll see 50-100 processes running in the background. System services, background sync, notification handlers — all of it.
+The easy answer — browser, code editor, terminal, Spotify. But open a task manager or system monitor and you'll find many more processes and background tasks. System services, background sync, notification handlers — all of it.
 
-But does your CPU have 100 cores? No. Most laptops have 4 to 16. So from the hardware side, only 16 things can happen at any moment.
+But does your laptop have that many CPU cores? No. It has a handful. And each core can run only a limited number of instruction streams at any one moment.
 
-So how do 100 programs run at the same time?
+So how do all these programs run at the same time?
 
-The answer is one thing. They don't. They take turns so fast it feels simultaneous to you. And the master orchestrator of all that turn-taking is one thing — the **Operating System**.
+The main trick is **concurrency**. The CPU divides its time among the runnable work, switching fast enough that it feels simultaneous to you. And with several cores, some of that work really does happen at the same time.
+
+Managing all that sharing is the job of the most important software on your laptop — the **Operating System**. And it shares far more than the CPU: memory, files, devices, network access, permissions, all kept managed and isolated between applications.
 
 That's today's story.
 
----
-
-## One thing to clear up first
-
-Everything so far in this series has been about hardware. Transistors, gates, CPU, registers, cache, RAM. Today we step into the world of software for the first time.
-
-But this isn't ordinary software. It's software that runs all other software. Linux, Windows, macOS, Android, iOS — the names differ, but the job is the same. Sit between the hardware and applications, hand out resources to everyone. Who gets the CPU when, how much memory each one is allowed, who's allowed to touch files — the OS decides.
+> **// the first software**
+>
+> Everything so far in this series has been about hardware. Transistors, gates, CPU, registers, cache, RAM. Today we step into the world of software for the first time.
+>
+> But this isn't ordinary software. An operating system is system software that manages the hardware's resources and gives applications an abstraction over them, plus controlled access to them. Linux, Windows, macOS, Android, iOS — the implementations differ, but the job list is broadly the same: process and thread management, memory management, device management, filesystems, networking, protection.
 
 Today's questions:
 
-- How do 50 programs run on one CPU at the same time?
-- Why doesn't a bug in one program crash another?
-- Why can't your app touch hardware directly, and how does it use files/network then?
+- How do many programs and threads share a limited amount of CPU?
+- How does one program's memory stay separate from another's?
+- Why can't your app touch hardware directly, and how does it use files and the network then?
 
 ---
 
-## Program vs Process — Not the Same Thing
+## 01 — Program vs Process — not the same thing
 
 The distinction matters up front. These two words often get mixed up, but they mean different things.
 
-A program is a `.exe` or `.app` file sitting on disk. Code and data organized into a structured file. Right now, it isn't doing anything. Just sitting there.
+A **program** is a passive description of instructions and data — an executable file or program image sitting on disk, say. Right now, it isn't doing anything. Just sitting there.
 
-Double-click that file. Now it's starting to "run" — that's called a process.
+A **[HOVER: process]** is a *running instance* of that program — the work actually in progress, along with the state and resources it needs to keep going.
 
-Simply put: a recipe (program) and someone actually cooking with that recipe (process) — two different things. Ten cooks can make ten different meals from the same recipe. Similarly, many processes can run from the same program. Open Chrome, open 20 tabs — often each gets its own process.
+Simply put: a recipe (program) and someone actually cooking with it (process) are two different things. Ten cooks can make ten different meals from the same recipe; likewise, many processes can run from the same program.
 
----
+One caution about browsers, though:
 
-## What Lives Inside a Process?
-
-When the OS creates a process, it sets up a whole "workspace" for it. That workspace has a few specific parts:
-
-**PID (Process ID):** The process's name — really just a unique number. So the OS knows which process is being talked about.
-
-**Memory space:** A dedicated area of memory where everything (code, data, and so on) for this process lives. How this area becomes "its own" is a story for the next section — the virtual memory story.
-
-Inside that memory area are a few sections:
-
-**Code section:** The program's instructions live here. This section is read-only — so the program can't accidentally rewrite its own code, and no one else can either.
-
-**Data section:** Variables that stick around from the beginning of the program to the end. Something like `int counter = 0;` declared outside any function in C — that global variable sits here. As long as the program runs, this variable stays.
-
-**Stack:** When a function is called, its parameters and local variables need temporary space. When the function ends, that space vanishes. That temporary space is the stack.
-
-Picture stacking papers into a tray, one after another — the last paper on top is the first one you take out. Function calls work the same way — the function called last is the first to finish. That "last-in, first-out" pattern is where the stack gets its name.
-
-**Heap:** Sometimes during execution the program needs to suddenly create a big array or object — something whose size wasn't known ahead of time. That dynamic memory comes from the heap. When you write `new Array(1000)` in JavaScript, or `malloc()` in C — memory comes from the heap.
-
-**File descriptors:** As the program runs, it opens files, creates network connections. These need to be tracked. Because the program might later want to write to that file, or close that connection. A file descriptor is the "handle" for one of these connections — a small number the program can use to say "work with this connection."
-
-**Register state:** Whatever was in the CPU's registers while this process was running — all of it. Why track it? Because the OS is going to move this process off the CPU and let another one run. When this process's turn comes again, it will have forgotten where it was, which values it was working with. So it all needs to be saved before it's moved off.
-
-A typical process memory layout:
-
-```
-High address    ┌─────────────────────┐
-                │       Stack         │  ← grows and shrinks with function calls
-                │         ↓           │      grows downward
-                │                     │
-                │      (unused)       │
-                │                     │
-                │         ↑           │
-                │        Heap         │  ← grows with malloc/new
-                ├─────────────────────┤      grows upward
-                │    Data / BSS       │  ← global variables
-                ├─────────────────────┤
-                │       Code          │  ← program's instructions
-Low address     └─────────────────────┘
-```
-
-*ANIMATION HINT: A process's memory layout being built up. First code section fills in (static). Then data section, with global variables settling in. Then the program starts running — heap grows upward with malloc calls; stack grows downward with function calls adding one box after another, boxes disappearing when functions return. Between them, unused space that both sides move into.*
-
-The OS tracks all of this in one central place, called a PCB (Process Control Block). To the OS, every process is essentially one entry in a PCB table.
+> **There's no fixed rule that one tab equals one process.** Modern browsers run several kinds of process — a browser/UI process, renderer processes, GPU-related processes. Which page ends up in which process depends on the browser's architecture and its resource and security policies.
 
 ---
 
-## Many Processes on One CPU: The Turn-Taking Story
+## 02 — What lives inside a process?
 
-Now the real question. There's one CPU (or a few cores). But many processes. So?
+When the OS creates a process, it doesn't just load the program's code into memory. A process carries a good deal of state about its execution and its resources.
 
-The answer: the OS gives each process a tiny slice of time on the CPU — typically 1 to 10 milliseconds. When that time is up, or the process stops on its own (waiting for disk data, say), the OS moves it off and puts another process on.
+**PID (Process ID):** an identifier for the process — so the OS knows which one is being talked about.
 
-That "moving off and putting on" is called a **context switch**.
+**Memory space:** a process has a virtual address space holding its code, data, stack, heap and other mapped regions. How that area becomes "its own" is the next section's story.
 
-Imagine you're doing homework in 5 different subjects — math, Bangla, English, science, social studies. You can't do all of them at once. So you do one at a time. But before switching from one to another, a few things have to happen:
+Inside that address space, a few important parts:
+
+**Code section:** the program's executable instructions usually live here. Under normal protection this region may be mapped read-only, so running code can't casually rewrite itself.
+
+**Data section:** globals and statics live here — something like `int counter = 0;` declared outside any function in C. Their lifetime is generally tied to the whole program execution.
+
+**Stack:** function calls need room for parameters, local variables and return information; that comes from the stack.
+
+Picture stacking papers into a tray, one after another — the last paper on top is the first one you take out. Function calls work the same way: the one called last finishes first. That "last-in, first-out" pattern is where the stack gets its name.
+
+**Heap:** memory allocated dynamically while the program runs comes from the heap. `malloc()` in C, or `new Array(1000)` in a JavaScript runtime — that memory comes from here.
+
+**File descriptors:** when a process uses a file, socket, pipe or other OS resource, the OS hands it a handle. On Unix-like systems that handle is a small integer — a file descriptor. The process shows that number to say "work with this resource."
+
+**Execution state:** running the work on a CPU needs execution state — register values, the program counter. On a context switch this state can be saved and later restored.
+
+> **A process is a context of address space and resources; the execution state saved and restored on the CPU belongs mainly to a thread.** Several threads in one process share the address space, but each has its own registers and stack.
+
+The kernel tracks all of this in its own data structures. Classic OS textbooks call the per-process record a **[HOVER: PCB]** (Process Control Block) — though a real kernel needn't keep it all in one literal "central table."
+
+The instrument below shows a conceptual picture of how a process's memory is laid out:
+
+**[WIDGET · ProcessAnatomy]**
+
+Keep in mind that this is a conceptual layout. The exact arrangement depends on the architecture, the OS, the executable format and the runtime; "the stack always grows down and the heap grows up" is not a universal physical law.
+
+---
+
+## 03 — Many tasks on one CPU: the turn-taking story
+
+Now the real question. CPU cores are limited, but runnable processes and threads are many. So?
+
+The OS's scheduler decides which runnable thread gets time on which core, and when. A thread runs for a while; then either preemption moves it aside, or it steps aside on its own — waiting for some I/O to finish, say.
+
+That changing of the execution context is called a **[HOVER: context switch]**.
+
+Imagine you're doing homework in 5 different subjects — math, Bangla, English, science, social studies. You can't write in five notebooks at once. So you do one at a time. But before switching from one to another, a few things have to happen:
 
 - Bookmark the page in the current subject.
 - Jot down whatever you were thinking about in a scratch pad.
@@ -405,83 +522,147 @@ Imagine you're doing homework in 5 different subjects — math, Bangla, English,
 
 Only then does work resume.
 
-CPUs work the same way. Except instead of bookmarks, everything in the CPU's "head" (its registers) — whatever instruction it was running, whatever values it was holding, all that transient data — has to be saved. That save location is the process's PCB. Then the next process's PCB is read, and its "head state" is loaded back into the CPU. Now the CPU can pick up where that process last left off.
+The idea on a CPU is the same:
 
-The CPU itself doesn't know how many processes exist or who it's working for. It just keeps executing whatever instructions it's given. The OS is rotating new processes in front of it every few milliseconds.
+**[DIAGRAM · context switch]**
 
-This turn-taking has a cost. Every save-and-load takes time — the more frequent the switches, the less time is left for actual work. So the OS tries to strike a balance: not so frequent that everything slows down, but not so infrequent that users notice a "hang."
+```text
+current thread's execution state
+              ↓
+            saved
+              ↓
+other thread's saved state
+              ↓
+           restored
+              ↓
+       execution resumes
+```
 
----
+The saved state holds execution information such as register values and the program counter. Restore it later and the work can pick up roughly where it left off.
 
-## Scheduling: Whose Turn Is It Now?
+> **A context switch doesn't necessarily mean a whole new process** — two threads of the same process can switch between each other too.
 
-Another question. If 100 processes are all ready for the CPU, how does the OS decide who goes next?
+The CPU itself doesn't decide which application matters right now. It just executes whatever is in front of it. The OS scheduler picks the next one using what it knows about the runnable work and its own policy. Step through one switch below:
 
-That decision is called **scheduling**. Who gets the CPU when, and for how long — those choices are made by an algorithm inside the OS called the **scheduler**.
+**[WIDGET · ContextSwitch]**
 
-What does the scheduler try to optimize for? Three things — everyone gets a fair chance, urgent work gets priority, and the system stays responsive. But these three are hard to satisfy at once. So over the years, many algorithms have been designed:
-
-**Round-Robin:** Give everyone equal time. Like a teacher letting every student speak in turn. Simple and fair. But there's a problem — some processes (like mouse cursor updates or keyboard drivers) are more urgent than others. Giving them the same slice means the cursor lags.
-
-**Priority-based:** The fix for that — higher priority processes get chosen first. But there's a new risk. If low-priority processes never get any CPU, it's called "starvation."
-
-**Modern Linux uses CFS (Completely Fair Scheduler)** — the name says the goal. It tracks how much CPU time each process has gotten. Whoever got the least, gets the next turn. That way, fairness and responsiveness both work out.
-
-Don't worry about the internal math of these algorithms. This much is enough — the OS has a "referee" that, at every context switch, decides who gets the CPU next.
-
----
-
-## Virtual Memory: Every Process Gets Its Own World
-
-Another problem in multitasking — memory.
-
-On your laptop, Chrome, VS Code, and Spotify are all sharing the same RAM. Each program is writing to some memory address. If Chrome accidentally writes to an address where VS Code has data, VS Code crashes. Worse — what if a malicious app deliberately reads another app's password?
-
-So the OS came up with a trick. **Give each process its own complete memory area — where it can believe the whole RAM belongs to it alone.**
-
-How is that possible? There's a "translator" sitting in the middle.
-
-When a program writes in its code "put this data at memory address 100," it thinks it's putting it at physical RAM address 100. But actually, that "100" is a virtual address — an imaginary address. The middle translator (a hardware unit called the MMU — Memory Management Unit) instantly translates that virtual address to an actual physical address.
-
-For Chrome, "virtual address 100" might be actual physical 842,000. For VS Code, the same "virtual address 100" might be actual 11,560,000. Two programs using the same virtual address, but they end up in completely different places in real RAM. Neither is touching the other's territory.
-
-The rules for this translation are set up by the OS — one "translation table" per process, called a **page table**.
-
-*ANIMATION HINT: Two processes side by side. Each sending out an arrow that says "virtual address 100." In the middle, an MMU — a translator. The MMU redirects those arrows to two different physical addresses. The point: same virtual address, different actual locations.*
-
-Virtual memory provides two big benefits:
-
-**Isolation:** One process cannot touch another's memory. Because its translation table doesn't lead into that territory at all. Nobody has any way of seeing what anyone else is writing. This is the foundation of modern system security.
-
-**Illusion of extra space:** Physical RAM might be 16 GB, but each process can think it has a much larger memory area — bigger than the RAM. How? Because whatever isn't being used right now doesn't need to be in RAM. The OS can move it to disk. When it's needed again, the OS pulls it back to RAM. The program doesn't even notice anything happened. This "move out and pull back" system is called **swap**.
-
-Simply put — virtual memory is a sweet lie the OS tells. Every program thinks it's the only king of the computer. In reality, 50 kings are sitting side by side, none seeing anyone else.
+This turn-taking has a cost. Every save and restore takes time — the more frequent the switches, the more CPU time goes into bookkeeping rather than work. So the OS has to find a balance: not so frequent that the overhead dominates, not so rare that users notice a "hang".
 
 ---
 
-## Kernel Mode and User Mode: Two Levels of Doors
+## 04 — Scheduling: whose turn is it now?
 
-Another fundamental separation — this time from the security angle.
+Another question. If many threads are runnable at once, how does the OS decide who goes next?
 
-You know the difference between an Admin account and a regular user account on Windows. Admin can do everything — change settings, install software, edit system files. Regular user is restricted — can't break the system, but can do their own work.
+That decision is **[HOVER: scheduling]**, and the part of the OS that makes it is the **scheduler**.
 
-The CPU itself has two such modes:
+A scheduler has to juggle several things at once — everyone gets a fair chance, urgent work happens in time, the system stays responsive. Satisfying all three together is hard, so many algorithms have been used over the years and across systems:
 
-**Kernel Mode** = admin mode. Code running in this mode can do anything — direct hardware access, look at any process's memory, change page tables, everything. Only the OS's own code runs in this mode.
+- **Round-Robin:** give the runnable tasks time in turn, like a teacher letting every student speak in order. Simple and fair — but it can't tell which work is more urgent.
+- **Priority-based:** some tasks get higher priority so they reach the CPU sooner. The risk here is that a low-priority task may go a long time without any CPU at all — that's **starvation**.
+- **Fair-share scheduling:** whoever has had the least CPU time so far goes next. Linux followed this line for years with **CFS (the Completely Fair Scheduler)**; since kernel 6.6 its place has been taken by **EEVDF**, which tracks virtual deadlines alongside virtual runtime — so latency-sensitive work runs not just fairly, but on time.
 
-**User Mode** = restricted mode. Programs in this mode can't touch hardware directly, can't do sensitive operations. If they try, the CPU itself shuts them down. All regular applications run in this mode — your browser, editor, games, all of them.
+You don't need the internal math of any of these. This much is enough:
 
-Why the split? Simple reason — if every app could do anything, one bad app could break the whole system. In user mode, an app can only do its own work; it can't touch anything else.
+> **The scheduler is the OS's referee, deciding how CPU time gets divided among the runnable work.**
 
-But apps do have to do things that need hardware — reading files, sending on the network, drawing on screen. How do they do those?
+Run all three policies below — watch who keeps getting the CPU, and who starves:
 
-The answer: they ask the OS. The mechanism for asking is called a **System Call**.
+**[WIDGET · Scheduler]** — round-robin / priority / fair-share.
+
+## 05 — Virtual memory: every process gets its own address space
+
+Another big problem in multitasking — memory isolation.
+
+Chrome, VS Code and Spotify on your laptop are all using the same physical RAM. How do you make sure one program can't freely read or write another's private memory?
+
+This is where **[HOVER: virtual memory]** comes in. Put simply: each process gets its own separate **virtual address space**.
+
+When a program uses a memory address, that address needn't be thought of as a slot in physical RAM. It's a virtual address. The hardware's MMU (Memory Management Unit), together with mapping information the OS sets up, connects it to a corresponding physical location.
+
+**[DIAGRAM · address mapping]**
+
+```text
+Process A
+virtual address 100
+        ↓
+physical location X
+
+Process B
+virtual address 100
+        ↓
+physical location Y
+```
+
+Two processes can use the same virtual address number, but because their address spaces are separate, the physical mappings differ. Neither is stepping into the other's territory.
+
+That mapping information lives in structures such as **page tables**, which the MMU uses to perform the translation. Toggle between two processes below and watch the same virtual address land in different places:
+
+**[WIDGET · MMUTranslator]**
+
+### Isolation
+
+An ordinary user process cannot reach outside its own permitted virtual memory to read or write another process's private memory directly. That is one of the foundations of modern system security.
+
+Think of it this way — fifty people live in the same city, but each holds a different map. Nobody's map has a road drawn to anyone else's room.
+
+### Virtual memory is not swap
+
+This distinction matters.
+
+**Virtual memory** is the whole arrangement: the address space abstraction, protection, and virtual-to-physical mapping.
+
+**Swap** is one mechanism inside that arrangement, where some memory contents may be moved out of RAM to secondary storage so the RAM can be used for something else. If that page is needed again it has to come back — which is what a **[HOVER: page fault]** sorts out.
+
+**[DIAGRAM · virtual memory vs swap]**
+
+```text
+Virtual Memory
+├── address space abstraction
+├── protection / isolation
+├── virtual → physical mapping
+└── other mechanisms
+
+Swap
+└── one mechanism: move memory contents
+    out to secondary storage
+```
+
+So virtual memory isn't just "a trick for having more memory than you have RAM." Virtual memory exists with or without swap.
+
+And one more thing — a program doesn't know its physical location, but that doesn't mean swapping goes unnoticed. It shows up clearly in performance.
+
+> **Physical RAM is shared by everyone, but every process sees its own separate virtual address space.**
 
 ---
 
-## System Call: The Doorway to Ask the OS
+## 06 — Kernel mode and user mode: two levels of doors
 
-A system call is a controlled door between the app in user mode and the OS in kernel mode. The app says "please do this for me," the OS does it.
+Another fundamental separation — this time about privilege and security.
+
+Recall the difference between an Admin account and a regular user account on Windows. Admin can do everything — change settings, install software, edit system files. A regular user is restricted: they can do their own work, but can't break the system.
+
+As a simplified model, CPU execution can be thought of in two privilege levels:
+
+**Kernel Mode:** kernel code running here can perform privileged operations — memory-management configuration, certain hardware-related control, that sort of thing.
+
+**User Mode:** ordinary applications run in this restricted mode and cannot perform privileged operations directly — your browser, editor, games, all of them live here.
+
+Real CPU architectures implement privilege differently, and some have more than two levels. For this article, the core idea is enough:
+
+> **Application code and trusted OS code do not run at the same privilege level.**
+
+If an application attempts something it isn't allowed to do, the CPU doesn't quietly let it through — an exception or trap occurs and control passes to the kernel. What happens next (terminate the process, deliver a signal, return an error) is the OS's decision.
+
+Why the split? Simple reason — if every app could do anything, one bad app could spread through the whole system.
+
+But apps do need to read files, use the network, create processes. So how? They ask the OS — and the road that request travels is the system call.
+
+---
+
+## 07 — System call: the door for asking the OS
+
+A **[HOVER: system call]** is a controlled interface between a user-mode application and the kernel. Instead of performing the privileged work itself, the application says — "please do this for me."
 
 A simple example in C:
 
@@ -490,101 +671,164 @@ A simple example in C:
 #include <unistd.h>
 
 int main() {
-    int fd = open("file.txt", O_RDONLY);  // system call
-    char buffer[100];
-    read(fd, buffer, 100);                 // system call
-    close(fd);                             // system call
-    return 0;
+  int fd = open("file.txt", O_RDONLY);  // library wrapper → syscall
+  char buffer[100];
+  read(fd, buffer, 100);                // library wrapper → syscall
+  close(fd);                            // library wrapper → syscall
+  return 0;
 }
 ```
 
-These `open()`, `read()`, `close()` calls look like ordinary function calls. But internally they do something special. They tell the CPU to execute a special instruction (on x86-64, called `syscall`). That instruction tells the CPU "switch from user mode to kernel mode, go to the OS's handler, do this thing, and come back."
+A subtle but important point: `open()`, `read()` and `close()` are not themselves system calls — they're library/API functions. On Linux these C library wrappers use the kernel's system call interface when they need to. On x86-64 Linux that happens through the `syscall` instruction, which moves execution from user mode to a defined kernel entry point.
 
-The full sequence, in short:
+**[DIAGRAM · request path]**
 
-1. The app puts parameters in specific places.
-2. It fires the `syscall` instruction.
-3. The CPU switches itself into kernel mode.
-4. The OS's pre-registered handler does the work.
-5. The result is placed back, and the CPU returns to user mode.
-6. The app gets its result.
+```text
+Application
+    ↓
+library / API function
+    ↓
+system call interface
+    ↓
+kernel
+    ↓
+requested operation
+    ↓
+result
+    ↓
+Application
+```
 
-Every kind of work has this kind of system call:
+The sequence, in short:
 
-- **File operations:** `open()`, `read()`, `write()`, `close()`
+1. The application prepares the system call's arguments in the expected places.
+2. The system call mechanism is used to enter the kernel.
+3. The CPU performs a privilege transition into a defined kernel entry point.
+4. The kernel validates the request and does the work.
+5. A result or error is placed back for the caller.
+6. Execution returns to user mode.
+
+Nearly every OS service has system calls behind it:
+
+- **Files:** `open()`, `read()`, `write()`, `close()`
 - **Network:** `socket()`, `send()`, `recv()`
-- **Process:** `fork()` (spawn a new process), `exit()` (end)
-- **Memory:** `mmap()` (ask for new memory)
+- **Processes:** `fork()` (a new process), `exit()` (end one)
+- **Memory:** `mmap()` (map a region into the address space)
 
-That transition is a little costly. Every system call burns some CPU cycles. So performance-conscious code makes as few system calls as possible.
+> **Not every high-level function call is a system call.** Plenty of library functions finish their work entirely in user space, and only enter the kernel when they actually have to.
+
+That kernel transition carries overhead, so performance-sensitive code avoids crossing into the kernel more often than it needs to. Step through the doorway on the instrument below:
+
+**[WIDGET · SyscallDoorway]**
 
 ---
 
-## Thread: Many Workers Inside One Process
+## 08 — Threads: many execution paths inside one process
 
-We've been talking about processes. But if opening 20 Chrome tabs meant 20 full processes, it would get very expensive. Each process needs its own memory setup, its own page table — lots of overhead.
+We've been talking about processes. Now threads.
 
-Sometimes many things need to happen in parallel inside the same process, but sharing memory is fine — in fact, sharing is the point. Here's where **threads** come in.
+A process can contain several **[HOVER: threads]**. They share the process's virtual address space and many of its resources, but each has its own stack and its own execution state.
 
-If a process is a factory, a thread is one of the factory's workers. A factory can have many workers running at once, all sharing the same machines and the same raw materials. Each one has its own task flow, but they share resources.
+If a process is a factory, a thread is one of its workers. Many workers can be at it at once, sharing the same machines and the same raw materials — but each follows its own line of work.
 
-Threads work the same way. Inside one process, multiple threads share the same memory and the same file descriptors. But each thread has its own stack and its own register state. They run together, but they don't interfere — unless one of them changes shared memory.
+**[DIAGRAM · inside a process]**
 
-The main differences:
+```text
+Process
+├── Thread A → own stack + execution state
+├── Thread B → own stack + execution state
+└── Thread C → own stack + execution state
+
+shared between them:
+virtual address space
+files and other process resources
+```
+
+Two threads in one process can reach the same memory — which makes sharing data easy, and makes coordination your problem. Get the "who writes what, when" wrong and the outcome stops being predictable.
+
+### Concurrency ≠ parallelism
+
+**[HOVER: Concurrency]** means the progress of several tasks overlaps. **Parallelism** means several tasks genuinely execute at the same instant on different cores. Concurrency is possible even on a single-core CPU; with several cores, some threads really do run in parallel.
 
 | Aspect | Process | Thread |
 | --- | --- | --- |
-| Memory | Own | Shared |
-| Creation cost | High | Low |
-| Communication | Hard | Easy (shared memory) |
-| Crash impact | Others survive | Whole process crashes |
+| Address space | usually separate | shared within the process |
+| Execution state | process context | own register state and stack |
+| Resource sharing | more isolated | more shared |
+| Context switch | more state involved | some state shared within a process |
+| Crash impact | other processes usually survive | a fatal one can take the process down |
 
-A web browser typically uses multiple threads in a single tab — one for UI, one for JavaScript, one for network. All in the same process, all sharing memory, but none blocking another.
-
----
-
-## The Whole Picture: The Story of 'A' from Keyboard to Screen
-
-Let's pull everything together. You press 'A' on your keyboard. What happens?
-
-1. **Hardware interrupt:** The keyboard controller sends a signal to the CPU — "a key was pressed!"
-2. **CPU pauses:** The CPU stops whatever it was doing (some Chrome instruction, maybe) and jumps to the interrupt handler.
-3. **Kernel mode:** The handler enters kernel mode, activating the OS's keyboard driver.
-4. **Event creation:** The driver reads the data from the keyboard and figures out that 'A' was pressed.
-5. **Which app gets this event?** The OS finds which window is currently active (your text editor). The event is dropped into that process's event queue.
-6. **Scheduler's decision:** The scheduler decides whether to hand the CPU to this process right now.
-7. **Context switch:** If yes — off the current process, on to the text editor.
-8. **Back to the app:** The text editor wakes up, its pending `read()` returns, delivering 'A'.
-9. **Drawing on screen:** The text editor makes another system call: "please draw this character on the screen." The OS's graphics stack activates.
-10. **GPU:** The GPU driver updates the framebuffer.
-11. **You see 'A' on screen.**
-
-For just one keypress: dozens of steps, several context switches, several system calls, one interrupt. And in the middle of it all, the OS conducting — deciding who does what and when.
-
-That's why the OS is called the "Grand Conductor." Between the hardware and the applications, orchestrating the whole show — every nanosecond.
+Real software uses both together. A modern browser, for instance, runs several processes (UI, renderers, GPU) — and inside those processes, several threads.
 
 ---
 
-## What This Article Covered
+## 09 — The whole picture: 'A' from keyboard to screen
 
-- **Program lives on disk, process runs in RAM.** Many processes can be born from the same program.
-- **One CPU, many processes — the OS takes turns.** It switches so fast that "at once" feels real.
-- **Virtual memory gives each program its own world.** No one can step into anyone else's territory.
-- **Kernel/user mode is the foundation of security.** Regular apps can't touch hardware directly.
-- **System calls are the doorway** — where an app asks the OS to do work on its behalf.
-- **Threads are concurrency inside a process.** One workspace, many workers.
+Let's pull it all together. You press 'A' on your keyboard.
+
+The path below is a simplified conceptual model — the actual steps differ across operating systems, input stacks, window systems and graphics architectures.
+
+**[DIAGRAM · conceptual path]**
+
+```text
+Keyboard
+   ↓
+input controller
+   ↓
+interrupt / input event
+   ↓
+kernel + device driver
+   ↓
+input subsystem
+   ↓
+window system → focused application
+   ↓
+application updates its state
+   ↓
+rendering / graphics system
+   ↓
+display
+```
+
+Step by step, the idea:
+
+1. The keyboard hardware produces a signal or data for the input.
+2. Through the hardware, the CPU is notified that input has arrived.
+3. The OS's privileged code and a device driver process that input.
+4. The input subsystem turns it into a higher-level input event.
+5. The window system or application receives that event.
+6. The application updates its own state — adding 'A' to a text field, say.
+7. The UI has to be rendered again.
+8. Through the rendering and display pipeline, the change finally reaches the screen.
+
+Step through the whole relay on the instrument below:
+
+**[WIDGET · KeypressRelay]**
+
+For one keypress: that many stages, several privilege transitions, several components handing work to each other. And through it all the OS is handling scheduling, protection, device access, and the coordination between those components.
+
+Which is why the OS gets called the "Grand Conductor" — sitting between hardware and applications, running the whole orchestra.
+
+> But keep in mind — **this is a conceptual flow, not any particular OS's exact instruction-by-instruction sequence.** In real systems the interrupt handling, drivers, event queues, window systems, rendering and GPU pipelines are far more complex.
 
 ---
 
-## Next article
+## What this article covered
 
-Hardware — done. OS — done.
+- **A program and a process aren't the same thing.** A program is a passive description of instructions and data; a process is a running execution context for it.
+- **Many runnable threads share a limited amount of CPU.** The scheduler decides who gets CPU time and when.
+- **A context switch saves and restores execution state** — and it can happen between two threads of the same process.
+- **Virtual memory gives each process its own virtual address space.** Hardware and OS mapping and protection control physical memory access — and virtual memory is not the same thing as swap.
+- **Kernel mode and user mode keep privilege separate.** Ordinary applications can't perform privileged operations directly; attempting one traps.
+- **A system call is the controlled interface to kernel services** — though not every library function call is one.
+- **Threads are separate execution paths inside a process.** Memory and resources are shared; the stack and execution state are each thread's own.
 
-But the code you write — JavaScript, Python, Go — isn't the CPU's own language. The CPU only understands machine code, those hex numbers.
+---
 
-So what's happening in between? How does the text file you write become executable CPU instructions?
+## Next article: From Code to Machine Code
 
-Compiler, interpreter, JIT — those stories are next.
+Hardware — done. OS — done. But the code you write — JavaScript, Python, Go, C — isn't the CPU's own language. The CPU ultimately executes machine instructions; those sit in memory as binary bit patterns, and we humans just tend to write them out in hexadecimal for convenience. So how does the text file you write become those machine instructions? When is a compiler involved, what does an interpreter do, and where does JIT fit in for a language like JavaScript? That's the next article.
 
-**[Next: 7. From Code to Machine Code]**
+**[Next: 07 — From Code to Machine Code]**
 
+**Hover terms used** (definitions live in `glossary.ts`): `process`, `pcb`, `contextswitch`, `scheduler`, `virtualmem`, `pagefault`, `syscall`, `thread`, `concurrency`

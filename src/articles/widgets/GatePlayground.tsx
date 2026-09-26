@@ -181,8 +181,8 @@ export function GatePlayground() {
         </div>
       </Instrument>
       <Caption
-        bn="Physical circuit → abstract symbol। series মানে AND, parallel মানে OR।"
-        en="Physical circuit → abstract symbol. Series means AND; parallel means OR."
+        bn="Switch-এর ছবি → abstract symbol। Series-এ সাজানো switch AND-এর মতো আচরণ করে, parallel-এ সাজানো switch OR-এর মতো — এটা বোঝার জন্য একটা সরল মডেল।"
+        en="Switch picture → abstract symbol. Switches in series behave like AND; switches in parallel behave like OR — a simple model for building intuition."
       />
     </>
   );

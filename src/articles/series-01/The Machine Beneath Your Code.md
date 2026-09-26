@@ -57,6 +57,10 @@ Abstraction আমাদের অসাধারণ productive করে। ক
 
 এখানে যন্ত্র শুধু গল্পের background। মূল গল্পটা information-এর।
 
+একটা সময় আমি বুঝেছিলাম — আমি আসলে Python, C বা JavaScript শিখছি না। শিখছি abstraction-এর স্তরগুলো।
+
+প্রতিটা নতুন language আমাকে আরও সমৃদ্ধ করছে, কিন্তু একই সঙ্গে মেশিন থেকে আরও দূরে সরিয়ে দিচ্ছে।
+
 ---
 
 // রোডম্যাপ
@@ -120,6 +124,14 @@ Register থেকে RAM, RAM থেকে SSD — কেন এত ধরন�
 নতুন কোনো technical term দেখলে সেটার ওপর cursor রাখুন (মোবাইলে tap করুন)। একটা ছোট popup সহজ ভাষায় সেটার মানে বুঝিয়ে দেবে — পড়া থামিয়ে Google-এ গিয়ে হারিয়ে যেতে হবে না।
 
 কোথাও অতিরিক্ত গভীরে যাব না। যেখানে concept-টা অতিরিক্ত academic হয়ে যাচ্ছে বলে মনে হবে — সেখানে থামব, আর ইশারা দিয়ে দেব যে, "বস, এইটুকু জানলেই আপাতত চলবে।"
+
+কোথাও অতিরিক্ত গভীরে যাব না। তাহলে এবার software-এর সব আরাম-আয়েশ ছেড়ে একেবারে নিচে নেমে যাই।
+
+আমার মূল উদ্দেশ্য হলো—কম্পিউটিংয়ের প্রতিটা স্তরের (Layer) মূল আইডিয়া বা মেকানিক্সটা যেন একজন পাঠক খুব সহজে একটা স্পষ্ট Mental Model হিসেবে দাঁড় করাতে পারেন। আর সেই স্পষ্টতা ও সহজবোধ্যতার খাতিরে অনেক জায়গায় জটিল বিষয়গুলোকে কিছুটা সরলীকরণ করতে হয়েছে। যেখানে মনে হয়েছে অতিরিক্ত জটিলতা মূল গল্প পড়ার অভিজ্ঞতাকে ব্যাহত করবে, সেখানে সূক্ষ্ম অনেক ডিটেইলস এড়িয়ে যাওয়া হয়েছে।
+
+এর মানে এই নয় যে আপনাকে বিভ্রান্ত করার চেষ্টা করা হয়েছে। বিষয়গুলোকে এমনভাবে সাজানো হয়েছে যেন বেসিক ধারণাটা একদম সঠিক থাকে, কিন্তু পড়তে সহজ হয়। তবুও, সরলীকরণ করতে গিয়ে কোথাও কোনো টেকনিক্যাল ভুল থেকে গেলে বা আপনার চোখে পড়লে অবশ্যই জানাবেন—সংশোধন করে নেওয়া হবে।
+
+যদি কোনো নির্দিষ্ট স্তর বা বিষয় আপনার মধ্যে বাড়তি আগ্রহ তৈরি করে, তবে সিরিজের শেষে দারুণ কিছু বই ও রিসোর্সের তালিকা দেওয়া থাকবে—যা আপনাকে এই বিষয়ের গভীরে নিয়ে যেতে সাহায্য করবে।
 
 ---
 
@@ -224,6 +236,14 @@ A bit. A number. A keystroke. An instruction.
 Every article follows this information as it moves. Where is it now? Who's holding it? What's transforming it? Where does it go next?
 
 The machine is just the setting. The story is about information.
+
+At some point I understood — I wasn't really learning Python, C, or JavaScript. I was learning the layers of abstraction.
+
+Every new language made me richer — and moved me further from the machine. That's when the wish took root: climb down once, and see how the whole machine actually runs.
+
+What I want is for every article to leave a small animation running in your head.
+
+So let's leave all of software's comforts behind and climb all the way down.
 
 ---
 

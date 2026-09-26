@@ -13,7 +13,7 @@ export function LatencyScale() {
 
   return (
     <>
-      <Instrument bnTitle="IF REGISTER = 1 SECOND" enTitle="IF REGISTER = 1 SECOND">
+      <Instrument bnTitle="IF THE NEAREST ACCESS = 1 SECOND" enTitle="IF THE NEAREST ACCESS = 1 SECOND">
         <div className="flex flex-col gap-[10px] py-4 px-4">
           {MEMORY_LAYERS.map((l) => {
             const isActive = l.id === sel;
@@ -44,14 +44,13 @@ export function LatencyScale() {
             );
           })}
         </div>
-        <div className="font-mono text-[12px] px-4 pb-4" style={{ color: '#8aa893', borderTop: '1px solid #2e392e', paddingTop: 12 }}>
-          {bn ? 'বাস্তব hardware latency: ' : 'real hardware latency: '}
-          <span style={{ color: '#00d26a' }}>{active.realLatency}</span>
+        <div className="font-mono text-[12px] px-4 pb-4" style={{ color: '#8aa893', borderTop: '1px solid #2e392e', paddingTop: 12 }} {...(bn ? { lang: 'bn' } : {})}>
+          <span style={{ color: '#00d26a' }}>{bn ? active.bnRole : active.enRole}</span>
         </div>
       </Instrument>
       <Caption
-        bn="Register access ১ সেকেন্ড ধরলে, RAM ৫-৭ মিনিট আর SSD/HDD দিন-মাস দূরে। bar-টা log scale-এ আঁকা — নাহলে বাকিগুলো screen-এই ধরত না।"
-        en="Scale register access to 1 second, and RAM sits 5-7 minutes away, SSD/HDD days to months. The bars are log-scaled — otherwise nothing else would fit on screen."
+        bn="CPU-র সবচেয়ে কাছের access ১ সেকেন্ড ধরলে দূরের layer-গুলো কতটা দূরে, তার একটা অনুভব। bar-টা log scale-এ আঁকা। এগুলো কোনো hardware-এর মাপ নয় — শুধু order of magnitude বোঝানোর জন্য।"
+        en="A feel for how far the distant layers sit if the nearest access took one human second. The bars are log-scaled. These are not hardware measurements — only orders of magnitude."
       />
     </>
   );

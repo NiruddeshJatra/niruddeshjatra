@@ -16,10 +16,10 @@ interface StepConfig {
 
 const STEPS: StepConfig[] = [
   {
-    user: { bn: 'app read(fd) কল করতে চায়', en: 'app wants to call read(fd)' },
+    user: { bn: 'app library-র read(fd) কল করল', en: "app calls the library's read(fd)" },
     kern: { bn: '—', en: '—' },
     mode: 'U', gate: '│',
-    narr: { bn: 'app user mode-এ চলছে — hardware-এ সরাসরি হাত নেই।', en: 'The app runs in user mode — no direct hand on the hardware.' },
+    narr: { bn: 'app user mode-এ চলছে — hardware-এ সরাসরি হাত নেই। Library-র wrapper এখন kernel-এ যাওয়ার প্রস্তুতি নিচ্ছে।', en: 'The app runs in user mode — no direct hand on the hardware. The library wrapper now prepares to enter the kernel.' },
     btn: { bn: 'parameter সাজাও ▶', en: 'set up parameters ▶' },
   },
   {

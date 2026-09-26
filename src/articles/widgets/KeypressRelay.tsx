@@ -5,16 +5,15 @@ import { Caption } from '../primitives/Caption';
 
 const STAGES = [
   { bnLabel: "keyboard-এ 'A' চাপা হলো", enLabel: "you press 'A'", mode: 'HW' },
-  { bnLabel: 'keyboard controller CPU-কে interrupt পাঠায়', enLabel: 'keyboard controller interrupts the CPU', mode: 'HW' },
-  { bnLabel: 'CPU থামে, interrupt handler-এ লাফ দেয়', enLabel: 'CPU pauses, jumps to the interrupt handler', mode: 'K' },
-  { bnLabel: 'kernel mode: keyboard driver জাগে', enLabel: 'kernel mode: keyboard driver wakes', mode: 'K' },
-  { bnLabel: "driver scancode পড়ে বোঝে 'A'", enLabel: "driver decodes the scancode as 'A'", mode: 'K' },
-  { bnLabel: 'event active window-এর queue-তে যায়', enLabel: "event dropped into the active window's queue", mode: 'K' },
-  { bnLabel: 'scheduler: editor-কে CPU দেবে?', enLabel: 'scheduler: give the CPU to the editor?', mode: 'K' },
-  { bnLabel: 'context switch → text editor', enLabel: 'context switch → text editor', mode: 'K' },
-  { bnLabel: "editor জাগে, read() ফিরে 'A' দেয়", enLabel: "editor wakes, read() returns 'A'", mode: 'U' },
-  { bnLabel: "syscall: 'A' screen-এ আঁকো", enLabel: "syscall: draw 'A' on screen", mode: 'K' },
-  { bnLabel: "GPU framebuffer update → 'A' দৃশ্যমান", enLabel: "GPU updates framebuffer → 'A' visible", mode: 'HW' },
+  { bnLabel: 'input controller CPU-কে জানায়', enLabel: 'the input controller notifies the CPU', mode: 'HW' },
+  { bnLabel: 'CPU privileged code-এ যায়: interrupt handler', enLabel: 'CPU enters privileged code: the interrupt handler', mode: 'K' },
+  { bnLabel: 'kernel + keyboard driver input process করে', enLabel: 'kernel + keyboard driver process the input', mode: 'K' },
+  { bnLabel: 'input subsystem একটা input event বানায়', enLabel: 'the input subsystem turns it into an input event', mode: 'K' },
+  { bnLabel: 'window system event-টা focused app-এর দিকে পাঠায়', enLabel: 'the window system routes it to the focused app', mode: 'K' },
+  { bnLabel: 'scheduler সেই app-কে CPU time দেয়', enLabel: 'the scheduler gives that app CPU time', mode: 'K' },
+  { bnLabel: "app নিজের state update করে — text-এ 'A'", enLabel: "the app updates its state — 'A' in the text", mode: 'U' },
+  { bnLabel: 'app graphics system-কে re-render করতে বলে', enLabel: 'the app asks the graphics system to re-render', mode: 'U' },
+  { bnLabel: "display pipeline নতুন frame দেখায় → 'A' দৃশ্যমান", enLabel: "the display pipeline shows the new frame → 'A' visible", mode: 'HW' },
 ] as const;
 
 const modeCol = (m: string) => m === 'K' ? '#00d26a' : m === 'U' ? '#8ab89c' : '#e0c264';
@@ -57,8 +56,8 @@ export function KeypressRelay() {
 
   useEffect(() => { if (step >= MAX) stopRun(); }, [step]);
 
-  const shown = step >= 8;
-  const cs = step >= 7 ? 1 : 0;
+  const shown = step >= 9;
+  const cs = step >= 6 ? 1 : 0;
 
   const csLabel = bn ? `context switch: ${num(cs)}` : `context switches: ${cs}`;
   const csControl = <span style={{ fontFamily: "'Departure Mono',monospace", fontSize: 10.5, color: '#8aa893', whiteSpace: 'nowrap' }}>{csLabel}</span>;
@@ -109,8 +108,8 @@ export function KeypressRelay() {
         </div>
       </Instrument>
       <Caption
-        bn="একটা keypress: hardware interrupt, kernel-এ ঢোকা, driver, scheduler-এর সিদ্ধান্ত, context switch, দুটো system call — সব মিলিয়ে কয়েক ডজন ধাপ, আর মাঝে OS conducting।"
-        en="One keypress: a hardware interrupt, entering the kernel, a driver, the scheduler's decision, a context switch, two system calls — dozens of steps, the OS conducting throughout."
+        bn="একটা keypress-এর simplified conceptual path: hardware থেকে interrupt, kernel আর driver, input event, window system, scheduler-এর সিদ্ধান্ত, app-এর state update, তারপর rendering। আসল ধাপগুলো OS, input stack আর graphics architecture ভেদে আলাদা।"
+        en="A simplified conceptual path for one keypress: an interrupt from hardware, kernel and driver, an input event, the window system, the scheduler's decision, the app's state update, then rendering. The real steps differ by OS, input stack and graphics architecture."
       />
     </>
   );

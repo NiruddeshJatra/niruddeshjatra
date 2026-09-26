@@ -1,6 +1,6 @@
 import { Section } from '../primitives/Section';
 import { Term } from '../primitives/Term';
-import { Deeper } from '../primitives/Deeper';
+import { Diagram } from '../primitives/Diagram';
 import { Recap } from '../primitives/Recap';
 import { RelayNav } from '../primitives/RelayNav';
 import { SERIES_HUB_PATH } from '../manifest';
@@ -9,6 +9,90 @@ import { useProse, LINK, mono as MONO } from '../primitives/useProse';
 import { KeyMatrixScan } from '../widgets/KeyMatrixScan';
 import { Rasterize } from '../widgets/Rasterize';
 import { FullRelay } from '../widgets/FullRelay';
+
+/* ── shared flow art, identical in both languages ─────────────────────── */
+
+const ART_SCAN = `Keyboard matrix
+      ↓
+controller scans
+      ↓
+which key changed?
+      ↓
+input report / usage code`;
+
+const ART_INTERRUPT = `current execution
+       ↓
+   interrupt
+       ↓
+OS interrupt handling
+       ↓
+resume previous work
+        or
+scheduler runs another task`;
+
+const ART_EVENT = `keyboard event
+      ↓
+OS input handling
+      ↓
+application becomes runnable
+      ↓
+scheduler
+      ↓
+application runs`;
+
+const ART_APPLOOP = `event waiting in the queue
+          ↓
+app takes the next event
+          ↓
+    update state
+          ↓
+mark the UI as needing a redraw
+          ↓
+  wait for the next event`;
+
+const ART_RASTER = `'A' character
+      ↓
+  font shape
+      ↓
+ rasterization
+      ↓
+pixel information`;
+
+const ART_DISPLAY = `Application UI
+      ↓
+  rendering
+      ↓
+  compositor
+      ↓
+  final frame
+      ↓
+ display buffer
+      ↓
+   monitor`;
+
+const ART_LAYERS = `Finger
+  ↓
+Keyboard switch
+  ↓
+Keyboard controller
+  ↓
+USB / HID
+  ↓
+Interrupt + OS input handling
+  ↓
+Application event
+  ↓
+Editor state
+  ↓
+Font + rasterization
+  ↓
+Compositor / graphics pipeline
+  ↓
+Display hardware
+  ↓
+Light
+  ↓
+Your eye`;
 
 /** Reading-list rows: title, where to find it, and the blurb. */
 type Res = { name: string; where?: string; bn: string; en: string };
@@ -20,8 +104,8 @@ const READING: { bnGroup: string; enGroup: string; items: Res[] }[] = [
     items: [
       {
         name: 'Crash Course Computer Science',
-        bn: 'YouTube-এ ৪০ পর্বের একটা সিরিজ, প্রতিটা ১০-১৫ মিনিট। Transistor থেকে AI পর্যন্ত পুরো computing-এর মানচিত্র। ভাষা সহজ, উপস্থাপনা চমৎকার। শুরু করার জন্য এর চেয়ে ভালো কিছু নেই।',
-        en: 'a 40-episode YouTube series, 10-15 minutes each. Maps the whole of computing from transistors to AI. Clear language, excellent production. There is nothing better to start with.',
+        bn: 'YouTube-এ ৪০ পর্বের একটা সিরিজ, প্রতিটা ১০-১৫ মিনিট। Transistor থেকে AI পর্যন্ত computing-এর অনেকগুলো গুরুত্বপূর্ণ idea সহজভাবে পরিচয় করিয়ে দেয়। ভাষা সহজ, উপস্থাপনা চমৎকার। শুরু করার জন্য একটা ভালো overview।',
+        en: 'a 40-episode YouTube series, 10-15 minutes each. Introduces a lot of computing ideas simply, from transistors to AI. Clear language, excellent production. A good overview to start with.',
       },
       {
         name: 'Ben Eater',
@@ -31,8 +115,8 @@ const READING: { bnGroup: string; enGroup: string; items: Res[] }[] = [
       {
         name: 'Nand2Tetris',
         where: 'nand2tetris.org',
-        bn: 'শুধু একটা NAND gate থেকে শুরু করে ধাপে ধাপে একটা পুরো কম্পিউটার বানানোর কোর্স। CPU, assembler, VM, compiler, OS — সব নিজে হাতে। Coursera-তে বিনামূল্যে করা যায়। এই সিরিজের প্রায় সবকিছু এখানে হাতে-কলমে করে দেখা যাবে।',
-        en: 'a course that starts with a single NAND gate and walks you up to a complete computer. CPU, assembler, VM, compiler, OS — you build all of it yourself. Free on Coursera. Almost everything in this series, done hands-on.',
+        bn: 'শুধু একটা NAND gate থেকে শুরু করে ধাপে ধাপে একটা পুরো computer system আর তার software hierarchy বানানোর কোর্স। CPU, assembler, VM, compiler, OS — সব নিজে হাতে project আকারে। Official website-এ lecture, project material আর tool বিনামূল্যে পাওয়া যায়; Coursera version-টা paid course। এই সিরিজের প্রায় সবকিছু এখানে হাতে-কলমে করে দেখা যাবে।',
+        en: 'a course that starts with a single NAND gate and walks you up through a complete computer system and its software hierarchy. CPU, assembler, VM, compiler, OS — you build all of it yourself as projects. Lectures, project materials and tools are free on the official site; the Coursera version is a paid course. Almost everything in this series, done hands-on.',
       },
     ],
   },
@@ -47,8 +131,8 @@ const READING: { bnGroup: string; enGroup: string; items: Res[] }[] = [
       },
       {
         name: 'Computer Organization and Design',
-        bn: 'Patterson ও Hennessy-র লেখা। Computer architecture-এর classic textbook। একটু ভারী, কিন্তু কর্তৃত্বপূর্ণ।',
-        en: 'Patterson and Hennessy. The classic computer architecture textbook. Heavier going, but authoritative.',
+        bn: 'Patterson ও Hennessy-র লেখা। Computer architecture-এর classic textbook। একটু ভারী, কিন্তু reference হিসেবে দাঁড়িয়ে থাকার মতো।',
+        en: 'Patterson and Hennessy. The classic computer architecture textbook. Heavier going, but the kind of reference that stays on the shelf.',
       },
       {
         name: 'Inside the Machine',
@@ -80,8 +164,8 @@ const READING: { bnGroup: string; enGroup: string; items: Res[] }[] = [
       {
         name: 'Operating Systems: Three Easy Pieces',
         where: 'ostep.org',
-        bn: 'Arpaci-Dusseau দম্পতির লেখা। সম্পূর্ণ বিনামূল্যে, PDF আকারে ওয়েবসাইটেই আছে। OS শেখার জন্য সম্ভবত সবচেয়ে ভালো বই — লেখার ধরন সহজ, উদাহরণ প্রচুর। Article 6-এর প্রতিটা বিষয় এখানে বিস্তারিত।',
-        en: 'by the Arpaci-Dusseaus. Completely free, full PDF on the website. Probably the best book for learning operating systems — readable style, plenty of examples. Every topic from Article 6 in full detail.',
+        bn: 'Arpaci-Dusseau দম্পতির লেখা। সম্পূর্ণ বিনামূল্যে, PDF আকারে ওয়েবসাইটেই আছে। OS শেখার জন্য চমৎকার একটা বই — লেখার ধরন সহজ, উদাহরণ প্রচুর। Article 6-এর প্রতিটা বিষয় এখানে বিস্তারিত।',
+        en: 'by the Arpaci-Dusseaus. Completely free, full PDF on the website. An excellent book for learning operating systems — readable style, plenty of examples. Every topic from Article 6 in full detail.',
       },
       {
         name: 'Linux Kernel Development',
@@ -120,8 +204,8 @@ const READING: { bnGroup: string; enGroup: string; items: Res[] }[] = [
       {
         name: 'CS50',
         where: 'Harvard',
-        bn: 'YouTube আর edX-এ বিনামূল্যে। C থেকে শুরু করে পুরো computer science-এর ভিত্তি। শিক্ষকতার মান অসাধারণ।',
-        en: 'free on YouTube and edX. Starts with C and covers the foundations of computer science. The teaching is superb.',
+        bn: 'YouTube আর edX-এ পাওয়া যায়; বর্তমান CS50x material free OpenCourseWare হিসেবেও available। C থেকে শুরু করে computer science-এর ভিত্তি, তারপর Python, SQL, web development। শিক্ষকতার মান অসাধারণ।',
+        en: 'available on YouTube and edX; the current CS50x materials are also available free as OpenCourseWare. Starts with C and covers the foundations of computer science, then Python, SQL and web development. The teaching is superb.',
       },
     ],
   },
@@ -138,62 +222,68 @@ export function KeyboardToScreen() {
           <div lang="bn" style={body}>
             {p("Keyboard-এ 'A' চাপলেন। এক মুহূর্ত পর screen-এ 'A' ফুটে উঠল।")}
             {p('আপনার কাছে মনে হলো instant। কোনো delay টের পাননি, কোনো অপেক্ষাও করতে হয়নি। আঙুল নামল আর অক্ষরটা চলে এল।')}
-            {p('কিন্তু বাস্তবে সেটা instant ছিল না। মাঝখানে প্রায় ২০ থেকে ৩০ millisecond সময় লেগেছে, আর সেই সময়ের ভেতরে আপনার laptop-এ কয়েকটা সম্পূর্ণ আলাদা system একের পর এক কাজ করে গেছে। প্রতিটার দায়িত্ব ভিন্ন, প্রতিটা ভিন্ন সময়ে ভিন্ন মানুষের হাতে design করা, কিন্তু সবাই মিলে একসাথে কাজ করেছে।')}
+            {p('কিন্তু "instant" মানে literally zero time নয়। আপনার আঙুলের চাপ থেকে screen-এ আলো জ্বলা পর্যন্ত বেশ কয়েকটি আলাদা hardware এবং software layer কাজ করে।')}
             {p('এই সিরিজে এতদিন আমরা এই system-গুলোকে আলাদা আলাদা করে দেখেছি। আজ দেখব সবাই একসাথে কীভাবে কাজ করে। একটা মাত্র keystroke-কে follow করে পুরো পথটা হেঁটে যাব — আঙুলের চাপ থেকে শুরু করে চোখে আলো পড়া পর্যন্ত।')}
           </div>
         ) : (
           <div style={body}>
             {p("You press 'A' on your keyboard. A moment later, 'A' appears on the screen.")}
             {p('It felt instant to you. No delay you could detect, no waiting. Your finger went down and the character showed up.')}
-            {p('But it was not instant. Roughly 20 to 30 milliseconds passed in between, and in that window several completely separate systems inside your laptop did their work one after another. Each has a different responsibility, each was designed by different people at different times, but together they got the job done.')}
+            {p('But "instant" does not mean literally zero time. Between your finger pressing down and light coming off the screen, several completely separate hardware and software layers do their work. Each has a different responsibility, each was designed by different people at different times.')}
             {p("Throughout this series we've looked at these systems one at a time. Today we watch them work together. We'll follow a single keystroke through the whole path — from the press of a finger to light hitting your eye.")}
           </div>
         )}
       </div>
 
-      <Section num="01" bnH2="প্রথম চমক: keyboard-এরও নিজস্ব একটা CPU আছে" enH2="First surprise: your keyboard has its own CPU">
+      <Section num="01" bnH2="প্রথম চমক: keyboard-এর ভেতরেও একটা ছোট computer আছে" enH2="First surprise: there's a small computer inside your keyboard">
         {bn ? (
           <div lang="bn" style={body}>
-            {p("'A' চাপলে সরাসরি laptop-এর CPU-তে কিছু যায় না। তার আগে সেই signal-কে থামতে হয় keyboard-এর নিজের ভেতরে বসে থাকা একটা ছোট্ট computer-এ।")}
-            {p('শুনতে অদ্ভুত লাগতে পারে। Keyboard তো একটা input device মাত্র, তার আবার নিজের computer কেন থাকবে? কিন্তু আছে। এমনকি সবচেয়ে সস্তা keyboard-এও একটা tiny chip বসানো থাকে, যার ভেতরে থাকে একটা mini CPU, সামান্য memory, আর কিছু আগে থেকে লেখা instruction।')}
-            {p('এই chip-এর কাজটা খুব নির্দিষ্ট। সে প্রতি কয়েক millisecond অন্তর পুরো keyboard scan করে যায়। প্রতিটা key-এর জন্য আলাদা তার নেই — সেটা করতে গেলে ১০৪টা তার লাগত। বদলে key-গুলো একটা grid-এ সাজানো, সারি আর কলাম মিলে। Chip একটা করে সারিতে current পাঠায় আর সব কলাম একসাথে পড়ে। কোন সারি আর কোন কলাম — এই দুইয়ের সংযোগ থেকেই বোঝা যায় কোন key চাপা হয়েছে।')}
+            {p("'A' চাপলে সরাসরি laptop-এর main CPU-তে কিছু যায় না। তার আগে সেই signal-কে থামতে হয় keyboard-এর নিজের ভেতরে বসে থাকা একটা ছোট্ট computer-এ।")}
+            {p('শুনতে অদ্ভুত লাগতে পারে। Keyboard তো একটা input device মাত্র, তার আবার নিজের computer কেন থাকবে? কিন্তু keyboard-এর ভেতরে সাধারণত একটা ছোট controller chip থাকে। এতে processor logic, কিছু memory আর keyboard-এর firmware থাকে। তার কাজ হলো key press detect করা আর সেটাকে computer-এর জন্য meaningful input data-তে পরিণত করা।')}
+            {p('অনেক keyboard-এ key-গুলো একটা matrix আকারে সাজানো — সারি আর কলামের intersection-এ key বসে। Controller বারবার সেই matrix scan করে দেখে কোন key-এর electrical state বদলেছে। প্রতিটা key-এর জন্য আলাদা তার টানার দরকার হয় না; সারি আর কলামের সংযোগই বলে দেয় কোন key চাপা হয়েছে।')}
             {p('যতক্ষণ কোনো key চাপা না হচ্ছে, কোনো কলামেই কিছু ধরা পড়ে না। কিন্তু যেই কোনো key চাপা হয়, সেই key-এর নিচের switch-এর দুইটা metal contact একসাথে লেগে যায়, সেই সারি আর সেই কলামের মাঝে circuit complete হয়ে যায়, আর chip ঐ কলামে voltage দেখতে পায়।')}
-            {p(<>Chip সেই পরিবর্তনটা ধরে ফেলে। তারপর নিজের ভেতরের একটা lookup table থেকে খুঁজে বের করে — এই সারি আর এই কলামের সংযোগে কোন key বসে আছে? 'A' key-এর জন্য সে একটা নির্দিষ্ট byte তৈরি করে, ধরা যাক {MONO('0x04')}। সেই byte-টাই USB cable দিয়ে laptop-এ পাঠিয়ে দেয়। এই byte-টার নাম <Term id="scancode">scancode</Term>।</>)}
-            {p('মানে laptop-এর main CPU কিছু জানার আগেই keyboard-এর ভেতরে একটা পুরো computing cycle শেষ হয়ে গেছে। Voltage পড়া হয়েছে, সিদ্ধান্ত নেওয়া হয়েছে, ডেটা তৈরি হয়েছে।')}
-            {p(<>আর সেই ভেতরের CPU-ও কিন্তু আমাদের দেখা <a href="/writing/heartbeat-fde" style={LINK}>সেই একই নিয়মে</a> চলে — fetch করে, decode করে, execute করে। শুধু scale-টা অনেক ছোট। নিচের যন্ত্রে একটা key চেপে scan cycle-টা দেখুন:</>)}
+            <Diagram art={ART_SCAN} bnLabel="scan cycle" enLabel="scan cycle" />
+            {p(<>ধরুন {"'A'"} key press detect হলো। USB keyboard হলে controller সাধারণত <Term id="hid">USB HID</Term> (Human Interface Device) protocol ব্যবহার করে host-এর কাছে একটা input report পাঠায়। সেই report-এ {"'A'"} key-এর জন্য একটা নির্দিষ্ট usage code থাকতে পারে — USB HID Usage Tables-এ {MONO('0x04')} হলো "Keyboard a and A"।</>)}
+            {p(<>খেয়াল করুন — এই {MONO('0x04')} character {"'A'"}-এর ASCII code নয়। এটা keyboard-এর কোন key-এর কথা বলা হচ্ছে, সেটার একটা code। অক্ষরে রূপান্তরটা হবে পরে, OS-এর স্তরে — layout বদলালে একই key অন্য অক্ষরও হতে পারে।</>)}
+            {p('মানে laptop-এর main CPU কিছু জানার আগেই keyboard-এর নিজের controller একটা পুরো কাজ সেরে ফেলেছে। Electrical change পড়া হয়েছে, সিদ্ধান্ত নেওয়া হয়েছে, digital input information তৈরি হয়েছে।')}
+            {p(<>আর সেই controller-এর processor-ও কিন্তু আমাদের দেখা <a href="/writing/heartbeat-fde" style={LINK}>সেই একই নিয়মে</a> চলে — fetch করে, decode করে, execute করে। শুধু scale-টা অনেক ছোট। নিচের যন্ত্রে একটা key চেপে scan cycle-টা দেখুন:</>)}
           </div>
         ) : (
           <div style={body}>
-            {p("When you press 'A', nothing goes directly to the laptop's CPU. Before that, the signal has to stop at a tiny computer sitting inside the keyboard itself.")}
-            {p('It sounds strange. A keyboard is just an input device — why would it have its own computer? But it does. Even the cheapest keyboard has a tiny chip inside, holding a mini CPU, a small amount of memory, and some pre-written instructions.')}
-            {p("That chip's job is very specific. Every few milliseconds it scans the whole keyboard. There isn't a separate wire for every key — that would take 104 wires. Instead the keys sit in a grid, at the intersections of rows and columns. The chip sends current down one row at a time and reads all the columns at once. Which row, and which column — the meeting point of those two is what tells it which key went down.")}
+            {p("When you press 'A', nothing goes directly to the laptop's main CPU. Before that, the signal has to stop at a tiny computer sitting inside the keyboard itself.")}
+            {p('It sounds strange. A keyboard is just an input device — why would it have its own computer? But inside a keyboard there is usually a small controller chip, holding processor logic, a little memory, and the keyboard\'s firmware. Its job is to detect key presses and turn them into input data that means something to the computer.')}
+            {p('In many keyboards the keys are arranged as a matrix — each key sits at the intersection of a row and a column. The controller keeps scanning that matrix to see which key\'s electrical state changed. No separate wire has to run to every key; the meeting point of a row and a column is what identifies the key.')}
             {p('As long as no key is pressed, nothing shows up on any column. But the moment a key goes down, two metal contacts under that key touch, completing the circuit between that row and that column, and the chip sees voltage on that column.')}
-            {p(<>The chip catches that change. Then it looks up its own internal table to figure out — which key sits at this row-and-column intersection? For the 'A' key it produces a specific byte, say {MONO('0x04')}. That byte gets sent to the laptop over the USB cable. That byte is called a <Term id="scancode">scancode</Term>.</>)}
-            {p("So before the laptop's main CPU knows anything at all, a complete computing cycle has already finished inside the keyboard. Voltage was read, a decision was made, data was produced.")}
-            {p(<>And that little CPU runs by <a href="/writing/heartbeat-fde" style={LINK}>the same rules</a> we've seen throughout this series — fetch, decode, execute. Just at a much smaller scale. Press a key on the instrument below to watch the scan cycle:</>)}
+            <Diagram art={ART_SCAN} bnLabel="scan cycle" enLabel="scan cycle" />
+            {p(<>Say the {"'A'"} key press is detected. On a USB keyboard the controller typically sends an input report to the host using the <Term id="hid">USB HID</Term> (Human Interface Device) protocol. That report can carry a specific usage code for the {"'A'"} key — in the USB HID Usage Tables, {MONO('0x04')} is "Keyboard a and A".</>)}
+            {p(<>Note what that {MONO('0x04')} is not: it isn't the ASCII code for the character {"'A'"}. It is a code for which key on the keyboard is being talked about. Turning it into a character happens later, at the OS level — change the layout and the same key can become a different letter.</>)}
+            {p("So before the laptop's main CPU knows anything at all, the keyboard's own controller has already done a complete piece of work. An electrical change was read, a decision was made, digital input information was produced.")}
+            {p(<>And that little controller's processor runs by <a href="/writing/heartbeat-fde" style={LINK}>the same rules</a> we've seen throughout this series — fetch, decode, execute. Just at a much smaller scale. Press a key on the instrument below to watch the scan cycle:</>)}
           </div>
         )}
         <KeyMatrixScan />
       </Section>
 
-      <Section num="02" bnH2="Interrupt: CPU-কে থামানোর একমাত্র উপায়" enH2="Interrupt: the only way to stop a CPU">
+      <Section num="02" bnH2="Interrupt: CPU-কে জানানো" enH2="Interrupt: telling the CPU">
         {bn ? (
           <div lang="bn" style={body}>
-            {p('USB cable দিয়ে signal ঢুকল laptop-এ। Motherboard-এ বসে থাকা USB controller সেটা receive করল। এই controller একটা আলাদা chip, CPU-র বাইরে, যার একমাত্র কাজ USB device-এর সাথে কথা বলা।')}
-            {p('Controller-এর কাছে এখন data আছে, কিন্তু CPU সেটা জানে না। CPU এই মুহূর্তে অন্য কাজে ব্যস্ত — হয়তো Chrome-এর কোনো JavaScript চালাচ্ছে, বা YouTube video decode করছে। তাকে জানাতে হবে যে নতুন কিছু এসেছে।')}
-            {p(<>জানানোর একমাত্র উপায় হলো <Term id="interrupt">interrupt</Term>। Controller একটা নির্দিষ্ট pin-এর voltage বদলে দেয়, আর সেই wire সরাসরি CPU-তে গিয়ে ঠেকে।</>)}
-            {p('Interrupt পাওয়ার সাথে সাথে CPU যা করছিল তা থামিয়ে দেয়। কিন্তু শুধু থামলেই তো হবে না। CPU-র register-এ এই মুহূর্তে যা কিছু আছে — কোন instruction চালাচ্ছিল, কোন value হাতে ধরা ছিল, সব সাময়িক হিসাব — সেসব হারিয়ে গেলে বিপদ। Interrupt handle করা শেষে যখন সে আগের কাজে ফিরবে, তখন সে জানতেই পারবে না কোথায় থেমেছিল।')}
-            {p(<>তাই থামার আগে CPU সব state একটা নির্দিষ্ট memory area-তে save করে রাখে। এই কাজটা আমরা <a href="/writing/os-grand-conductor" style={LINK}>Article 6</a>-এ দেখেছিলাম — context switch-এর সময় যেভাবে process-এর "মাথার অবস্থা" PCB-তে জমা রাখা হয়, এখানেও প্রায় একই ব্যাপার, শুধু ছোট আকারে।</>)}
-            {p('State save হয়ে গেলে CPU switch করে kernel mode-এ। এতক্ষণ সে user mode-এ ছিল, Chrome-এর code চালাচ্ছিল। এখন OS-এর code চালাতে হবে, আর সেই code-এর hardware access দরকার। তাই privilege level বদলাতেই হবে।')}
+            {p('USB-এর মাধ্যমে keyboard-এর input information laptop-এ পৌঁছাল। Motherboard-এ বসে থাকা USB controller সেটা receive করল — এই controller একটা আলাদা chip, CPU-র বাইরে, যার কাজ USB device-এর সঙ্গে কথা বলা।')}
+            {p('এখন data এসেছে, কিন্তু CPU এই মুহূর্তে অন্য কাজ করতে পারে — হয়তো Chrome-এর কোনো JavaScript চালাচ্ছে, বা video decode করছে। তাকে জানাতে হবে যে একটা hardware event ঘটেছে।')}
+            {p(<>এই জানানোর একটা mechanism হলো <Term id="interrupt">interrupt</Term>। USB subsystem host CPU-কে জানায় যে নতুন data এসেছে, আর CPU তার বর্তমান execution-এর উপযুক্ত point থেকে interrupt handling-এর দিকে যায়।</>)}
+            {p('তার আগে CPU-কে এতটুকু state সংরক্ষণ করতে হয়, যাতে পরে আগের execution-এ ফিরে আসা যায়। তারপর privileged OS code interrupt-এর কাজটা সামলায়।')}
+            {p(<>এখানে একটা গুরুত্বপূর্ণ distinction: <strong>interrupt আসা মানেই context switch নয়।</strong> Interrupt handle করার পর CPU আগের কাজেই ফিরে যেতে পারে। আবার interrupt handling-এর ফলে কোনো task runnable হলে scheduler পরে অন্য task-কে CPU-তে চালাতেও পারে।</>)}
+            <Diagram art={ART_INTERRUPT} bnLabel="interrupt handling" enLabel="interrupt handling" />
+            {p('অর্থাৎ interrupt মূলত একটা বার্তা — "CPU, hardware-এ একটা event ঘটেছে, এটা handle করো।"')}
           </div>
         ) : (
           <div style={body}>
-            {p('The signal came into the laptop over the USB cable. The USB controller sitting on the motherboard received it. This controller is a separate chip, outside the CPU, whose only job is talking to USB devices.')}
-            {p("The controller now has data, but the CPU doesn't know that. The CPU is busy with something else at this moment — maybe running some Chrome JavaScript, maybe decoding a YouTube video. It needs to be told that something new arrived.")}
-            {p(<>The only way to tell it is an <Term id="interrupt">interrupt</Term>. The controller changes the voltage on a specific pin, and that wire runs straight into the CPU.</>)}
-            {p("The instant the interrupt arrives, the CPU stops what it was doing. But simply stopping isn't enough. Whatever is in the CPU's registers right now — which instruction it was running, which values it was holding, all the intermediate results — losing any of that would be a disaster. When it returns to its previous work after handling the interrupt, it wouldn't know where it had left off.")}
-            {p(<>So before stopping, the CPU saves all its state into a designated memory area. This is the same operation we saw in <a href="/writing/os-grand-conductor" style={LINK}>Article 6</a> — the way a process's "head state" gets stored in its PCB during a context switch. Same idea here, just at a smaller scale.</>)}
-            {p('Once the state is saved, the CPU switches into kernel mode. Until now it was in user mode, running Chrome\'s code. Now it has to run OS code, and that code needs hardware access. So the privilege level has to change.')}
+            {p("The keyboard's input information reached the laptop over USB. The USB controller sitting on the motherboard received it — a separate chip, outside the CPU, whose job is talking to USB devices.")}
+            {p("The data has arrived, but the CPU may be busy with something else right now — running some Chrome JavaScript, decoding a video. It has to be told that a hardware event happened.")}
+            {p(<>One mechanism for telling it is an <Term id="interrupt">interrupt</Term>. The USB subsystem signals the host CPU that new data has arrived, and the CPU moves from a suitable point in its current execution into interrupt handling.</>)}
+            {p('Before that, the CPU has to preserve enough state to be able to return to the previous execution afterwards. Then privileged OS code handles the interrupt\'s work.')}
+            {p(<>An important distinction here: <strong>an interrupt arriving does not mean a context switch.</strong> After handling the interrupt, the CPU can go straight back to what it was doing. Or, if the interrupt handling made some task runnable, the scheduler may later run a different task on the CPU.</>)}
+            <Diagram art={ART_INTERRUPT} bnLabel="interrupt handling" enLabel="interrupt handling" />
+            {p('So an interrupt is essentially one message — "CPU, an event happened in hardware; handle it."')}
           </div>
         )}
       </Section>
@@ -201,27 +291,25 @@ export function KeyboardToScreen() {
       <Section num="03" bnH2="OS-এর ভেতরে: এই event কার জন্য?" enH2="Inside the OS: who is this event for?">
         {bn ? (
           <div lang="bn" style={body}>
-            {p('Interrupt handler চলতে শুরু করে। এই handler আসলে কী জিনিস? এটা Linux বা Windows kernel-এর একটা অংশ, যেটা বছর কয়েক আগে কোনো developer C-তে লিখেছিলেন। তারপর সেটা compile হয়ে machine code হয়েছে, আর আপনার laptop boot হওয়ার সময় সেই machine code memory-তে load হয়েছে। এই মুহূর্তে সেই বহু পুরনো compiled code-ই চলছে।')}
-            {p("Handler প্রথমে USB controller থেকে scancode read করে নেয়। তারপর OS-এর keyboard driver সেই scancode দেখে বুঝে যায় — 'A' চাপা হয়েছে।")}
-            {p('এখন প্রশ্ন হলো, এই তথ্যটা কার কাছে যাবে? আপনার laptop-এ তো এই মুহূর্তে ৫০টা program চলছে। সবাইকে জানানোর তো মানে হয় না।')}
-            {p('OS জানে এই মুহূর্তে কোন window active আছে — যেটাকে বলে focused window। ধরা যাক সেটা VS Code। OS সেই window-এর সাথে যুক্ত process-টা খুঁজে বের করে, আর সেই process-এর জন্য যে event queue আছে, সেখানে event-টা রেখে দেয়।')}
-            {p('কিন্তু এখানে একটা সমস্যা আছে। VS Code-এর process এই মুহূর্তে CPU-তে চলছে না। CPU-তে ছিল Chrome। তাহলে VS Code জানবে কীভাবে যে তার জন্য একটা event এসেছে?')}
-            {p(<>এখানেই <Term id="scheduler">scheduler</Term>-এর ভূমিকা। <a href="/writing/os-grand-conductor" style={LINK}>Article 6</a>-এ দেখেছিলাম, প্রতিটা context switch-এ scheduler ঠিক করে দেয় পরের বার CPU কে পাবে। এখন তার সামনে একটা choice — Chrome-কে আবার resume করবে, নাকি VS Code-কে জাগিয়ে তুলবে?</>)}
-            {p('Modern OS-এ interactive application-কে সাধারণত দ্রুত response দেওয়া হয়। কারণ user সরাসরি তাদের সাথে কাজ করছে, একটু দেরি হলেই "lag" মনে হবে। তাই scheduler সিদ্ধান্ত নেয় — VS Code-কে এখনই CPU দাও।')}
-            {p(<>Context switch শুরু হয়। Chrome-এর সমস্ত state তার PCB-তে জমা হয়ে যায়। VS Code-এর PCB থেকে তার আগের state আবার CPU-তে load হয়। সাথে <Term id="virtualmem">virtual memory</Term>-র context-ও বদলে যায় — এখন থেকে CPU যেসব virtual address ব্যবহার করবে, সেগুলো VS Code-এর page table দিয়ে translate হবে, Chrome-এর নয়।</>)}
-            {p('সব প্রস্তুত হলে CPU আবার user mode-এ ফিরে আসে, আর VS Code-এর code চালাতে শুরু করে।')}
+            {p('Interrupt handler চলতে শুরু করে। এই handler আসলে কী জিনিস? এটা Linux বা Windows kernel-এর একটা অংশ, যেটা বছর কয়েক আগে কোনো developer লিখেছিলেন। তারপর সেটা compile হয়ে machine code হয়েছে, আর আপনার laptop boot হওয়ার সময় সেই machine code memory-তে load হয়েছে। এই মুহূর্তে সেই বহু পুরনো compiled code-ই চলছে।')}
+            {p('তারপর OS-এর keyboard driver সেই input data পড়ে বোঝে — কোন key চাপা হয়েছে। সেখান থেকে OS একটা keyboard event তৈরি করে নিজের উপরের স্তরে পাঠিয়ে দেয়।')}
+            {p('এখন প্রশ্ন — এই event কোন application-এর জন্য? আপনার laptop-এ তো এই মুহূর্তে অনেকগুলো program চলছে। Key press সাধারণত সবাইকে পাঠানো হয় না।')}
+            {p('Desktop-এর input/window system জানে কোন window এই মুহূর্তে focused। ধরা যাক সেটা VS Code। তাহলে event সেই application-এর জন্য deliver করা হবে।')}
+            {p('এরপর application যদি এই মুহূর্তে CPU-তে না চলে, তাকে runnable করা হতে পারে। Scheduler তার policy অনুযায়ী পরে তাকে CPU-তে চালানোর সুযোগ দেয়।')}
+            <Diagram art={ART_EVENT} bnLabel="event delivery" enLabel="event delivery" />
+            {p(<>এখানেও আগের distinction-টা মনে রাখুন — <strong>event আসা আর context switch একই ঘটনা নয়।</strong> Application তখন CPU-তেই থাকতে পারে; তখন আলাদা করে context switch-এর দরকার নাও হতে পারে।</>)}
+            {p(<>আর যদি সত্যিই অন্য process-এর thread থেকে VS Code-এর thread-এ execution যায়, তখন প্রয়োজন অনুযায়ী তাদের execution state আর virtual memory context বদলায় — <a href="/writing/os-grand-conductor" style={LINK}>Article 6</a>-এ যেভাবে দেখেছিলাম।</>)}
           </div>
         ) : (
           <div style={body}>
-            {p("The interrupt handler starts running. What is this handler, exactly? It's a piece of the Linux or Windows kernel that some developer wrote in C years ago. That code was then compiled into machine code, and when your laptop booted, that machine code was loaded into memory. Right now, that very old compiled code is what's running.")}
-            {p("The handler first reads the scancode from the USB controller. Then the OS's keyboard driver looks at that scancode and figures out — 'A' was pressed.")}
-            {p('Now the question is, who does this information go to? Fifty programs are running on your laptop at this moment. Telling all of them makes no sense.')}
-            {p("The OS knows which window is currently active — what's called the focused window. Say that's VS Code. The OS finds the process attached to that window, and drops the event into that process's event queue.")}
-            {p("But there's a problem here. VS Code's process isn't running on the CPU right now. Chrome was. So how does VS Code find out that an event arrived for it?")}
-            {p(<>This is where the <Term id="scheduler">scheduler</Term> comes in. As we saw in <a href="/writing/os-grand-conductor" style={LINK}>Article 6</a>, at every context switch the scheduler decides who gets the CPU next. It now faces a choice — resume Chrome, or wake up VS Code?</>)}
-            {p('Modern OSes typically give interactive applications faster response. Because the user is working with them directly, and any delay immediately feels like lag. So the scheduler decides — give VS Code the CPU right now.')}
-            {p(<>The context switch begins. All of Chrome's state gets saved into its PCB. VS Code's earlier state gets loaded back from its PCB into the CPU. The <Term id="virtualmem">virtual memory</Term> context switches too — from now on, the virtual addresses the CPU uses get translated through VS Code's page table, not Chrome's.</>)}
-            {p("Once everything's in place, the CPU returns to user mode and starts running VS Code's code.")}
+            {p("The interrupt handler starts running. What is this handler, exactly? It's a piece of the Linux or Windows kernel that some developer wrote years ago. That code was then compiled into machine code, and when your laptop booted, that machine code was loaded into memory. Right now, that very old compiled code is what's running.")}
+            {p("Then the OS's keyboard driver reads that input data and works out which key was pressed. From there the OS builds a keyboard event and passes it up to its own higher layers.")}
+            {p('Now the question — which application is this event for? Plenty of programs are running on your laptop at this moment, and a key press is usually not sent to all of them.')}
+            {p("The desktop's input/window system knows which window is focused right now. Say that's VS Code. Then the event is delivered for that application.")}
+            {p("If that application isn't running on the CPU at this moment, it can be made runnable. The scheduler, following its policy, later gives it a turn on the CPU.")}
+            <Diagram art={ART_EVENT} bnLabel="event delivery" enLabel="event delivery" />
+            {p(<>Keep the earlier distinction in mind here too — <strong>an event arriving and a context switch are not the same event.</strong> The application may already be on the CPU; then no separate context switch is necessarily needed.</>)}
+            {p(<>And if execution really does move from another process's thread to VS Code's thread, then their execution state and virtual memory context change as needed — exactly as we saw in <a href="/writing/os-grand-conductor" style={LINK}>Article 6</a>.</>)}
           </div>
         )}
       </Section>
@@ -229,17 +317,23 @@ export function KeyboardToScreen() {
       <Section num="04" bnH2="App জেগে উঠল" enH2="The app wakes up">
         {bn ? (
           <div lang="bn" style={body}>
-            {p('VS Code একটা Electron application, মানে মূলত JavaScript-এ লেখা। Chrome-এর যে V8 engine, সেটাই ভেতরে বসে এই JavaScript চালাচ্ছে।')}
-            {p(<>VS Code-এর event loop-এ একটা {MONO('read()')} <Term id="syscall">system call</Term> অনেকক্ষণ ধরে pending অবস্থায় ছিল। সে user-এর input-এর অপেক্ষায় block হয়ে বসে ছিল। এখন OS-এর কাছে event ready, তাই সেই system call return করল, আর VS Code-এর হাতে 'A' character পৌঁছে গেল।</>)}
-            {p(<>এই keystroke handle করার যে code, সেটা JavaScript-এ লেখা। কিন্তু <a href="/writing/code-to-machine-code" style={LINK}>আগের আর্টিকেলে</a> দেখেছি, V8 প্রথমে code-কে interpret করে চালায়, তারপর যেসব অংশ বারবার চলে সেগুলোকে <Term id="jit">JIT</Term> দিয়ে native machine code-এ compile করে ফেলে। Keystroke handler নিশ্চয়ই হাজার হাজার বার চলেছে। তাই এই মুহূর্তে সেটা আর interpret হচ্ছে না — সরাসরি compiled machine code-ই চলছে, প্রায় C-র মতো গতিতে।</>)}
-            {p("Code বলল — cursor যেখানে আছে সেখানে 'A' লেখো। কিন্তু \"লেখা\" মানে screen-এ pixel বসানো। কোন pixel-এ কী রং হবে, সেটা কে ঠিক করবে?")}
+            {p('ধরুন আপনি একটা text editor-এ টাইপ করছেন — এই মুহূর্তে সেটাই focused application। Event তার কাছে পৌঁছায়, আর application-এর ভেতরের একটা event handler বুঝতে পারে: user একটা key চেপেছে।')}
+            {p('তবে event সাধারণত app-কে মাঝপথে ধাক্কা দিয়ে থামায় না। App-এর নিজের একটা loop আছে, যেটা একটার পর একটা event নিয়ে কাজ করে। আমাদের keypress সেই সারিতেই গিয়ে বসেছিল, আর app CPU-তে সুযোগ পেয়ে সেটা তুলে নিয়েছে।')}
+            <Diagram art={ART_APPLOOP} bnLabel="app-এর loop" enLabel="the app loop" />
+            {p(<>"State update" বলতে এখানে কী বোঝায়? Editor-এর কাছে আপনার file-টা memory-তে একটা data structure হিসেবে আছে — মোটামুটি character-এর একটা তালিকা। <a href="/writing/how-does-anything-become-bits" style={LINK}>Article 2</a>-তে দেখেছি, প্রতিটা character memory-তে সংখ্যা হিসেবেই থাকে। তাই কাজটা আসলে এই — cursor যেখানে আছে সেখানে সেই সংখ্যাটা ঢোকানো, আর cursor এক ধাপ এগিয়ে দেওয়া।</>)}
+            {p('আর একটা keypress-এ প্রায়ই এর চেয়ে বেশি কিছু ঘটে। Undo history-তে একটা entry যোগ হয়, যাতে Ctrl+Z কাজ করে। Syntax highlighting আবার হিসাব হয়। Autocomplete হয়তো নতুন suggestion খুঁজতে শুরু করে। এক অক্ষর টাইপ করলেও editor-এর ভেতরে কয়েকটা ছোট কাজ একসঙ্গে জেগে ওঠে।')}
+            {p('কিন্তু খেয়াল করুন — app নিজে screen-এ কিছু আঁকেনি। সে শুধু নিজের state বদলেছে, আর ঠিক করেছে UI-র কোন অংশটা আবার আঁকা দরকার। আঁকার কাজটা এর পরের ধাপ।')}
+            {p('আর "আঁকা" মানে screen-এ pixel বসানো। কোন pixel-এ কী রং হবে, সেটা কে ঠিক করবে?')}
           </div>
         ) : (
           <div style={body}>
-            {p("VS Code is an Electron application, meaning it's mostly written in JavaScript. Chrome's V8 engine sits inside it and runs that JavaScript.")}
-            {p(<>In VS Code's event loop, a {MONO('read()')} <Term id="syscall">system call</Term> had been pending for a while. It was blocked, waiting for user input. Now the OS has the event ready, so that system call returns, and the 'A' character lands in VS Code's hands.</>)}
-            {p(<>The code handling this keystroke is written in JavaScript. But as we saw in <a href="/writing/code-to-machine-code" style={LINK}>the last article</a>, V8 first interprets code, then takes the parts that run repeatedly and <Term id="jit">JIT</Term>-compiles them into native machine code. This keystroke handler has surely run thousands of times. So right now it isn't being interpreted at all — the compiled machine code is running directly, at nearly C-level speed.</>)}
-            {p('The code says — write \'A\' at the cursor position. But "writing" means placing pixels on the screen. Who decides which pixel gets what color?')}
+            {p("Say you're typing in a text editor — that's the focused application right now. The event reaches it, and a handler inside the application works out that the user pressed a key.")}
+            {p("The event usually doesn't barge in and stop the app mid-work, though. The app has its own loop, taking one event after another. Our keypress went and sat in that queue, and the app picked it up once it got its turn on the CPU.")}
+            <Diagram art={ART_APPLOOP} bnLabel="app-এর loop" enLabel="the app loop" />
+            {p(<>And what does "updating state" mean here? To the editor, your file is a data structure in memory — roughly a list of characters. As we saw in <a href="/writing/how-does-anything-become-bits" style={LINK}>Article 2</a>, every character sits in memory as a number. So the actual work is this: put that number in where the cursor is, and move the cursor one step along.</>)}
+            {p("And a single keypress usually sets off more than that. An entry goes into the undo history, so Ctrl+Z will work. Syntax highlighting gets recomputed. Autocomplete may start looking for fresh suggestions. Type one character and several small jobs wake up inside the editor together.")}
+            {p("But notice — the app hasn't drawn anything on the screen. It only changed its own state and decided which part of the UI needs redrawing. The drawing is the next step.")}
+            {p('And "drawing" means placing pixels on the screen. Who decides which pixel gets what colour?')}
           </div>
         )}
       </Section>
@@ -247,67 +341,53 @@ export function KeyboardToScreen() {
       <Section num="05" bnH2="অক্ষর থেকে pixel" enH2="From character to pixel">
         {bn ? (
           <div lang="bn" style={body}>
-            {p('এখানে font system কাজে নামে। আপনার editor-এ যে font ব্যবহার করছেন — Consolas, Fira Code, যাই হোক — সেই font file আগে থেকেই RAM-এ load করা আছে।')}
+            {p('এখানে font system কাজে নামে। আপনার editor-এ যে font ব্যবহার করছেন — Consolas, Fira Code, যাই হোক — তার font data system বা application-এর memory/cache-এ আগে থেকেই থাকতে পারে। না থাকলে প্রয়োজন অনুযায়ী load করা হয়।')}
             {p('Font file-এ প্রতিটা character-এর জন্য একটা করে shape-এর বর্ণনা থাকে। বেশিরভাগ modern font-এ সেই বর্ণনা vector আকারে — মানে গাণিতিক curve দিয়ে বলা থাকে অক্ষরটার আকৃতি কেমন হবে। এর সুবিধা হলো, যেকোনো size-এ scale করলেও অক্ষরটা ঝাপসা হয় না।')}
-            {p(<>কিন্তু screen তো vector বোঝে না। Screen বোঝে pixel। তাই সেই vector shape-কে আপনার current font size অনুযায়ী pixel grid-এ রূপান্তর করতে হয়। এই প্রক্রিয়ার নাম <Term id="rasterization">rasterization</Term>।</>)}
-            {p(<>Rasterization শেষে 'A' character আর অক্ষর থাকে না। এখন সেটা কয়েকশো pixel-এর একটা grid, যার প্রতিটা pixel-এর জন্য R, G, B value নির্ধারিত। <a href="/writing/how-does-anything-become-bits" style={LINK}>Article 2</a>-তে দেখেছিলাম কীভাবে ছবি binary হয় — এখানেও ঠিক তাই ঘটল। একটা অক্ষর এইমাত্র একটা ছোট্ট ছবিতে পরিণত হলো। নিচের যন্ত্রে vector থেকে pixel-এ যাওয়াটা দেখুন:</>)}
+            {p(<>কিন্তু display-এ শেষ পর্যন্ত pixel দরকার। তাই সেই shape-কে আপনার current font size অনুযায়ী pixel grid-এর ওপর বসাতে হয়। এই প্রক্রিয়ার নাম <Term id="rasterization">rasterization</Term>।</>)}
+            <Diagram art={ART_RASTER} bnLabel="rasterization" enLabel="rasterization" />
+            {p(<>এখন {"'A'"} আর শুধু একটা character হিসেবে নেই। তার shape screen-এর ছোট একটা অঞ্চলের pixel information-এ পরিণত হয়েছে, যার প্রতিটা pixel-এর জন্য brightness বা color information দরকার। <a href="/writing/how-does-anything-become-bits" style={LINK}>Article 2</a>-তে দেখেছিলাম কীভাবে ছবির pixel value শেষ পর্যন্ত bit-এ represent হয় — এখানেও সেই একই idea ফিরে এল। একটা abstract অক্ষর ধীরে ধীরে screen-এর physical image-এর দিকে এগোচ্ছে। নিচের যন্ত্রে vector থেকে pixel-এ যাওয়াটা দেখুন:</>)}
           </div>
         ) : (
           <div style={body}>
-            {p("This is where the font system comes in. The font you're using in your editor — Consolas, Fira Code, whatever it is — has already been loaded into RAM.")}
+            {p("This is where the font system comes in. The font you're using in your editor — Consolas, Fira Code, whatever it is — may already have its data in system or application memory or cache. If not, it gets loaded as needed.")}
             {p('A font file contains a shape description for every character. In most modern fonts, that description is in vector form — the shape of the letter is described mathematically with curves. The advantage is that scaling to any size keeps the letter crisp.')}
-            {p(<>But screens don't understand vectors. Screens understand pixels. So that vector shape has to be converted into a pixel grid according to your current font size. That process is called <Term id="rasterization">rasterization</Term>.</>)}
-            {p(<>After rasterization, 'A' is no longer a character. It's now a grid of a few hundred pixels, each with a determined R, G, B value. In <a href="/writing/how-does-anything-become-bits" style={LINK}>Article 2</a> we saw how images become binary — the same thing just happened here. A letter has become a small picture. Watch a vector become pixels on the instrument below:</>)}
+            {p(<>But a display ultimately needs pixels. So that shape has to be laid onto a pixel grid according to your current font size. That process is called <Term id="rasterization">rasterization</Term>.</>)}
+            <Diagram art={ART_RASTER} bnLabel="rasterization" enLabel="rasterization" />
+            {p(<>Now {"'A'"} is no longer just a character. Its shape has become pixel information for a small region of the screen, where every pixel needs brightness or colour information. In <a href="/writing/how-does-anything-become-bits" style={LINK}>Article 2</a> we saw how an image's pixel values end up represented as bits — the same idea has come back here. An abstract character is moving, step by step, toward a physical image on screen. Watch a vector become pixels on the instrument below:</>)}
           </div>
         )}
         <Rasterize />
       </Section>
 
-      <Section num="06" bnH2="Framebuffer থেকে আলো" enH2="From framebuffer to light">
+      <Section num="06" bnH2="Frame থেকে আলো" enH2="From frame to light">
         {bn ? (
           <div lang="bn" style={body}>
-            {p('VS Code এখন আরেকটা system call করে — "এই pixel data screen-এ দেখাও।" আবার user mode থেকে kernel mode-এ transition, আবার OS-এর দরজায় কড়া নাড়া।')}
-            {p(<>OS-এর <Term id="compositor">window compositor</Term> এই data receive করে। Compositor-এর কাজ হলো সব window-এর content মিলিয়ে screen-এর final চেহারা তৈরি করা। সে জানে VS Code-এর window screen-এর ঠিক কোন জায়গায় বসানো, তাই সেই অনুযায়ী pixel-গুলোর সঠিক coordinate হিসাব করে।</>)}
-            {p(<>তারপর সেই data লেখা হয় <Term id="framebuffer">framebuffer</Term>-এ। Framebuffer হলো GPU-র নিজস্ব memory-তে (VRAM) একটা বিশেষ এলাকা, যেখানে screen-এ এই মুহূর্তে যা দেখাচ্ছে তার পুরো ছবিটা bit আকারে জমা থাকে।</>)}
-            {p('GPU প্রতি ১৬.৬৭ millisecond অন্তর (মানে 60Hz refresh rate-এ) সেই framebuffer পড়ে নেয় আর সেই ডেটা HDMI বা DisplayPort cable দিয়ে monitor-এ পাঠিয়ে দেয়। Cable-এর ভেতরে যা যাচ্ছে সেটা আসলে দ্রুত পরিবর্তিত voltage — high, low, high, low। সেই voltage pattern-ই pixel data-র binary রূপ।')}
-            {p(<>এই সিরিজের <a href="/writing/whats-inside-a-bit" style={LINK}>একদম প্রথম আর্টিকেলে</a> আমরা যেখান থেকে শুরু করেছিলাম, ঘুরে ফিরে সেই voltage-এই ফিরে এলাম।</>)}
-            {p('Monitor-এর ভেতরের controller সেই signal receive করে। LCD screen-এ প্রতিটা pixel-এর পেছনে থাকে liquid crystal, আর controller সেই crystal-এর orientation নিয়ন্ত্রণ করে ঠিক করে দেয় কোন pixel দিয়ে কতটুকু আলো যাবে। OLED-এ ব্যাপারটা আরও সরাসরি — প্রতিটা pixel নিজেই আলো তৈরি করে।')}
-            {p("'A' অক্ষরের আকৃতি অনুযায়ী নির্দিষ্ট pixel-গুলোতে voltage গেল। সেই pixel-গুলো আলো ছাড়ল। Photon বেরিয়ে এসে আপনার চোখে পড়ল।")}
+            {p(<>এখন application-এর updated UI-কে screen-এর জন্য একটা final image-এ পরিণত করতে হবে। <Term id="compositor">Window compositor</Term> বিভিন্ন visible window-এর content একত্র করে screen-এর final frame তৈরি করতে পারে — সে জানে কোন window কোথায় বসানো।</>)}
+            {p(<>তারপর graphics/display pipeline সেই frame-কে একটা <Term id="framebuffer">display buffer</Term>-এ প্রস্তুত করে, যেখান থেকে display hardware সেটা monitor-এর দিকে পাঠাতে পারে।</>)}
+            <Diagram art={ART_DISPLAY} bnLabel="display path" enLabel="display path" />
+            {p('60 Hz display হলে screen প্রতি second-এ ৬০টা refresh cycle চালায় — প্রতিটা cycle মোটামুটি ১৬.৬৭ millisecond। তবে এর মানে এই নয় যে GPU ঠিক প্রতি ১৬.৬৭ ms অন্তর পুরো ছবিটা একসাথে cable-এ ছুঁড়ে দেয়; display system frame-এর data ধারাবাহিকভাবে scan out করে।')}
+            {p('HDMI বা DisplayPort cable-এর মধ্য দিয়ে সেই digital information electrical signal হিসেবে যায়, আর তার মাধ্যমে pixel data ও display control information monitor-এ পৌঁছায়।')}
+            {p(<>এই সিরিজের <a href="/writing/whats-inside-a-bit" style={LINK}>একদম প্রথম আর্টিকেলে</a> আমরা যেখান থেকে শুরু করেছিলাম, ঘুরে ফিরে সেই electrical signal-এই ফিরে এলাম।</>)}
+            {p('Monitor-এর ভেতরের display electronics সেই data অনুযায়ী panel drive করে। LCD-তে liquid crystal দিয়ে ঠিক করা হয় backlight-এর কতটা আলো প্রতিটা pixel দিয়ে যাবে; OLED-এ প্রতিটা pixel নিজেই আলো তৈরি করে।')}
+            {p("'A'-এর shape অনুযায়ী নির্দিষ্ট pixel-গুলোতে উপযুক্ত আলো তৈরি হলো। Photon বেরিয়ে এসে আপনার চোখে পড়ল।")}
             {p("আপনি screen-এ 'A' দেখলেন।")}
           </div>
         ) : (
           <div style={body}>
-            {p('VS Code now makes another system call — "show this pixel data on screen." Another user-to-kernel transition, another knock on the OS\'s door.')}
-            {p(<>The OS's <Term id="compositor">window compositor</Term> receives this data. The compositor's job is to combine the content of all windows into the screen's final appearance. It knows exactly where VS Code's window sits on the screen, so it computes the right coordinates for those pixels.</>)}
-            {p(<>Then that data gets written into the <Term id="framebuffer">framebuffer</Term>. The framebuffer is a special area in the GPU's own memory (VRAM) that holds, in bits, the complete current picture of what the screen is showing.</>)}
-            {p('Every 16.67 milliseconds (at a 60Hz refresh rate) the GPU reads that framebuffer and sends the data over an HDMI or DisplayPort cable to the monitor. What travels through that cable is rapidly changing voltage — high, low, high, low. That voltage pattern is the binary form of the pixel data.')}
-            {p(<>We've come full circle back to the voltage we started with in <a href="/writing/whats-inside-a-bit" style={LINK}>the very first article</a> of this series.</>)}
-            {p("The controller inside the monitor receives that signal. In an LCD screen, each pixel has liquid crystal behind it, and the controller adjusts the orientation of that crystal to decide how much light passes through each pixel. In OLED, it's more direct — each pixel generates its own light.")}
-            {p("Voltage went to the pixels matching the shape of 'A'. Those pixels emitted light. Photons left the glass and hit your eye.")}
+            {p(<>Now the application's updated UI has to become one final image for the screen. A <Term id="compositor">window compositor</Term> can combine the content of the visible windows into the screen's final frame — it knows where each window sits.</>)}
+            {p(<>The graphics/display pipeline then prepares that frame in a <Term id="framebuffer">display buffer</Term>, from which the display hardware can send it toward the monitor.</>)}
+            <Diagram art={ART_DISPLAY} bnLabel="display path" enLabel="display path" />
+            {p('On a 60 Hz display the screen runs 60 refresh cycles per second — roughly 16.67 milliseconds each. But that does not mean the GPU flings the whole picture down the cable once every 16.67 ms; the display system scans out the frame data continuously.')}
+            {p('Through an HDMI or DisplayPort cable that digital information travels as electrical signals, carrying pixel data and display control information to the monitor.')}
+            {p(<>Which brings us back to the electrical signals we started from in <a href="/writing/whats-inside-a-bit" style={LINK}>the very first article</a> of this series.</>)}
+            {p("The display electronics inside the monitor drive the panel according to that data. In an LCD, liquid crystal decides how much of the backlight passes through each pixel; in OLED, each pixel generates its own light.")}
+            {p("The pixels matching the shape of 'A' produced the right light. Photons left the glass and hit your eye.")}
             {p("You saw 'A' on the screen.")}
           </div>
         )}
-        <Deeper
-          bnLabel="আরেকটু গভীরে — DMA, vsync, subpixel rendering"
-          enLabel="go deeper — DMA, vsync, subpixel rendering"
-        >
-          {bn ? (
-            <ul lang="bn" style={{ margin: '14px 0 0', paddingLeft: 20, lineHeight: 1.85, fontFamily: "'Anek Bangla','Anek Latin',sans-serif" }}>
-              <li style={{ marginBottom: 10 }}><strong>DMA:</strong> GPU framebuffer বারবার CPU-কে না জ্বালিয়ে সরাসরি RAM থেকে পড়তে পারে — এই Direct Memory Access-এ CPU মুক্ত থাকে, শুধু ডেটা চলাচল হয়।</li>
-              <li style={{ marginBottom: 10 }}><strong>Vsync আর tearing:</strong> GPU যদি screen refresh-এর মাঝপথে framebuffer বদলায়, উপরে-নিচে দুটো frame মিশে যায় — screen tearing। Vsync (আর double buffering) refresh সীমানার সাথে update মিলিয়ে সেটা ঠেকায়।</li>
-              <li><strong>Subpixel rendering:</strong> প্রতিটা pixel আসলে তিনটে ছোট আলো — R, G, B পাশাপাশি। Text renderer এগুলো আলাদা করে ব্যবহার করে অক্ষরের কিনারা আরও মসৃণ দেখায় (ClearType, এর একটা উদাহরণ)।</li>
-            </ul>
-          ) : (
-            <ul style={{ margin: '14px 0 0', paddingLeft: 20, lineHeight: 1.85, fontFamily: "'Anek Latin',sans-serif" }}>
-              <li style={{ marginBottom: 10 }}><strong>DMA:</strong> the GPU can read the framebuffer straight from RAM without repeatedly bothering the CPU — this Direct Memory Access frees the CPU while data just flows.</li>
-              <li style={{ marginBottom: 10 }}><strong>Vsync and tearing:</strong> if the GPU swaps the framebuffer mid-refresh, two frames blend across the screen — screen tearing. Vsync (with double buffering) aligns updates to refresh boundaries to prevent it.</li>
-              <li><strong>Subpixel rendering:</strong> each pixel is really three tiny lights — R, G, B side by side. Text renderers use them separately to make letter edges look smoother (ClearType is one example).</li>
-            </ul>
-          )}
-        </Deeper>
       </Section>
 
-      <Section num="07" bnH2="২০ millisecond-এ কত কিছু" enH2="So much in 20 milliseconds">
+      <Section num="07" bnH2="একটামাত্র keypress-এ কতগুলো layer" enH2="How many layers in one keypress">
         {bn ? (
           <div lang="bn" style={body}>
             {p('আপনার কাছে পুরোটা instant মনে হয়েছে। এক আঙুলের চাপ, সাথে সাথে অক্ষর। নিচের যন্ত্রে পুরো relay-টা এক ধাপ এক ধাপ করে চালিয়ে দেখুন — keypress থেকে চোখে আলো পর্যন্ত:')}
@@ -320,39 +400,45 @@ export function KeyboardToScreen() {
         <FullRelay />
         {bn ? (
           <div lang="bn" style={body}>
-            {p('কিন্তু এই সময়টুকুর ভেতরে ঘটে গেছে অনেক কিছু। Keyboard-এর নিজস্ব CPU একটা পুরো scan cycle চালিয়েছে। USB controller signal তৈরি করেছে। Main CPU একটা interrupt সামলেছে, নিজের state save করেছে, privilege level বদলেছে। OS-এর driver ডেটা পড়েছে, ঠিক করেছে কোন application এই event পাবে। Scheduler সিদ্ধান্ত নিয়েছে কাকে CPU দেওয়া হবে। একটা full context switch হয়েছে, page table বদলেছে। JIT-compiled JavaScript চলেছে। Font system একটা অক্ষরকে ছবিতে রূপান্তর করেছে। GPU framebuffer update করেছে। Cable-এ voltage-এর ঢেউ গেছে। Monitor-এর pixel জ্বলে উঠেছে।')}
-            {p(<>এই সময়ে CPU-তে কয়েক বিলিয়ন instruction execute হয়েছে। <a href="/writing/memory-hierarchy" style={LINK}>Cache line</a> RAM থেকে L3, L2 হয়ে L1-এ এসেছে বহুবার। Page table lookup হয়েছে প্রতিটা memory access-এ। দুই-তিনটা context switch হয়েছে।</>)}
-            {p('আর সবচেয়ে আশ্চর্যের ব্যাপার হলো, এই পুরো chain-এর প্রতিটা অংশ আলাদা আলাদা মানুষ, আলাদা কোম্পানি, আলাদা সময়ে তৈরি করেছে। Keyboard-এর firmware লিখেছে এক দল, USB protocol design করেছে আরেক দল, kernel-এর driver লিখেছে অন্য কেউ, V8 engine বানিয়েছে Google-এর একটা team, font rendering library লিখেছে আরও কেউ। কেউ কারো সাথে বসে আলোচনা করেনি।')}
-            {p('তবু সবাই মিলে flawlessly কাজ করেছে। কারণ প্রতিটা layer পরের layer-এর জন্য একটা পরিষ্কার contract রেখে গেছে — "তুমি আমাকে এই format-এ ডেটা দাও, আমি এই কাজটা করে দেব।" ভেতরে কী হচ্ছে সেটা জানার দরকার নেই।')}
-            {p(<>এটাই <Term id="abstraction">abstraction</Term>। এবং এটাই আধুনিক computing-এর সবচেয়ে বড় শক্তি।</>)}
+            {p('কিন্তু এই ছোট্ট ঘটনার ভেতরে আমরা অনেকগুলো layer দেখতে পেলাম:')}
+            <Diagram art={ART_LAYERS} bnLabel="the whole chain" enLabel="the whole chain" />
+            {p('প্রতিটা layer-এর কাজ আলাদা। Keyboard জানে না VS Code কীভাবে text edit করে। OS জানে না \'A\'-এর glyph দেখতে কেমন। Font system জানে না keyboard থেকে event কীভাবে এসেছে। Display hardware জানে না আপনি কোন editor ব্যবহার করছেন।')}
+            {p('তবু তারা একে অন্যের সঙ্গে কাজ করতে পারে। কেন?')}
+            {p('কারণ প্রতিটা layer-এর মধ্যে একটা defined interface আছে — এক layer কী ধরনের information দেবে, পরের layer সেটাকে কীভাবে interpret করবে, আর তার output কী হবে।')}
+            {p(<>এই ধারণাটাই <Term id="abstraction">abstraction</Term>। একটা layer-এর ভেতরটা না জেনেও তার interface ব্যবহার করা যায়।</>)}
+            {p('এই কারণেই keyboard-এর firmware লেখা engineer-কে VS Code-এর code বুঝতে হয় না। আর VS Code-এর developer-কে LCD panel-এর liquid crystal physics বুঝে keypress handler লিখতে হয় না।')}
+            {p('আধুনিক computing-এর বিশাল complexity সামলানোর অন্যতম বড় কৌশল এটাই — প্রতিটা layer নিজের কাজটা করে, আর অন্য layer-এর সঙ্গে একটা defined interface দিয়ে কথা বলে।')}
           </div>
         ) : (
           <div style={body}>
-            {p("But inside that window, a lot happened. The keyboard's own CPU ran a full scan cycle. The USB controller generated a signal. The main CPU handled an interrupt, saved its state, changed privilege level. The OS's driver read the data and decided which application should receive the event. The scheduler decided who gets the CPU. A full context switch happened, page tables changed. JIT-compiled JavaScript ran. The font system converted a letter into a picture. The GPU updated a framebuffer. A wave of voltage went down a cable. Pixels on the monitor lit up.")}
-            {p(<>In that time the CPU executed billions of instructions. <a href="/writing/memory-hierarchy" style={LINK}>Cache lines</a> moved from RAM through L3 and L2 into L1, many times over. A page table lookup happened on every memory access. Two or three context switches occurred.</>)}
-            {p('And the most remarkable part is this — every piece of that chain was built by different people, different companies, at different times. One team wrote the keyboard\'s firmware, another designed the USB protocol, someone else wrote the kernel driver, a team at Google built the V8 engine, someone else wrote the font rendering library. None of them sat down together to discuss anything.')}
-            {p('Yet they all worked together flawlessly. Because each layer left a clear contract for the next — "give me data in this format, and I\'ll do this job." Nobody needs to know what\'s happening inside anyone else.')}
-            {p(<>That's <Term id="abstraction">abstraction</Term>. And it's the greatest strength of modern computing.</>)}
+            {p('But inside that small event, we got to see a lot of layers:')}
+            <Diagram art={ART_LAYERS} bnLabel="the whole chain" enLabel="the whole chain" />
+            {p("Each layer has a different job. The keyboard doesn't know how VS Code edits text. The OS doesn't know what the glyph for 'A' looks like. The font system doesn't know how the event arrived from the keyboard. The display hardware doesn't know which editor you're using.")}
+            {p('And yet they work with one another. Why?')}
+            {p('Because between each layer there is a defined interface — what kind of information one layer hands over, how the next one interprets it, and what comes back out.')}
+            {p(<>That idea is <Term id="abstraction">abstraction</Term>. You can use a layer's interface without knowing what's inside it.</>)}
+            {p("Which is why the engineer writing a keyboard's firmware doesn't have to understand VS Code's code. And a VS Code developer doesn't have to understand the liquid-crystal physics of an LCD panel to write a keypress handler.")}
+            {p('That is one of the biggest tricks for handling the sheer complexity of modern computing — every layer does its own job and talks to the others through a defined interface.')}
           </div>
         )}
         <Recap>
           {bn ? (
             <>
-              <li>Keyboard-এর নিজের একটা CPU আছে — সে সারি-কলামের grid scan করে, byte বানায়, তারপর USB-তে পাঠায়।</li>
-              <li>Interrupt-ই CPU-কে থামানোর একমাত্র উপায়; থামার আগে সে নিজের state save করে kernel mode-এ যায়।</li>
-              <li>OS event-টা focused window-এর queue-তে রাখে, scheduler সেই app-কে CPU দেয় — একটা context switch।</li>
-              <li>App-এর JIT-compiled code অক্ষরটা নেয়; font system সেটাকে rasterize করে pixel বানায়।</li>
-              <li>Compositor → framebuffer → GPU → cable-এ voltage → monitor-এর pixel জ্বলে ওঠে। ঘুরে সেই voltage-এ ফেরত।</li>
-              <li>প্রতিটা layer আলাদা মানুষ বানিয়েছে, তবু contract মেনে সবাই একসাথে কাজ করে — এটাই abstraction।</li>
+              <li>Keyboard-এর ভেতরে নিজের একটা controller আছে — সে সারি-কলামের matrix scan করে, input report বানায়, USB HID দিয়ে পাঠায়।</li>
+              <li>Interrupt হলো CPU-কে hardware event জানানোর একটা mechanism — আর interrupt আসা মানেই context switch নয়।</li>
+              <li>OS-এর input machinery event তৈরি করে, focused application-এর জন্য deliver করে; দরকার হলে scheduler তাকে CPU-তে চালায়।</li>
+              <li>Application event handle করে নিজের state বদলায়; font system অক্ষরের shape-কে rasterize করে pixel information বানায়।</li>
+              <li>Compositor → final frame → display buffer → cable → monitor-এর pixel আলো ছাড়ে। ঘুরে সেই electrical signal-এই ফেরত।</li>
+              <li>প্রতিটা layer নিজের কাজ করে আর defined interface দিয়ে পরেরজনের সঙ্গে কথা বলে — এটাই abstraction।</li>
             </>
           ) : (
             <>
-              <li>The keyboard has its own CPU — it scans a row/column grid, makes a byte, then sends it over USB.</li>
-              <li>An interrupt is the only way to stop a CPU; before stopping it saves its state and enters kernel mode.</li>
-              <li>The OS drops the event in the focused window's queue; the scheduler gives that app the CPU — a context switch.</li>
-              <li>The app's JIT-compiled code takes the letter; the font system rasterizes it into pixels.</li>
-              <li>Compositor → framebuffer → GPU → voltage down the cable → the monitor's pixels light up. Back to voltage.</li>
-              <li>Every layer was built by different people, yet they work together on a contract — that's abstraction.</li>
+              <li>A keyboard has its own controller inside — it scans a row/column matrix, builds an input report, and sends it over USB HID.</li>
+              <li>An interrupt is one mechanism for telling the CPU about a hardware event — and an interrupt arriving does not mean a context switch.</li>
+              <li>The OS's input machinery builds an event and delivers it for the focused application; where needed, the scheduler gives that app the CPU.</li>
+              <li>The application handles the event and changes its own state; the font system rasterizes the letter's shape into pixel information.</li>
+              <li>Compositor → final frame → display buffer → cable → the monitor's pixels emit light. Back to the electrical signals we began with.</li>
+              <li>Every layer does its own job and talks to the next through a defined interface — that's abstraction.</li>
             </>
           )}
         </Recap>
@@ -362,22 +448,24 @@ export function KeyboardToScreen() {
         {bn ? (
           <div lang="bn" style={body}>
             {p(<>আটটা আর্টিকেল আগে শুরু করেছিলাম একটা সহজ প্রশ্ন দিয়ে — {MONO('x = 5')} লিখলে সেই ৫ সংখ্যাটা কম্পিউটারের কোথায় যায়?</>)}
-            {p('উত্তরটা খুঁজতে গিয়ে আমাদের অনেক দূর যেতে হয়েছে। Transistor থেকে শুরু করে logic gate, gate থেকে latch, latch থেকে register। তারপর binary encoding, CPU-র ভেতরের ALU আর bus, fetch-decode-execute-এর অবিরাম চক্র। এরপর memory hierarchy, cache-এর চতুরতা, locality-র সৌন্দর্য। তারপর operating system, যে সবার মাঝখানে বসে সবকিছু সামলায়। আর শেষে compiler, interpreter আর JIT — যারা মানুষের ভাষাকে machine-এর ভাষায় অনুবাদ করে।')}
-            {p('এই সিরিজ পড়ে আপনি নতুন CPU design করতে পারবেন না। সেটা উদ্দেশ্যও ছিল না। উদ্দেশ্য ছিল অন্য কিছু।')}
-            {p('আমরা প্রতিদিন এমন সব tool ব্যবহার করি যাদের ভেতরের কিছুই জানি না। React লিখি, কিন্তু browser কীভাবে সেটা চালায় জানি না। Docker চালাই, কিন্তু container আসলে কী তা নিয়ে ভাবি না। এই না-জানাটা এক অর্থে ভালো — abstraction-এর পুরো উদ্দেশ্যই তো এটা। কিন্তু আরেক অর্থে এটা আমাদের অসহায় করে তোলে। কিছু ভাঙলে আমরা জানি না কোথায় খুঁজতে হবে।')}
-            {p('এখন অন্তত একটা মানচিত্র আছে। App slow হলে বুঝবেন cache-এর কথা ভাবা যেতে পারে। Memory leak হলে জানবেন heap কী জিনিস। Deployment-এ 502 এলে অন্তত অনুমান করতে পারবেন কোন layer-এ সমস্যা।')}
-            {p('সবচেয়ে বড় কথা, machine আর আগের মতো রহস্যময় থাকবে না। ঢাকনা খুলে ইঞ্জিনটা একবার দেখা হয়ে গেছে। ভেতরে কোনো জাদু নেই — আছে শুধু voltage, logic, আর কয়েক দশক ধরে মানুষের জমানো চতুর কিছু ধারণা।')}
+            {p('উত্তরটা খুঁজতে গিয়ে আমাদের অনেক দূর যেতে হয়েছে। Transistor থেকে শুরু করে logic gate, gate থেকে latch, latch থেকে register। তারপর binary representation, CPU-র ভেতরের ALU আর datapath, fetch-decode-execute-এর অবিরাম চক্র। এরপর memory hierarchy, cache-এর চতুরতা, locality-র সৌন্দর্য। তারপর operating system — process, scheduling, virtual memory, system call। আর শেষে compiler, interpreter, bytecode, VM আর JIT — source code কীভাবে execution-এর দিকে এগোয়।')}
+            {p('সবশেষে keyboard-এর অক্ষর থেকে screen-এর অক্ষর পর্যন্ত পুরো journey-টা একসাথে দেখলাম।')}
+            {p('এই সিরিজ পড়ে আপনি নতুন CPU design করতে পারবেন না। সেটা উদ্দেশ্যও ছিল না। উদ্দেশ্য ছিল একটা mental map তৈরি করা।')}
+            {p('আমরা প্রতিদিন এমন সব tool ব্যবহার করি যাদের ভেতরের অনেক layer নিয়ে ভাবি না। React লিখি, browser-এর rendering system নিয়ে না ভেবেও। Docker চালাই, container-এর নিচে কী হচ্ছে না জেনেও। এটা খারাপ কিছু নয় — abstraction-এর উদ্দেশ্যই তো আপনাকে সব layer একসাথে মাথায় রাখতে না দেওয়া।')}
+            {p('কিন্তু কিছু ভেঙে গেলে সেই abstraction-এর নিচে একটু তাকাতে পারা কাজে দেয়। App slow হলে এখন অন্তত ভাবতে পারবেন — computation, memory, I/O, scheduling, rendering, নাকি অন্য কোনো layer? Memory নিয়ে সমস্যা হলে heap আর virtual memory-র কথা মনে পড়বে। Input বা display নিয়ে গোলমাল হলে keyboard থেকে screen পর্যন্ত এই পুরো chain-টা মাথায় আসতে পারে।')}
+            {p('সবচেয়ে বড় কথা, machine আর আগের মতো রহস্যময় থাকবে না। ঢাকনা খুলে ইঞ্জিনটা একবার দেখা হয়ে গেছে। ভেতরে কোনো জাদু নেই — আছে electrical signal, logic, software, interface, আর মানুষের তৈরি অনেকগুলো চতুর abstraction।')}
             {p('সেটুকু জানাই যথেষ্ট।')}
             <p style={{ margin: '0 0 16px', fontFamily: "'Departure Mono',monospace", fontSize: 13, color: '#00753F' }}>পড়ার জন্য ধন্যবাদ। ভালো থাকবেন।</p>
           </div>
         ) : (
           <div style={body}>
             {p(<>Eight articles ago we started with a simple question — when you write {MONO('x = 5')}, where does that 5 go inside the computer?</>)}
-            {p('Finding that answer took us a long way. From transistors to logic gates, gates to latches, latches to registers. Then binary encoding, the ALU and buses inside a CPU, the endless cycle of fetch-decode-execute. Then memory hierarchy, the cleverness of caches, the beauty of locality. Then the operating system, sitting between everyone and managing it all. And finally compilers, interpreters, and JIT — translating human language into machine language.')}
-            {p("Reading this series won't let you design a new CPU. That was never the goal. The goal was something else.")}
-            {p("Every day we use tools whose insides we know nothing about. We write React without knowing how the browser runs it. We run Docker without thinking about what a container actually is. That not-knowing is fine in one sense — the whole point of abstraction is exactly that. But in another sense it leaves us helpless. When something breaks, we don't know where to start looking.")}
-            {p("Now at least there's a map. When an app is slow, you'll know caches are worth thinking about. When there's a memory leak, you'll know what a heap is. When a deployment returns 502, you'll at least be able to guess which layer has the problem.")}
-            {p("Most of all, the machine won't feel as mysterious anymore. The hood has been opened once and the engine has been looked at. There's no magic inside — just voltage, logic, and a few decades' worth of clever ideas accumulated by people.")}
+            {p('Finding that answer took us a long way. From transistors to logic gates, gates to latches, latches to registers. Then binary representation, the ALU and datapath inside a CPU, the endless cycle of fetch-decode-execute. Then memory hierarchy, the cleverness of caches, the beauty of locality. Then the operating system — processes, scheduling, virtual memory, system calls. And finally compilers, interpreters, bytecode, VMs and JITs — how source code moves toward execution.')}
+            {p('And last of all, the whole journey from a letter on the keyboard to a letter on the screen, seen in one piece.')}
+            {p("Reading this series won't let you design a new CPU. That was never the goal. The goal was to build a mental map.")}
+            {p("Every day we use tools whose inner layers we never think about. We write React without thinking about the browser's rendering system. We run Docker without knowing what happens beneath a container. That's not a bad thing — the whole point of abstraction is to spare you from holding every layer in your head at once.")}
+            {p("But when something breaks, being able to look a little way under that abstraction helps. When an app is slow, you can now at least ask — computation, memory, I/O, scheduling, rendering, or some other layer? When there's a memory problem, heaps and virtual memory come to mind. When input or display misbehaves, this whole chain from keyboard to screen is there to think through.")}
+            {p("Most of all, the machine won't feel as mysterious anymore. The hood has been opened once and the engine has been looked at. There's no magic inside — just electrical signals, logic, software, interfaces, and a lot of clever abstractions built by people.")}
             {p('Knowing that much is enough.')}
             <p style={{ margin: '0 0 16px', fontFamily: "'Departure Mono',monospace", fontSize: 13, color: '#00753F' }}>Thank you for reading. Take care.</p>
           </div>
@@ -387,11 +475,11 @@ export function KeyboardToScreen() {
       <Section num="09" bnH2="আরও গভীরে যেতে চাইলে" enH2="If you want to go deeper">
         {bn ? (
           <div lang="bn" style={body}>
-            {p('এই সিরিজ ছিল একটা পাখির চোখে দেখা। প্রতিটা topic-ই নিজে একটা পূর্ণ জগত। কোনো একটা layer যদি আপনার ভালো লেগে থাকে, নিচের resource-গুলো থেকে শুরু করতে পারেন। প্রায় সবগুলোই বিনামূল্যে পাওয়া যায়।')}
+            {p('এই সিরিজ ছিল একটা পাখির চোখে দেখা। প্রতিটা topic-ই নিজে একটা পূর্ণ জগত। কোনো একটা layer যদি আপনার ভালো লেগে থাকে, নিচের resource-গুলো থেকে শুরু করতে পারেন। বেশিরভাগই বিনামূল্যে পাওয়া যায়।')}
           </div>
         ) : (
           <div style={body}>
-            {p("This series was a bird's-eye view. Each topic is a world of its own. If one of the layers caught your interest, here's where to start. Nearly all of these are free.")}
+            {p("This series was a bird's-eye view. Each topic is a world of its own. If one of the layers caught your interest, here's where to start. Most of these are free.")}
           </div>
         )}
 
@@ -447,8 +535,8 @@ export function KeyboardToScreen() {
           variant: 'next',
         }}
         bridge={{
-          bn: 'এখানেই সিরিজ শেষ। voltage থেকে শুরু করে আবার voltage-এ ফেরত — মাঝখানে transistor, gate, register, cache, process, compiler, আর একটা keystroke-এর পুরো যাত্রা। সবগুলো পর্ব একসাথে দেখতে চাইলে hub-এ ফিরে যান।',
-          en: "That's the end of the series. From voltage back to voltage — with transistors, gates, registers, caches, processes, compilers, and one keystroke's full journey in between. Head back to the hub to see all eight legs together.",
+          bn: 'এখানেই সিরিজ শেষ। electrical signal থেকে শুরু করে আবার সেখানেই ফেরত — মাঝখানে transistor, gate, register, cache, process, compiler, আর একটা keystroke-এর পুরো যাত্রা। সবগুলো পর্ব একসাথে দেখতে চাইলে hub-এ ফিরে যান।',
+          en: "That's the end of the series. From electrical signals back to electrical signals — with transistors, gates, registers, caches, processes, compilers, and one keystroke's full journey in between. Head back to the hub to see all eight legs together.",
         }}
       />
       <Colophon />

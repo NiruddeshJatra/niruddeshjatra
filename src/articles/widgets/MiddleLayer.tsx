@@ -109,8 +109,8 @@ export function MiddleLayer() {
         </div>
       </Instrument>
       <Caption
-        bn="Source সরাসরি machine code-এ যায় না — আগে একটা intermediate bytecode-এ নামে, তারপর VM সেটা interpret করে। Java আর Python — শেপ একই।"
-        en="Source doesn't go straight to machine code — it drops to an intermediate bytecode first, then the VM interprets it. Java and Python share the shape."
+        bn="Source সরাসরি native machine code-এ যায় না — আগে একটা intermediate bytecode-এ নামে, তারপর VM সেটা চালায়। Java আর Python — শেপ একই। VM চাইলে পরে সেই bytecode-এর কিছু অংশ machine code-এও compile করতে পারে।"
+        en="Source doesn't go straight to native machine code — it drops to an intermediate bytecode first, and the VM runs that. Java and Python share the shape. A VM can also compile parts of that bytecode to machine code later."
       />
     </>
   );
