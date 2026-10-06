@@ -9,6 +9,60 @@ type FieldNote = {
 // newest-first
 const notes: FieldNote[] = [
   {
+    date: "2026-10-02",
+    title: "thirty-five",
+    body: (
+      <>
+        <p className="mb-3">
+          ran 35 kilometres today. the longest i've ever run in training.
+        </p>
+        <p className="mb-3">
+          the first twenty went the way long runs go. the last stretch was mostly negotiation. i got home weaker than i expected to be.
+        </p>
+        <p className="mb-3">
+          two weeks to a marathon. this was supposed to be the confidence run. it turned out to be the honest one: the distance is there. the margin isn't yet. taper starts now.
+        </p>
+      </>
+    ),
+  },
+  {
+    date: "2026-08-11",
+    title: "results day",
+    body: (
+      <>
+        <p className="mb-3">
+          the ssc results came out yesterday. i'd built a site that ranks the chattogram board's results, and last night was the only night it mattered.
+        </p>
+        <p className="mb-3">
+          ran the scrape, checked a sample by hand, then published. by this morning students i've never met were looking up where they stood.
+        </p>
+        <p className="mb-3">
+          it's the least glamorous thing i've built and the most useful one to strangers. no login, no design award. just a number someone was waiting for.
+        </p>
+      </>
+    ),
+  },
+  {
+    date: "2026-08-07",
+    title: "the race i didn't start",
+    body: (
+      <>
+        <p className="mb-3">
+          the sylhet marathon is tomorrow. i'm not going.
+        </p>
+        <p className="mb-3">
+          a week ago, with the toe still sore from football in taper week, i wrote down — in advance, while calm — the conditions under which i wouldn't start. yesterday they came true.
+        </p>
+        <p className="mb-3">
+          every other time i've written a rule like that, i broke it the day it cost something. this is the first one that held. the trip went with it.
+        </p>
+        <p className="mb-3">
+          still annoyed. but the 100k is in december, and i'd like to reach it on two working feet.
+        </p>
+      </>
+    ),
+  },
+  {
     date: "2026-09-09",
     title: "eight of eight",
     body: (

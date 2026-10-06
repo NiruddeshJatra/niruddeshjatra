@@ -2,7 +2,7 @@ import { useNavigate } from "react-router-dom";
 import { firePortal } from "@/hooks/useLoader";
 import IndexRow from "./IndexRow";
 import SEO from "../SEO";
-import { SERIES_HUB_PATH } from "@/articles/manifest";
+import { SERIES_HUB_PATH, SERIES_TITLE } from "@/articles/manifest";
 
 const essays = [
   {
@@ -118,7 +118,7 @@ const WritingContent = () => {
                 onClick={() => goArticle(SERIES_HUB_PATH)}
                 className="text-phosphor hover:underline cursor-pointer bg-transparent border-none p-0 font-mono text-left"
               >
-                the paper oscilloscope
+                {SERIES_TITLE}
               </button>
             }
             description={<>a complete 8-part series on how computers actually work, from voltage to pixels</>}
@@ -142,7 +142,7 @@ const WritingContent = () => {
         </div>
 
         <div className="mt-12 pt-3 border-t border-border/40 text-[10px] text-phosphor-dim font-mono">
-          — nj · 2026-05 · this index will grow
+          — nj · 2026-10 · this index will grow
         </div>
       </div>
     </>

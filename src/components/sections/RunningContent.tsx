@@ -112,6 +112,8 @@ const RunningContent = () => (
       no coach. no plan more sophisticated than "next week, a little further."
     </p>
 
+    <p className="mb-4">longest training run so far: 35 km, october 2026.</p>
+
     <p className="mb-4">i train in shoes that aren't actual running shoes. cost is real.</p>
 
     <p className="mb-4">
@@ -148,7 +150,7 @@ const RunningContent = () => (
     {/* ── 2026 calendar ── */}
     <SectionHeader label="2026 calendar" />
 
-    <p className="mb-4">races i'm watching. weighted by interest. not all of these will happen.</p>
+    <p className="mb-4">races i'm entered in or watching. each one is decided two weeks out. not all of these will happen.</p>
 
     <HScrollTable className="my-4">
       {cal.map((c) => (
@@ -161,7 +163,7 @@ const RunningContent = () => (
     </HScrollTable>
 
     <div className="mt-12 pt-3 border-t border-border/40 text-[10px] text-phosphor-dim font-mono">
-      — nj · last updated 2026-07 · still going
+      — nj · last updated 2026-10 · still going
     </div>
   </div>
   </>

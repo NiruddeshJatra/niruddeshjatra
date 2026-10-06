@@ -28,6 +28,10 @@ export const OPENER_LINES: OpenerLine[] = [
   "trying to do hard things slowly.",
   "quiet day. that's enough.",
   "small steps. several of them.",
+  "taper. doing less on purpose.",
+  "one task at a time.",
+  "chess between tuitions.",
+  "networking, from the wire up.",
 ];
 
 export const getTodaysOpenerLine = (): OpenerLine => {

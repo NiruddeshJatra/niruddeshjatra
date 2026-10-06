@@ -11,7 +11,7 @@ const queryClient = new QueryClient();
 
 const ResumeRedirect = () => {
   if (typeof window !== "undefined") {
-    window.location.replace("/resume.html");
+    window.location.replace("/Nasiful_Alam_Resume.pdf");
   }
   return null;
 };

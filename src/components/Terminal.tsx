@@ -3,6 +3,7 @@ import { Terminal as TerminalIcon, ChevronRight, GitBranch, Clock } from "lucide
 import { useNavigate } from "react-router-dom";
 import { emitMatrix } from "@/lib/matrixSignals";
 import { SECTION_ALIASES } from "@/constants/sections";
+import { CHANGELOG } from "@/constants/changelog";
 import { verifyPassphrase, unlockVault } from "@/lib/vault";
 
 interface TerminalProps {
@@ -51,15 +52,6 @@ const FORTUNES = [
   'The map is not the terminal.',
 ];
 
-const GIT_LOG_TIMELINE = [
-  'commit a1b2c3d  2026-04  site: rewriting myself in public',
-  'commit 9f8e7d6  2026-04  workshop: arczero ready to ship',
-  'commit 7c5d3a2  2026-04  meta: resigned. no more jobs.',
-  'commit 4e2b1a0  2025-09  body: started training for 100k',
-  'commit 2x1y0z3  2022-01  brain: returned to cs on my own terms',
-  'commit 0000000  2018-01  road: dropped cuet year one, started reading',
-];
-
 const EASTER_EGGS: { [key: string]: string[] } = {
   'whoami --deep': [
     'hi, i\'m nasif, expressively nj.',
@@ -69,7 +61,7 @@ const EASTER_EGGS: { [key: string]: string[] } = {
     '',
   ],
   'fortune': [],
-  'git log --author=nasif': GIT_LOG_TIMELINE.concat(''),
+  'git log --author=nasif': [...CHANGELOG].reverse().map((c) => `commit ${c.hash}  ${c.date}  ${c.message}`).concat(''),
   'about nasif': [
     '> cat me/about.md',
     "nj's full name is nasiful alam.",
@@ -172,7 +164,7 @@ const Terminal = ({ onCommand, currentSection, onThemeChange, isFocused = false,
         "nj. they call me niruddeshjatra online.",
         "chattogram, bangladesh.",
         "i tutor. i make games. i run.",
-        "no longer for hire.",
+        "client work and remote projects, yes.",
         "mail: nasifulalam1212@gmail.com",
         ""
       );

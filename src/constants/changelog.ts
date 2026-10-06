@@ -14,5 +14,10 @@ export const CHANGELOG: ChangelogEntry[] = [
   { hash: "5f8a3c1", date: "2025-12", message: "body/test: 26K of a 52K hill ultra walked with a stick. finished." },
   { hash: "2a8b3e5", date: "2026-04", message: "workshop/start: started building arczero" },
   { hash: "6e9f7c2", date: "2026-04", message: "exit: resigned. no more jobs." },
-  { hash: "HEAD",    date: "2026-05", message: "current: shipping arczero, training for 100k" },
+  { hash: "c3e91f0", date: "2026-05", message: "work/first: first paid website, for a race organiser" },
+  { hash: "d7a24b6", date: "2026-07", message: "site/announce: told people this place exists" },
+  { hash: "e18f5c2", date: "2026-08", message: "data/ship: board-exam rankings, live on results day" },
+  { hash: "9b4c7e1", date: "2026-09", message: "writing/done: the machine beneath your code, eight of eight" },
+  { hash: "f2d06a9", date: "2026-10", message: "body/longest: 35k training run" },
+  { hash: "HEAD",    date: "2026-10", message: "current: marathon taper, networking from scratch, road to 100k" },
 ];
