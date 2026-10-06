@@ -87,6 +87,14 @@ export const racesAfterGap: RaceEntry[] = [
     flag: true,
     note: "first race back after the injury months. even splits —\nsecond half matched the first. right glute gave out at km 18.\n68th of 942. strongest comeback i could've asked for.",
   },
+  {
+    date: "2026-08-21", dist: "21.1K", event: "Chatto Metro Half Marathon", time: "2h 10m",
+    note: "first race off the summer injury. the watch said 20 km —\nshort course or short gps, not sure which. 68th of 340.",
+  },
+  {
+    date: "2026-09-18", dist: "10K", event: "Sports Bangla Men's Run", time: "55m 52s",
+    note: "a new 10k best, by about a minute. 38th of 803.",
+  },
 ];
 
 export const skipped: RaceEntry[] = [
@@ -97,6 +105,10 @@ export const skipped: RaceEntry[] = [
   {
     date: "2026-02-05", dist: "50K", event: "Bhawal Ultra Marathon", time: "did not run",
     note: "registered months ahead. by the date, i knew the leg\nwouldn't finish. didn't go.",
+  },
+  {
+    date: "2026-08-08", dist: "42.2K", event: "Sylhet International Marathon", time: "did not run",
+    note: "toe hurt at football in taper week. i'd written down,\na week before, when i wouldn't start. it held.\nthe sylhet trip went with it.",
   },
 ];
 
@@ -110,12 +122,14 @@ export type CalEntry = {
 };
 
 export const cal: CalEntry[] = [
-  { date: "2026-07-10",  dist: "21.1K",             event: "Chatto Metro Half Marathon 2026",     weight: "phosphor" },
-  { date: "2026-08-08",  dist: "42.2K",             event: "Sylhet International Marathon 2026",   weight: "phosphor" },
-  { date: "2026-10-16",  dist: "42.2K / 21.1K",     event: "Active Pulse Chattogram Marathon",    weight: "body", short: "Chattogram" },
-  { date: "2026-10-30",  dist: "100K / 50K / 33K",  event: "Albatross Ultrail 2026",              weight: "phosphor" },
-  { date: "2026-11-14",  dist: "42.2K",             event: "Cox's Bazar International Marathon",   weight: "body", short: "Cox's Bazar" },
-  { date: "2026-12-17",  dist: "161K / 100K / 50K", event: "Costral Ultra 2026",                  weight: "dim"  },
+  { date: "2026-10-16", dist: "42.2K", event: "Active Pulse Chattogram Marathon", weight: "phosphor", short: "Active Pulse Marathon" },
+  { date: "2026-10-23", dist: "21.1K", event: "BM LP Gas RRC Half Marathon", weight: "body", short: "RRC half" },
+  { date: "2026-11-06", dist: "50K", event: "Comilla Trail Ultra", weight: "phosphor", short: "Comilla 50K" },
+  { date: "2026-11-14", dist: "42.2K", event: "Cox's Bazar International Marathon", weight: "body", short: "Cox's Bazar" },
+  { date: "2026-11-27", dist: "52K", event: "Vertical Dreamers Ultra (bandarban)", weight: "dim", short: "Bandarban 52K" },
+  { date: "2026-12-04", dist: "21.1K", event: "MSDO Satkania Half Marathon", weight: "dim", short: "Satkania half" },
+  { date: "2026-12-12", dist: "21.1K / 42.2K", event: "Dhaka International Marathon", weight: "dim", short: "Dhaka" },
+  { date: "2026-12-18", dist: "100K", event: "Coastal Ultra 2026", weight: "phosphor", short: "Coastal Ultra" },
 ];
 
 // last completed race — source of truth for the "most recent result" facts referenced on the now page

@@ -36,12 +36,12 @@ const getPath = (section: string): string => {
 };
 
 const LAST_UPDATED: Record<string, string> = {
-  welcome: "2026-04-29",
+  welcome: "2026-10",
   about: "2026-04-29",
   games: "2026-04-29",
-  now: "2026-04-29",
-  contact: "2026-04-29",
-  writing: "2026-05",
+  now: "2026-10",
+  contact: "2026-10",
+  writing: "2026-10",
   "writing-essays-on-running-for-nothing": "2026-05",
   "writing-essays-on-running-for-nothing-bn": "2026-05",
   "writing-essays-on-staying-small": "2026-05",
@@ -49,9 +49,9 @@ const LAST_UPDATED: Record<string, string> = {
   "writing-essays-on-forgetting": "2026-05",
   "writing-essays-on-forgetting-bn": "2026-05",
   journey: "2026-05",
-  "journey-running": "2026-05",
+  "journey-running": "2026-10",
   "journey-hiking": "pending",
-  "field-notes": "pending",
+  "field-notes": "2026-10",
   photos: "eventually",
   "archived-experience": "archived",
   "archived-education": "archived",

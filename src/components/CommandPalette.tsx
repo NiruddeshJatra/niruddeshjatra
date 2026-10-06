@@ -65,9 +65,9 @@ const CommandPalette = ({ isOpen, mode, onClose, onThemeChange }: CommandPalette
     {
       id: 'open-resume',
       label: 'open /resume',
-      hint: 'download resume PDF',
+      hint: 'open resume PDF',
       action: () => {
-        window.open('/resume.pdf', '_blank');
+        window.open('/Nasiful_Alam_Resume.pdf', '_blank');
         onClose();
       },
     },

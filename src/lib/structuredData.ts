@@ -14,6 +14,7 @@ export const personSchema = () => ({
   sameAs: [
     'https://github.com/niruddeshjatra',
     'https://www.strava.com/athletes/102295099',
+    'https://www.linkedin.com/in/nasiful-alam',
   ],
   address: {
     '@type': 'PostalAddress',

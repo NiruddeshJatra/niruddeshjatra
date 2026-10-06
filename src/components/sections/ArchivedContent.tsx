@@ -5,7 +5,7 @@ interface ArchivedContentProps {
 const CONTENT: Record<Exclude<ArchivedContentProps['variant'], 'skills'>, string[]> = {
   experience: [
     "this used to be my job-hunting résumé.",
-    "i'm out of that line. don't give a fuck about jobs anymore.",
+    "i'm out of that line.",
     "the work happened. the framing was fake.",
     "moving on.",
   ],
@@ -23,7 +23,7 @@ const CONTENT: Record<Exclude<ArchivedContentProps['variant'], 'skills'>, string
 };
 
 const SIGNATURES: Record<ArchivedContentProps['variant'], { bytes: number }> = {
-  experience: { bytes: 178 },
+  experience: { bytes: 114 },
   education:  { bytes: 196 },
   projects:   { bytes: 142 },
   skills:     { bytes: 213 },
