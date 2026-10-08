@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { emitMatrix } from "@/lib/matrixSignals";
 import { SECTION_ALIASES } from "@/constants/sections";
 import { CHANGELOG } from "@/constants/changelog";
-import { verifyPassphrase, unlockVault } from "@/lib/vault";
+import { unlockVaultPages } from "@/lib/vault";
 
 interface TerminalProps {
   onCommand: (command: string) => void;
@@ -165,7 +165,7 @@ const Terminal = ({ onCommand, currentSection, onThemeChange, isFocused = false,
         "chattogram, bangladesh.",
         "i tutor. i make games. i run.",
         "client work and remote projects, yes.",
-        "mail: nasifulalam1212@gmail.com",
+        "mail: nasif@niruddeshjatra.space",
         ""
       );
     } else if (trimmedCmd === "ls") {
@@ -249,9 +249,8 @@ const Terminal = ({ onCommand, currentSection, onThemeChange, isFocused = false,
       newHistory.push("> opening contact…", "");
     } else if (trimmedCmd.startsWith("unlock ")) {
       const passphrase = cmd.substring(7).trim();
-      const isValid = await verifyPassphrase(passphrase);
+      const isValid = await unlockVaultPages(passphrase);
       if (isValid) {
-        unlockVault();
         newHistory.push("ok · vault unlocked", "");
         setHistory(newHistory);
         setCommandHistory([...commandHistory, cmd]);

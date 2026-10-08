@@ -32,3 +32,6 @@ dist-ssr
 
 # npm artifacts (this project uses yarn)
 package-lock.json
+
+# Vault plaintext — never commit
+vault-src/

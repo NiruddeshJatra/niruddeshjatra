@@ -19,10 +19,10 @@ const ContactContent = () => {
           <span className="text-phosphor">&gt; </span>
           mail:{" "}
           <a
-            href="mailto:nasifulalam1212@gmail.com"
+            href="mailto:nasif@niruddeshjatra.space"
             className="text-phosphor hover:underline"
           >
-            nasifulalam1212@gmail.com
+            nasif@niruddeshjatra.space
           </a>
         </p>
         <p><span className="text-phosphor">&gt; </span>client work: same address.</p>
@@ -84,7 +84,7 @@ const ContactContent = () => {
         </p>
       </div>
       <div className="mt-12 pt-3 border-t border-border/40 text-[10px] text-phosphor-dim font-mono">
-        — nj · 2026-10 · 158 bytes
+        — nj · 2026-10 · 159 bytes
       </div>
     </div>
     </>

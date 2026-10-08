@@ -93,7 +93,7 @@ const ResponsiveHeader: React.FC<ResponsiveHeaderProps> = ({
             aria-label="Social media links"
           >
             <a
-              href="mailto:nasifulalam1212@gmail.com"
+              href="mailto:nasif@niruddeshjatra.space"
               className={`
                 hover:text-primary focus-visible:focus-visible transition rounded-md
                 ${isMobile ? `min-h-[${MIN_TOUCH_TARGET_SIZE}px] min-w-[${MIN_TOUCH_TARGET_SIZE}px] flex items-center justify-center p-2` : 'p-1'}
