@@ -183,7 +183,7 @@ Adding a new container folder: add a `FileItem` with `isContainer: true`, `id` s
 - **`PromptBar`'s `readCount`** (series progress dots) is derived in `ArticlePage.tsx` as `ARTICLES.filter(a => a.state === 'read').length` — never hardcode this number; it must track how many articles are actually published.
 - **Article design tokens**: paper bg `#e8dfc9`; ink `#26241C`; ink-green `#00753F` (on paper only); phosphor `#00d26a` (inside dark scope wells only — never on paper). Tokens in `tailwind.config.ts` under `paper`, `ink`, `rule`, `machine`, `well`.
 - **Bilingual articles**: BN default; JS toggle (no URL change). BN numerals via `bd()` helper in BN mode. `lang="bn"` on BN blocks. Definitions follow the toggle. SEO uses `<Helmet>` inside `ArticleBody` (which has `useLang()` context) so title/description/`<html lang>` update dynamically.
-- **`cal` in `races.ts` holds upcoming races only** — after a race, move it into `racesAfterGap` (or `skipped`). `lastRace`/`nextRace`/`upcomingRaces` and the now page derive from these.
+- **`cal` in `races.ts` holds upcoming races only** — after a race, move it into `racesAfterGap` (or `skipped`). `lastRace`/`nextRace`/`upcomingRaces` and the now page derive from these. A race postponed by its organiser stays in `cal` with `status: "postponed"` until it gets a new date; `nextRace`/`upcomingRaces` skip postponed entries (they derive from `activeCal`; use `isPostponed(c)` to label rows).
 - **Terminal `git log --author=nasif` derives from `CHANGELOG`** (`src/constants/changelog.ts`) — never hardcode a second timeline.
 - **No public page may state a degree, metric, user count, uptime or deployment that the author hasn't verified.** Resume content comes only from the author's own CV file (`public/Nasiful_Alam_Resume.pdf`), linked from the contact page — never write resume copy by hand.
 - Commit format: `type(scope): description` (feat/fix/chore/refactor/docs)
@@ -235,7 +235,7 @@ npm run dev          # Start dev server (Vite)
 npm run build        # Production build (vault:check, OG, favicons, sitemap, tsc, vite, prerender)
 npm run preview      # Preview production build
 npm run lint         # ESLint check
-npx tsc --noEmit     # Type check
+npx tsc -p tsconfig.app.json --noEmit  # Real type check — root tsconfig has "files": [], so plain `npx tsc --noEmit` (and `tsc` in build) checks nothing. 18 pre-existing errors as of 2026-11; do not add new ones
 npx vitest           # Run unit tests
 npx playwright test  # Run E2E tests
 CHROME_PATH=/path/to/chrome npm run prerender  # Run prerender manually

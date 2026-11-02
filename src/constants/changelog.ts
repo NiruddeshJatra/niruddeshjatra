@@ -19,5 +19,7 @@ export const CHANGELOG: ChangelogEntry[] = [
   { hash: "e18f5c2", date: "2026-08", message: "data/ship: board-exam rankings, live on results day" },
   { hash: "9b4c7e1", date: "2026-09", message: "writing/done: the machine beneath your code, eight of eight" },
   { hash: "f2d06a9", date: "2026-10", message: "body/longest: 35k training run" },
-  { hash: "HEAD",    date: "2026-10", message: "current: marathon taper, networking from scratch, road to 100k" },
+  { hash: "4b58c1e", date: "2026-10", message: "body/sub-5: 4:58, first marathon under five hours" },
+  { hash: "a29e7d3", date: "2026-10", message: "chess/first: first tournament, 29th of 212" },
+  { hash: "HEAD",    date: "2026-11", message: "current: rest, module two, one thing at a time" },
 ];

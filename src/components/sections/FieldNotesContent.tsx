@@ -9,6 +9,57 @@ type FieldNote = {
 // newest-first
 const notes: FieldNote[] = [
   {
+    date: "2026-11-01",
+    title: "the almirah",
+    body: (
+      <>
+        <p className="mb-3">
+          new rule, for three months: after the last tuition, the phone goes into the almirah until i leave the next day.
+        </p>
+        <p className="mb-3">
+          the scrolling was eating the evenings, and the evenings were eating everything else.
+        </p>
+        <p className="mb-3">
+          four pages of the quran a day instead. one focused thing at a time. we'll see how long it holds.
+        </p>
+      </>
+    ),
+  },
+  {
+    date: "2026-10-24",
+    title: "eight games",
+    body: (
+      <>
+        <p className="mb-3">
+          skipped tuitions for a chess tournament. one day, eight rounds. my first.
+        </p>
+        <p className="mb-3">
+          five wins, a draw, two losses. 29th of 212. five of my opponents had fide ratings.
+        </p>
+        <p className="mb-3">
+          i started playing properly in september. it's the first thing i've done in a long time where the board tells me exactly how wrong i was, every single move.
+        </p>
+      </>
+    ),
+  },
+  {
+    date: "2026-10-16",
+    title: "four fifty-eight",
+    body: (
+      <>
+        <p className="mb-3">
+          found out on thursday that the marathon started at 2:45 on friday morning. started three minutes late.
+        </p>
+        <p className="mb-3">
+          the shoes were too tight from the first loop. changed them at 33 km. it didn't help. someone rubbed my legs at 38, and the last two kilometres were my fastest of the night.
+        </p>
+        <p className="mb-3">
+          4:58. my first marathon under five hours, 32 minutes off my best. the legs weren't the problem. the feet and the stops were. that's fixable.
+        </p>
+      </>
+    ),
+  },
+  {
     date: "2026-10-02",
     title: "thirty-five",
     body: (
@@ -21,6 +72,42 @@ const notes: FieldNote[] = [
         </p>
         <p className="mb-3">
           two weeks to a marathon. this was supposed to be the confidence run. it turned out to be the honest one: the distance is there. the margin isn't yet. taper starts now.
+        </p>
+      </>
+    ),
+  },
+  {
+    date: "2026-09-09",
+    title: "eight of eight",
+    body: (
+      <>
+        <p className="mb-3">
+          the last article went up today. keyboard to screen — one keystroke
+          followed all the way from a switch closing under a finger to photons
+          leaving the glass. the series is finished.
+        </p>
+        <p className="mb-3">
+          seven weeks ago i wrote in this same field-notes file that all eight
+          were done on paper and i was scared to publish them. that entry is
+          still below this one. i left it there on purpose.
+        </p>
+        <p className="mb-3">
+          what i got wrong back then: i thought the articles needed to be
+          finished before they could go up. they weren't finished. i corrected
+          a scheduler that linux replaced in 2023, a dram refresh interval,
+          an l1 latency figure, and — in this last one — a claim that a keyboard
+          reads all 104 keys on 104 wires. it doesn't. it scans a grid. that
+          correction came after publishing, not before, and the article is
+          better for it.
+        </p>
+        <p className="mb-3">
+          the thing i was afraid of — being wrong in public — happened, several
+          times, and the cost was an afternoon of edits each time. the cost of
+          waiting would have been the whole series sitting unread in a folder.
+        </p>
+        <p className="mb-3">
+          i don't think i know computer science now. i know where the map is.
+          that was the whole point.
         </p>
       </>
     ),
@@ -58,42 +145,6 @@ const notes: FieldNote[] = [
         </p>
         <p className="mb-3">
           still annoyed. but the 100k is in december, and i'd like to reach it on two working feet.
-        </p>
-      </>
-    ),
-  },
-  {
-    date: "2026-09-09",
-    title: "eight of eight",
-    body: (
-      <>
-        <p className="mb-3">
-          the last article went up today. keyboard to screen — one keystroke
-          followed all the way from a switch closing under a finger to photons
-          leaving the glass. the series is finished.
-        </p>
-        <p className="mb-3">
-          seven weeks ago i wrote in this same field-notes file that all eight
-          were done on paper and i was scared to publish them. that entry is
-          still below this one. i left it there on purpose.
-        </p>
-        <p className="mb-3">
-          what i got wrong back then: i thought the articles needed to be
-          finished before they could go up. they weren't finished. i corrected
-          a scheduler that linux replaced in 2023, a dram refresh interval,
-          an l1 latency figure, and — in this last one — a claim that a keyboard
-          reads all 104 keys on 104 wires. it doesn't. it scans a grid. that
-          correction came after publishing, not before, and the article is
-          better for it.
-        </p>
-        <p className="mb-3">
-          the thing i was afraid of — being wrong in public — happened, several
-          times, and the cost was an afternoon of edits each time. the cost of
-          waiting would have been the whole series sitting unread in a folder.
-        </p>
-        <p className="mb-3">
-          i don't think i know computer science now. i know where the map is.
-          that was the whole point.
         </p>
       </>
     ),

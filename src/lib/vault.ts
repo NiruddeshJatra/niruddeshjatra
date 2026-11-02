@@ -10,11 +10,11 @@ interface CipherData {
 // In-memory only — cleared on page reload, never persisted
 const vaultStore = new Map<string, string>();
 
-function b64ToBytes(b64: string): Uint8Array {
+function b64ToBytes(b64: string): Uint8Array<ArrayBuffer> {
   return Uint8Array.from(atob(b64), (c) => c.charCodeAt(0));
 }
 
-async function deriveKey(passphrase: string, salt: Uint8Array, iter: number): Promise<CryptoKey> {
+async function deriveKey(passphrase: string, salt: Uint8Array<ArrayBuffer>, iter: number): Promise<CryptoKey> {
   const keyMaterial = await crypto.subtle.importKey(
     "raw",
     new TextEncoder().encode(passphrase),

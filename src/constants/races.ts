@@ -95,6 +95,10 @@ export const racesAfterGap: RaceEntry[] = [
     date: "2026-09-18", dist: "10K", event: "Sports Bangla Men's Run", time: "55m 52s",
     note: "a new 10k best, by about a minute. 38th of 803.",
   },
+  {
+    date: "2026-10-16", dist: "42.2K", event: "Active Pulse Chattogram Marathon", time: "4h 58m",
+    note: "a 2:45 am gun. found out the start time the day before.\nshoes too tight, changed them at 33K — didn't help.\nfirst marathon under five hours. 32 minutes off my best.",
+  },
 ];
 
 export const skipped: RaceEntry[] = [
@@ -110,6 +114,10 @@ export const skipped: RaceEntry[] = [
     date: "2026-08-08", dist: "42.2K", event: "Sylhet International Marathon", time: "did not run",
     note: "toe hurt at football in taper week. i'd written down,\na week before, when i wouldn't start. it held.\nthe sylhet trip went with it.",
   },
+  {
+    date: "2026-10-23", dist: "21.1K", event: "BM LP Gas RRC Half Marathon", time: "did not run",
+    note: "a week after the marathon. spent the morning at the venue\nhelping the organisers instead.",
+  },
 ];
 
 export type CalEntry = {
@@ -119,27 +127,34 @@ export type CalEntry = {
   weight: "phosphor" | "body" | "dim";
   /** casual short name for prose references (e.g. now page) — falls back to `event` with any trailing year stripped */
   short?: string;
+  status?: "postponed";
 };
 
 export const cal: CalEntry[] = [
-  { date: "2026-10-16", dist: "42.2K", event: "Active Pulse Chattogram Marathon", weight: "phosphor", short: "Active Pulse Marathon" },
-  { date: "2026-10-23", dist: "21.1K", event: "BM LP Gas RRC Half Marathon", weight: "body", short: "RRC half" },
   { date: "2026-11-06", dist: "50K", event: "Comilla Trail Ultra", weight: "phosphor", short: "Comilla 50K" },
-  { date: "2026-11-14", dist: "42.2K", event: "Cox's Bazar International Marathon", weight: "body", short: "Cox's Bazar" },
-  { date: "2026-11-27", dist: "52K", event: "Vertical Dreamers Ultra (bandarban)", weight: "dim", short: "Bandarban 52K" },
+  { date: "2026-11-14", dist: "42.2K", event: "Cox's Bazar International Marathon", weight: "dim", short: "Cox's Bazar", status: "postponed" },
+  { date: "2026-11-27", dist: "52K", event: "Vertical Dreamers Ultra (bandarban)", weight: "dim", short: "Bandarban 52K", status: "postponed" },
   { date: "2026-12-04", dist: "21.1K", event: "MSDO Satkania Half Marathon", weight: "dim", short: "Satkania half" },
   { date: "2026-12-12", dist: "21.1K / 42.2K", event: "Dhaka International Marathon", weight: "dim", short: "Dhaka" },
   { date: "2026-12-18", dist: "100K", event: "Coastal Ultra 2026", weight: "phosphor", short: "Coastal Ultra" },
+  { date: "2027-01-29", dist: "25K", event: "Dhaka Run 25K", weight: "body", short: "Dhaka 25K" },
 ];
+
+export function isPostponed(c: CalEntry): boolean {
+  return c.status === "postponed";
+}
+
+// calendar entries that are still scheduled (postponed races excluded)
+export const activeCal = cal.filter((c) => !c.status);
 
 // last completed race — source of truth for the "most recent result" facts referenced on the now page
 export const lastRace = racesAfterGap[racesAfterGap.length - 1];
 
 // next race on the calendar — source of truth for "what's next" facts referenced on the now page
-export const nextRace = cal[0];
+export const nextRace = activeCal[0];
 
 // races after the next one, in calendar order
-export const upcomingRaces = cal.slice(1);
+export const upcomingRaces = activeCal.slice(1);
 
 export function formatRaceDate(iso: string): string {
   const [year, month, day] = iso.split("-").map(Number);

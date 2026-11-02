@@ -566,3 +566,19 @@ Added Google tag (`G-2CWN5RMGK4`) immediately after `<head>` in `index.html`. Si
 - **Email**: `nasifulalam1212@gmail.com` replaced with `nasif@niruddeshjatra.space` in `ResponsiveHeader.tsx`, `Terminal.tsx`, and `ContactContent.tsx` (byte count: 158 → 159). `index.html` and `public/` had no occurrences.
 - **Verified**: `git check-ignore -v vault-src/the-real-story.md` shows ignored; `tsc --noEmit` clean; `grep -rn "STORED_HASH\|ncs_vault_unlocked\|verifyPassphrase" src` returns nothing; `grep -rn "nasifulalam1212" src index.html public` returns nothing; `vault:check` fails with clear message before encrypted JSONs are created.
 
+
+---
+
+## Content refresh — November 2026
+**2026-11-01 — post-marathon refresh; postponed races shown as postponed; field-note order fixed**
+
+- **Races**: `CalEntry` gained optional `status?: "postponed"`; `races.ts` exports `activeCal` (entries without a status) and `isPostponed(c)`. `nextRace`/`upcomingRaces` now derive from `activeCal`, so postponed races never surface as "next" on the now page. `cal` replaced: October races removed, Cox's Bazar (Nov 14) and Vertical Dreamers (Nov 27) kept with `status: "postponed"`, Dhaka Run 25K (2027-01-29) added. The Oct 16 Active Pulse Chattogram Marathon (4h 58m, first sub-5) moved into `racesAfterGap`; the Oct 23 RRC half went into `skipped`.
+- **Running page**: calendar section relabelled `upcoming`, new intro line, ` · postponed` suffix on postponed rows (same row styling), footer 2026-11.
+- **Now page**: every section rewritten for November (rest after the marathon, module two networking, first chess tournament, HSC 2026 update to the board-exam rankings site, new `// this month` section); `// races` lists `upcomingRaces` only. SEO description updated.
+- **Field notes**: the 2026-09-09 "eight of eight" note was out of order (below two August notes) and was moved directly after 2026-10-02 with its text untouched; three new notes added at the top (2026-10-16 "four fifty-eight", 2026-10-24 "eight games", 2026-11-01 "the almirah"). Order asserted strictly descending.
+- **Elsewhere**: home welcome "just finished" line replaced with a "lately" line; `CHANGELOG` gained the sub-5 and first-chess-tournament entries with HEAD bumped to 2026-11; three opener lines added; `StatusBar` `LAST_UPDATED` bumped to 2026-11 for welcome, now, journey-running and field-notes.
+
+## Vault type fix
+**2026-11-01 — Web Crypto buffer types in `src/lib/vault.ts`**
+
+`b64ToBytes` and `deriveKey`'s `salt` are now typed `Uint8Array<ArrayBuffer>`, which clears the two `BufferSource` errors introduced with the October vault encryption (type-only, no runtime change). They had gone unnoticed because the root `tsconfig.json` has `"files": []`, so `npx tsc --noEmit` and the `tsc` step in `build` type-check nothing; `CLAUDE.md` now documents `npx tsc -p tsconfig.app.json --noEmit` as the real check (18 pre-existing errors remain, none in vault code).

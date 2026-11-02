@@ -2,7 +2,7 @@ import { useNavigate } from "react-router-dom";
 import SEO from "../SEO";
 import { firePortal } from "@/hooks/useLoader";
 import { SERIES_HUB_PATH, SERIES_TITLE } from "@/articles/manifest";
-import { lastRace, nextRace, upcomingRaces, formatRaceDate, formatRaceMonth, displayName } from "@/constants/races";
+import { upcomingRaces, formatRaceMonth, displayName } from "@/constants/races";
 
 const NowContent = () => {
   const navigate = useNavigate();
@@ -14,7 +14,7 @@ const NowContent = () => {
     <>
       <SEO
         title="now — niruddeshjatra"
-        description="what i'm doing this month — marathon taper, tutoring, networking from scratch, chess. updates whenever life shifts."
+        description="what i'm doing this month — resting after a marathon, networking, chess, doing less on purpose. updates whenever life shifts."
         path="/now"
       />
     <div className="animate-fade-in font-mono text-sm leading-relaxed max-w-xl mx-auto px-4 py-6">
@@ -31,21 +31,21 @@ const NowContent = () => {
         <div>
           <div className="text-phosphor-dim text-sm mt-8 mb-2 font-mono">// training</div>
           <p>
-            {displayName(nextRace)} on {formatRaceDate(nextRace.date)} is the next start line, so this is taper — less volume, more rest, trying not to fill the space with something new. On October 2 I ran 35 kilometres, the longest training run I've done. In {formatRaceMonth(lastRace.date)}: a {lastRace.dist} in {lastRace.time}, my best at that distance. Full calendar's on the running page.
+            The marathon on October 16 went better than I had any right to expect: 4:58, my first under five hours, 32 minutes off my best. Since then the body has asked for a break, and I'm trying to actually give it one. The Comilla 50K on November 6 gets decided the day before, against a list I wrote while calm. Two November races were postponed by their organisers, which made the month quieter than planned.
           </p>
         </div>
 
         <div>
           <div className="text-phosphor-dim text-sm mt-8 mb-2 font-mono">// races</div>
           <p>
-            After that the autumn gets crowded: {upcomingRaces.map((r) => `${displayName(r)} (${formatRaceMonth(r.date)})`).join(", ")}. Not all of them will happen; each one gets decided two weeks out. The one that matters is the Coastal Ultra on December 18 — the 100K, if I get in.
+            What's left: {upcomingRaces.map((r) => `${displayName(r)} (${formatRaceMonth(r.date)})`).join(", ")}. The one that matters is the Coastal Ultra on December 18 — the 100K, if I'm selected. Full calendar's on the running page.
           </p>
         </div>
 
         <div>
           <div className="text-phosphor-dim text-sm mt-8 mb-2 font-mono">// learning</div>
           <p>
-            Networking, from the ground up — how a request actually crosses the wire. The test at the end is an HTTP server written on a raw socket, without AI. And chess, properly this time: started in September, first one-day tournament on October 24.
+            Module two: networking, from the wire up. About halfway — TCP and TLS right now. It closes by the end of November, and the test is an HTTP server written on a raw socket, without AI. Chess: my first tournament was on October 24 — eight games, 29th of 212. Now it's puzzles or one game a day.
           </p>
         </div>
 
@@ -58,7 +58,7 @@ const NowContent = () => {
             >
               {SERIES_TITLE}
             </button>{" "}
-            is finished: eight articles, in Bangla and English. The registration portal I built for Triathlon Bangladesh now runs two events. The{" "}
+            is finished and out in the world: eight articles, in Bangla and English. The{" "}
             <a
               href="https://boardexamrankings.vercel.app"
               target="_blank"
@@ -67,12 +67,19 @@ const NowContent = () => {
             >
               board-exam rankings site
             </a>{" "}
-            served the SSC results in August, and a lot of students checked where they stood on it. ArcZero is still live. From here it's one thing at a time.
+            was updated for the HSC 2026 results on October 31. The registration portal I built for Triathlon Bangladesh runs two events. ArcZero is still live.
+          </p>
+        </div>
+
+        <div>
+          <div className="text-phosphor-dim text-sm mt-8 mb-2 font-mono">// this month</div>
+          <p>
+            Doing less, on purpose. One focused task at a time. The phone goes away after the last tuition. Fewer races, more reading.
           </p>
         </div>
       </div>
       <div className="mt-12 pt-3 border-t border-border/40 text-[10px] text-phosphor-dim font-mono">
-        — nj · 2026-10 · this changes often
+        — nj · 2026-11 · this changes often
       </div>
     </div>
     </>

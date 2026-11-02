@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import SEO from "../SEO";
-import { races, racesAfterGap, skipped, cal, type RaceEntry, type CalEntry } from "@/constants/races";
+import { races, racesAfterGap, skipped, cal, isPostponed, type RaceEntry, type CalEntry } from "@/constants/races";
 
 const SectionHeader = ({ label }: { label: string }) => (
   <div className="text-phosphor-dim text-sm mt-10 mb-3 font-mono">// {label}</div>
@@ -147,23 +147,23 @@ const RunningContent = () => (
       <span className="text-phosphor">&gt; 100K</span>   <span>in 10h 00m</span>
     </div>
 
-    {/* ── 2026 calendar ── */}
-    <SectionHeader label="2026 calendar" />
+    {/* ── upcoming ── */}
+    <SectionHeader label="upcoming" />
 
-    <p className="mb-4">races i'm entered in or watching. each one is decided two weeks out. not all of these will happen.</p>
+    <p className="mb-4">races i've applied for or i'm watching. each one is decided two weeks out. postponed ones stay listed until they get a new date.</p>
 
     <HScrollTable className="my-4">
       {cal.map((c) => (
         <div key={c.date + c.event} className={`flex gap-x-4 mb-1 ${weightClass[c.weight]}`}>
           <span className="shrink-0 w-[10ch]">{c.date}</span>
           <span className="shrink-0 w-[18ch]">{c.dist}</span>
-          <span>{c.event}</span>
+          <span>{c.event}{isPostponed(c) && " · postponed"}</span>
         </div>
       ))}
     </HScrollTable>
 
     <div className="mt-12 pt-3 border-t border-border/40 text-[10px] text-phosphor-dim font-mono">
-      — nj · last updated 2026-10 · still going
+      — nj · last updated 2026-11 · still going
     </div>
   </div>
   </>
