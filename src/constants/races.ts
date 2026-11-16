@@ -99,6 +99,10 @@ export const racesAfterGap: RaceEntry[] = [
     date: "2026-10-16", dist: "42.2K", event: "Active Pulse Chattogram Marathon", time: "4h 58m",
     note: "a 2:45 am gun. found out the start time the day before.\nshoes too tight, changed them at 33K — didn't help.\nfirst marathon under five hours. 32 minutes off my best.",
   },
+  {
+    date: "2026-11-06", dist: "50K", event: "Comilla Trail Ultra", time: "5h 40m",
+    note: "four loops, 613 m of elevation, first podium finish.\n9th, 7th, 5th, 4th after each loop.\nfourth overall. the heat took the last loop, not the hills.",
+  },
 ];
 
 export const skipped: RaceEntry[] = [
@@ -131,12 +135,9 @@ export type CalEntry = {
 };
 
 export const cal: CalEntry[] = [
-  { date: "2026-11-06", dist: "50K", event: "Comilla Trail Ultra", weight: "phosphor", short: "Comilla 50K" },
-  { date: "2026-11-14", dist: "42.2K", event: "Cox's Bazar International Marathon", weight: "dim", short: "Cox's Bazar", status: "postponed" },
-  { date: "2026-11-27", dist: "52K", event: "Vertical Dreamers Ultra (bandarban)", weight: "dim", short: "Bandarban 52K", status: "postponed" },
-  { date: "2026-12-04", dist: "21.1K", event: "MSDO Satkania Half Marathon", weight: "dim", short: "Satkania half" },
-  { date: "2026-12-12", dist: "21.1K / 42.2K", event: "Dhaka International Marathon", weight: "dim", short: "Dhaka" },
-  { date: "2026-12-18", dist: "100K", event: "Coastal Ultra 2026", weight: "phosphor", short: "Coastal Ultra" },
+  { date: "2026-12-04", dist: "21.1K", event: "MSDO Satkania Half Marathon", weight: "body", short: "Satkania half" },
+  { date: "2026-12-18", dist: "50K", event: "Coastal Ultra 2026", weight: "phosphor", short: "Coastal 50K" },
+  { date: "2027-01-07", dist: "42.2K", event: "Cox's Bazar International Marathon", weight: "dim", short: "Cox's Bazar" },
   { date: "2027-01-29", dist: "25K", event: "Dhaka Run 25K", weight: "body", short: "Dhaka 25K" },
 ];
 

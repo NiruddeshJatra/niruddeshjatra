@@ -21,5 +21,6 @@ export const CHANGELOG: ChangelogEntry[] = [
   { hash: "f2d06a9", date: "2026-10", message: "body/longest: 35k training run" },
   { hash: "4b58c1e", date: "2026-10", message: "body/sub-5: 4:58, first marathon under five hours" },
   { hash: "a29e7d3", date: "2026-10", message: "chess/first: first tournament, 29th of 212" },
-  { hash: "HEAD",    date: "2026-11", message: "current: rest, module two, one thing at a time" },
+  { hash: "7c2e91d", date: "2026-11", message: "body/fourth: comilla 50k trail, 5:40, fourth" },
+  { hash: "HEAD",    date: "2026-11", message: "current: coastal 50k, module two, phone in the almirah" },
 ];

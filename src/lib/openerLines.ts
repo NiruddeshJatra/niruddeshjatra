@@ -35,6 +35,8 @@ export const OPENER_LINES: OpenerLine[] = [
   "4:58.",
   "one thing at a time.",
   "the phone sleeps in the almirah.",
+  "fourth, by slowing down less.",
+  "fifty, then.",
 ];
 
 export const getTodaysOpenerLine = (): OpenerLine => {

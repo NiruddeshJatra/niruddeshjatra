@@ -107,9 +107,7 @@ const RunningContent = () => (
     <SectionHeader label="training, briefly" />
 
     <p className="mb-4">
-      three sessions a week. two short — five to ten kilometers — and one
-      long run, mileage going up each week. strength work at home, no gym.
-      no coach. no plan more sophisticated than "next week, a little further."
+      two easy runs and a long run every week, friday evening. football on tuesdays. strength at home, twice a week, no gym. stretches every morning. a written plan to keep me honest — mostly about doing less.
     </p>
 
     <p className="mb-4">longest training run so far: 35 km, october 2026.</p>

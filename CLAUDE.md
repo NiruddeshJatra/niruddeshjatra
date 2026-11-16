@@ -70,6 +70,7 @@ src/
 │   └── ...               # Other shared utilities
 └── constants/
     ├── sections.ts       # SECTION_ALIASES — derived from FileExplorer.files (skips containers)
+    ├── nowArchive.ts     # Earlier Now-page versions, newest-first, verbatim from git; rendered under `// earlier` in NowContent
     └── ...               # Other static data
 ```
 
@@ -184,6 +185,7 @@ Adding a new container folder: add a `FileItem` with `isContainer: true`, `id` s
 - **Article design tokens**: paper bg `#e8dfc9`; ink `#26241C`; ink-green `#00753F` (on paper only); phosphor `#00d26a` (inside dark scope wells only — never on paper). Tokens in `tailwind.config.ts` under `paper`, `ink`, `rule`, `machine`, `well`.
 - **Bilingual articles**: BN default; JS toggle (no URL change). BN numerals via `bd()` helper in BN mode. `lang="bn"` on BN blocks. Definitions follow the toggle. SEO uses `<Helmet>` inside `ArticleBody` (which has `useLang()` context) so title/description/`<html lang>` update dynamically.
 - **`cal` in `races.ts` holds upcoming races only** — after a race, move it into `racesAfterGap` (or `skipped`). `lastRace`/`nextRace`/`upcomingRaces` and the now page derive from these. A race postponed by its organiser stays in `cal` with `status: "postponed"` until it gets a new date; `nextRace`/`upcomingRaces` skip postponed entries (they derive from `activeCal`; use `isPostponed(c)` to label rows).
+- Before rewriting `NowContent.tsx`, append its current sections to `nowArchive.ts` (newest-first, dated with the publishing commit's date). Snapshots are never edited.
 - **Terminal `git log --author=nasif` derives from `CHANGELOG`** (`src/constants/changelog.ts`) — never hardcode a second timeline.
 - **No public page may state a degree, metric, user count, uptime or deployment that the author hasn't verified.** Resume content comes only from the author's own CV file (`public/Nasiful_Alam_Resume.pdf`), linked from the contact page — never write resume copy by hand.
 - Commit format: `type(scope): description` (feat/fix/chore/refactor/docs)

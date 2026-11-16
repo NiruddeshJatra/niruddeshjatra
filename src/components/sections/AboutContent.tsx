@@ -17,7 +17,7 @@ const DraftAbout = () => (
     <div className="text-phosphor-dim text-sm mt-10 mb-3 font-mono">// on hard things</div>
     <p className="mb-1"><span className="text-phosphor">&gt; </span>i was a weak kid. people called me a farm chicken.</p>
     <p className="mb-4"><span className="text-phosphor">&gt; </span>i wanted a different story so i started writing one.</p>
-    <p className="mb-4">i run long distance. two 52k ultras done, a 100k coming this year. i hike mountains in bandarban. tents, jungles, occasionally life-threatening. mountaineering, eventually.</p>
+    <p className="mb-4">i run long distance. two 52k hill ultras and a 50k trail ultra done. the 100k waits for another year. i hike mountains in bandarban. tents, jungles, occasionally life-threatening. mountaineering, eventually.</p>
     <p className="mb-1"><span className="text-phosphor">&gt; </span>i pick the longer distance, not the faster one.</p>
     <p className="mb-1"><span className="text-phosphor">&gt; </span>the slow part is the point.</p>
     <p className="mb-4"><span className="text-phosphor">&gt; </span>i'd rather finish broken than win unbroken.</p>

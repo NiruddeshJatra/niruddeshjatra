@@ -37,7 +37,7 @@ const getPath = (section: string): string => {
 
 const LAST_UPDATED: Record<string, string> = {
   welcome: "2026-11",
-  about: "2026-04-29",
+  about: "2026-11",
   games: "2026-04-29",
   now: "2026-11",
   contact: "2026-10",

@@ -244,7 +244,7 @@ const Editor = ({ currentSection }: EditorProps) => {
               <p><span className="text-phosphor">&gt; </span>{todaysLine}</p>
               <p><span className="text-phosphor">&gt; </span>games i'm building, things i'm writing, trips i'm taking.</p>
               <p><span className="text-phosphor">&gt; </span>nothing is finished. that's fine.</p>
-              <p className="mt-2"><span className="text-phosphor-dim">// </span><span className="text-foreground/70">lately: a first marathon under five hours (4:58), a first chess tournament, and module two of the networking course.</span></p>
+              <p className="mt-2"><span className="text-phosphor-dim">// </span><span className="text-foreground/70">lately: fourth at a 50k trail ultra, a 50k in december instead of the 100k, and module two of the networking course.</span></p>
             </div>
 
             <div className="text-phosphor-dim text-sm mt-10 mb-3 font-mono">// where to go</div>

@@ -9,6 +9,40 @@ type FieldNote = {
 // newest-first
 const notes: FieldNote[] = [
   {
+    date: "2026-11-16",
+    title: "fifty",
+    body: (
+      <>
+        <p className="mb-3">
+          the coastal ultra list came out on thursday. i'm in the 50k. i'd put the 100k first.
+        </p>
+        <p className="mb-3">
+          i'd been pointing at that hundred for six, eight months. every long run this year was a step toward it, in my head at least. the points were there. comilla was there. the list went the other way, and nobody owes me a reason.
+        </p>
+        <p className="mb-3">
+          after 2 days of frustration and sadness, i've accepted my fate, made up my mind for the 50k. the hundred will still be there next year. so will i.
+        </p>
+      </>
+    ),
+  },
+  {
+    date: "2026-11-06",
+    title: "first and probably last podium",
+    body: (
+      <>
+        <p className="mb-3">
+          left for comilla at seven in the evening, got there at three in the morning with mahadi vai. 3 weeks of weakness, tired body, zero sleep. everything on paper said don't start. the gun went at 5:50.
+        </p>
+        <p className="mb-3">
+          four loops, 613 metres of total elevation. fog and cold for the first two, and they felt easy. maybe bandarban did that. then the sun came up, and the last loop took 1:42.
+        </p>
+        <p className="mb-3">
+          9th, 7th, 5th, 4th. 5:40, fourth overall. i didn't move up by getting faster; the others slowed down more than i did. a magical day. the first ten out of ten since august.
+        </p>
+      </>
+    ),
+  },
+  {
     date: "2026-11-01",
     title: "the almirah",
     body: (
